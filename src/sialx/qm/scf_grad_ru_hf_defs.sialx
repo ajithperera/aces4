@@ -50,7 +50,7 @@ static fockrohf_a[aces_defs_mu,aces_defs_mu]
 static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 special compute_nn_repulsion_grad u
-special return_1el_grdints wrur
+special return_1el_gradient wrur
 Special return_2el_grdints wr
 special return_1el_ecp_grdints w 
 special return_2el_gradient rrur 

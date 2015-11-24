@@ -1,4 +1,4 @@
-sial scf_hess_uhf_defs 
+sial mp2_uhf_defs
 #
 predefined  int norb   #total number of atomic orbital segments 
 predefined  int naocc  # number of occupied molecular orbital segments (alpha)
@@ -22,12 +22,8 @@ predefined  int ebvirtorb # used as a simple index, end beta virtual
 
 predefined  int Natoms 
 predefined  int iecp_on
-predefined  int three_natoms
+predefined  int cc_iter  
 predefined  int reference
-predefined  int ihess1
-predefined  int ihess2
-predefined  int jhess1
-predefined  int jhess2
 
 #these are predefined in the index table
 
@@ -53,10 +49,9 @@ static oed_ovl[aces_defs_mu,aces_defs_mu]
 static fockrohf_a[aces_defs_mu,aces_defs_mu]
 static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
+special energy_denominator urrr
+special compute_ubatch6 wrruu
 special compute_int_scratchmem uuu
-special drive_2el_hessian ru
-spectai return_1el_gradints wrr
-special return return_kin_ovl_hessints wrur
 
-endsial scf_hess_uhf_defs
+endsial mp2_uhf_defs 
 
