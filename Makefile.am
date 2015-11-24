@@ -656,6 +656,8 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_grad_ru_hf_defs.sialx\
 ./src/sialx/qm/scf_hess_uhf.sialx\
 ./src/sialx/qm/scf_hess_uhf_defs.sialx\
+./src/sialx/qm/mp2_uhf.sialx\
+./src/sialx/qm/mp2_uhf_defs.sialx\
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\

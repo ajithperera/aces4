@@ -14,7 +14,7 @@ C-----------------------------------------------------------------
 !>  Ajith Perera, 09/2015.
 C-----------------------------------------------------------------
 
-      subroutine drive_2el_hessian(
+      subroutine return_2el_hessian(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
      c  ierr) BIND(C)

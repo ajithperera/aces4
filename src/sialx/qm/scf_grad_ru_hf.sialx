@@ -238,7 +238,7 @@ import "scf_grad_ru_hf_defs.sialx"
             Tpq[mu,nu] += DHFB[mu,nu]
             Spq[mu,nu]  = Tpq[mu,nu] 
             flag = 1.0
-            execute return_1el_grdints Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
@@ -249,7 +249,7 @@ import "scf_grad_ru_hf_defs.sialx"
             Enddo Ngrads
 
             flag = 2.0
-            execute return_1el_grdints Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
@@ -296,7 +296,7 @@ import "scf_grad_ru_hf_defs.sialx"
             GET           WHFb[mu,nu]
             Tpq[mu,nu]  = WHFa[mu,nu]
             Tpq[mu,nu] += WHFb[mu,nu]
-            execute return_1el_grdints Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]

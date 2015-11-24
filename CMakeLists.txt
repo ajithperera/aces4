@@ -604,10 +604,11 @@ set(SIAL_FILES
     src/sialx/qm/scf_rhf_defs.sialx;
     src/sialx/qm/scf_grad_ru_hf.sialx;
     src/sialx/qm/scf_grad_ru_hf_defs.sialx;
-    src/sialx/qm/scf_hess_uhf.sialx;
-    src/sialx/qm/scf_hess_uhf_defs.sialx)
+    src/sialx/qm/mp2_uhf.sialx;
+    src/sialx/qm/mp2_uhf_defs.sialx)
+#    src/sialx/qm/scf_hess_uhf.sialx;
+#    src/sialx/qm/scf_hess_uhf_defs.sialx)
     
-
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
 set (SIAL_COMPILED_FILES "")
@@ -628,6 +629,4 @@ foreach(F ${SIAL_FILES})
 endforeach()
 
 add_custom_target(SIAL_FILES_COMPILE ALL DEPENDS ${SIAL_COMPILED_FILES})
-
-
 

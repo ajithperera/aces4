@@ -1027,6 +1027,11 @@ import "scf_hess_uhf_defs.sialx"
      scalar imax 
      scalar zmax 
      scalar flag
+     scalar typeo
+     scalar typek
+     scalar typen
+     scalar cent
+
 
 #   ------------------------------------------------------------------------
 
@@ -3322,13 +3327,6 @@ import "scf_hess_uhf_defs.sialx"
       PROC DINT_TRAN 
 #     --------------  
 #
-      create Qyai 
-      create Qybj 
-      create Fya 
-      create Fyb 
-      sip_barrier 
-      server_barrier 
-#
 #     Finish the contribution to Qyai and Qybj 
 #     ---------------------------------------- 
 #
@@ -3451,7 +3449,13 @@ import "scf_hess_uhf_defs.sialx"
 #
       PARDO mu, nu 
 #
-            execute fock_der txx[mu,nu] 
+            t1xx[mu,nu] = 0
+            execute return_1el_gradints t1xx[mu,nu] typek cmp3
+            txx[mu,nu] = t1xx[mu,nu]
+
+            t1xx[mu,nu] = 0.0
+            execute return_1el_gradints t1xx[mu,nu] typen cmp3
+            txx[mu,nu] += t1xx[mu,nu]
 #
 #           Contributions to Qxai and Qxbj  
 #           ------------------------------ 
@@ -3494,7 +3498,13 @@ import "scf_hess_uhf_defs.sialx"
 #
       PARDO mu, nu 
 #
-            execute fock_der txx[mu,nu] 
+            t1xx[mu,nu] = 0
+            execute return_1el_gradints t1xx[mu,nu] typek cmp3
+            txx[mu,nu] = t1xx[mu,nu]
+
+            t1xx[mu,nu] = 0.0
+            execute return_1el_gradints t1xx[mu,nu] typen cmp3
+            txx[mu,nu] += t1xx[mu,nu]
 #
 #           Contributions to Qxai and Qxbj  
 #           ------------------------------ 
@@ -3541,7 +3551,14 @@ import "scf_hess_uhf_defs.sialx"
 #
       PARDO mu, nu 
 #
-            execute fock_der txx[mu,nu] 
+            t1xx[mu,nu] = 0
+            execute return_1el_gradints t1xx[mu,nu] typek cmp3
+            txx[mu,nu] = t1xx[mu,nu]
+
+            t1xx[mu,nu] = 0.0
+            execute return_1el_gradints t1xx[mu,nu] typen cmp3
+            txx[mu,nu] += t1xx[mu,nu]
+
 #
 #           Contributions to Fya and Fyb 
 #           ---------------------------- 
@@ -3791,8 +3808,7 @@ import "scf_hess_uhf_defs.sialx"
       PARDO mu, nu 
 #
             txx[mu,nu]  = 0.0 
-#
-            execute overlap_der txx[mu,nu] 
+            execute return_1el_derints txx[mu,nu]  typeo cmp3
 #
             DO p 
 #
@@ -3838,13 +3854,12 @@ import "scf_hess_uhf_defs.sialx"
 #     perturbation is defined by iatom, ix and icenter and the 
 #     final arrays are Sxa and Sxb. 
 #
-     #create Sxa 
-     #create Sxb 
-#
 #
       PARDO mu, nu 
 #
-           #execute overlap_der txx[mu,nu] 
+            txx[mu,nu]  = 0.0
+            execute return_1el_derints txx[mu,nu]  typeo cmp3
+
             GET ovl_der[mu,nu,iatom,ix] 
             txx[mu,nu] = ovl_der[mu,nu,iatom,ix] 
 #
@@ -3874,7 +3889,6 @@ import "scf_hess_uhf_defs.sialx"
             GET            QTAxx[mu,nu,iatom,ix] 
             GET            QTBxx[mu,nu,iatom,ix] 
 #
-           #execute fock_der txx[mu,nu] 
             GET h_der[mu,nu,iatom,ix] 
             txx[mu,nu] = h_der[mu,nu,iatom,ix] 
 #
@@ -3911,13 +3925,9 @@ import "scf_hess_uhf_defs.sialx"
       PROC Uy_XX  
 #     ----------- 
 #
-      create Uyaa 
-      create Uybb 
-      sip_barrier 
-#
       PARDO mu, nu 
 #
-            execute overlap_der txx[mu,nu] 
+            execute return_1el_gradints txx[mu,nu] typeo cmp3
 #
             DO i 
 #
@@ -6978,44 +6988,40 @@ import "scf_hess_uhf_defs.sialx"
 #
       PROC ALLTRAN_VX_XIXI
 #     --------------------
+# type0 overlap derivatives, typek kinteic energy deriavtives and
+# typen attraction derivatives.
 #
-      create QTai 
-      create QTbj 
-      create ovl_der 
-      create h_der 
-      create QTABxx 
-      create QTAxx 
-      create QTBxx 
-#
+      cmp3  = 0.0
+      typeo = 3.0
+      typek = 1.0
+      typen = 2.0
+
       DO iatom 
          IF iatom >= ihess1 
          IF iatom <= ihess2 
+         cmp3 = 0.0
       DO ix 
-#
-      create Qxai
-      create Qxbj
-      create QAxx
-      create QBxx
-      create QABxx
-      create Sxa 
-      create Sxb 
-      create Uxaa 
-      create Uxbb 
-      sip_barrier 
-#
-#     Set flags --> perturbation.
-#     ---------------------------
-      execute set_flags2 dflags2[iatom,ix]
+         cmp3  = cmp3  + 1.0
+         cent  = scalar(iatom)
 #
 #     Compute the transformed overlap derivative integrals 
 #     ---------------------------------------------------- 
-#
+
       PARDO mu, nu 
 #
-            execute overlap_der txx[mu,nu] 
-            execute fock_der t1xx[mu,nu] 
+            txx[mu,nu]  = 0.0
+            t1xx[mu,nu] = 0.0
+            t2xx[mu,nu] = 0.0
+
+            execute return_1el_gradints txx[mu,nu] type0 cmp3
             PUT ovl_der[mu,nu,iatom,ix] = txx[mu,nu] 
+
+            execute return_1el_gradints t1xx[mu,nu] typek cmp3
             PUT h_der[mu,nu,iatom,ix] = t1xx[mu,nu] 
+
+            t1xx[mu,nu] = 0.0
+            execute return_1el_gradints t1xx[mu,nu] typen cmp3
+            PUT h_der[mu,nu,iatom,ix] += t1xx[mu,nu] 
 #
             DO i 
 #
@@ -7056,18 +7062,7 @@ import "scf_hess_uhf_defs.sialx"
 #               Update QAxx, QBxx, and QABxx
 #               ----------------------------
 #
-               #GET                   Dhfa[lambda,sigma]
-               #GET                   Dhfb[lambda,sigma]
-               #GET                   Dhfa[lambda,nu]
-               #GET                   Dhfb[lambda,nu]
-               #GET                   Dhfa[sigma,nu]
-               #GET                   Dhfb[sigma,nu]
-               #GET                   Dhfa[lambda,mu]
-               #GET                   Dhfb[lambda,mu]
-               #GET                   Dhfa[sigma,mu]
-               #GET                   Dhfb[sigma,mu]
-#
-                execute der2_comp saoint[mu,nu,lambda,sigma]
+                execute return_2el_grdints saoint[mu,nu,lambda,sigma] cmp3 cent
 #
                 txx[lambda,sigma]   = LDhfa[lambda,sigma]
                 txx[lambda,sigma]  += LDhfb[lambda,sigma]
@@ -7120,16 +7115,7 @@ import "scf_hess_uhf_defs.sialx"
 #               Update QAxx, QBxx, and QABxx
 #               ----------------------------
 #
-               #GET                   Dhfa[lambda,sigma]
-               #GET                   Dhfb[lambda,sigma]
-               #GET                   Dhfa[lambda,nu]
-               #GET                   Dhfb[lambda,nu]
-               #GET                   Dhfa[sigma,nu]
-               #GET                   Dhfb[sigma,nu]
-               #GET                   Dhfa[lambda,mu]
-               #GET                   Dhfb[lambda,mu]
-#
-                execute der2_comp saoint[mu,nu,lambda,sigma]
+                execute return_2el_grdints saoint[mu,nu,lambda,sigma] cmp3 cent
 #
                 txx[lambda,sigma]   = LDhfa[lambda,sigma]
                 txx[lambda,sigma]  += LDhfb[lambda,sigma]
@@ -7164,14 +7150,7 @@ import "scf_hess_uhf_defs.sialx"
 #               Update QAxx, QBxx, and QABxx
 #               ----------------------------
 #
-               #GET                   Dhfa[lambda,sigma]
-               #GET                   Dhfb[lambda,sigma]
-               #GET                   Dhfa[lambda,nu]
-               #GET                   Dhfb[lambda,nu]
-               #GET                   Dhfa[lambda,mu]
-               #GET                   Dhfb[lambda,mu]
-#
-                execute der2_comp saoint[mu,nu,lambda,sigma]
+                execute return_2el_grdints saoint[mu,nu,lambda,sigma] cmp3 cent
 #
                 txx[lambda,sigma]   = LDhfa[lambda,sigma]
                 txx[lambda,sigma]  += LDhfb[lambda,sigma]
@@ -7208,12 +7187,8 @@ import "scf_hess_uhf_defs.sialx"
 #               Update QAxx, QBxx, and QABxx
 #               ----------------------------
 #
-               #GET                   Dhfa[lambda,sigma]
-               #GET                   Dhfb[lambda,sigma]
-               #GET                   Dhfa[lambda,nu]
-               #GET                   Dhfb[lambda,nu]
 #
-                execute der2_comp saoint[mu,nu,lambda,sigma]
+                execute return_2el_grdints saoint[mu,nu,lambda,sigma] cmp3 cent
 #
                 txx[lambda,sigma]   = LDhfa[lambda,sigma]
                 txx[lambda,sigma]  += LDhfb[lambda,sigma]
@@ -7231,14 +7206,6 @@ import "scf_hess_uhf_defs.sialx"
 #
       ENDPARDO mu, nu, lambda, sigma
 #
-#     create Fxa
-#     create Fxb
-#     create Hxa
-#     create Hxb
-      create Hx_px
-      create Hx_qx
-      create Hx_pp
-      create Hx_qq
       sip_barrier
 #
 #     Finish the contribution to Qxai and Qxbj
@@ -7314,9 +7281,6 @@ import "scf_hess_uhf_defs.sialx"
 #
       CALL QXAI_H 
       CALL Qx_XX 
-######CALL FORM_UXAI 
-#
-######CALL FINTX_TRAN  
 #
       sip_barrier
 #
@@ -7343,25 +7307,6 @@ import "scf_hess_uhf_defs.sialx"
       ENDPARDO b, j 
 #
       sip_barrier
-      delete Hx_px
-      delete Hx_qx
-      delete Hx_pp
-      delete Hx_qq
-#     delete Fxa
-#     delete Fxb
-#     delete Hxa
-#     delete Hxb
-      delete Qxai
-      delete Qxbj
-      delete QAxx
-      delete QBxx
-      delete QABxx
-      delete Sxa 
-      delete Sxb 
-      delete Uxaa 
-      delete Uxbb 
-#
-      execute print_scalar etemp 
 #
       ENDDO ix 
          ENDIF 
@@ -7516,33 +7461,6 @@ import "scf_hess_uhf_defs.sialx"
 #
       eold  = 0.0
       ecrit = 0.00001
-      create Cainew 
-      create Caiold 
-      create Cbjnew 
-      create Cbjold 
-#
-      create eT1ai
-      create eT2ai
-      create eT3ai
-      create eT4ai
-      create eT5ai
-      create dT1ai
-      create dT2ai
-      create dT3ai
-      create dT4ai
-      create dT0ai
-      create eT1bj
-      create eT2bj
-      create eT3bj
-      create eT4bj
-      create eT5bj
-      create dT1bj
-      create dT2bj
-      create dT3bj
-      create dT4bj
-      create dT0bj
-#
-       
 #
 #     Form initial guess --> DX/eps. 
 #     ------------------------------ 
@@ -8100,9 +8018,7 @@ import "scf_hess_uhf_defs.sialx"
       execute compute_int_scratchmem oed_ovl zmax imax
 
        
-      execute print_scalar etemp 
       CALL TRAN_UHF
-      execute print_scalar etemp 
 #
 # 2. First order amplitudes T2aiai, T2bjbj, T2aibj, t1ai, t2bj. 
 # -------------------------------------------------------------  
@@ -8123,8 +8039,7 @@ import "scf_hess_uhf_defs.sialx"
 # ------------------------------------------------------------------------------
 #
       CALL CDENSAI
-      execute print_scalar etemp 
-     # 
+# 
 #
 # 5. Compute 'directly' computed intermediates. 
 # --------------------------------------------- 
@@ -8139,43 +8054,32 @@ import "scf_hess_uhf_defs.sialx"
 #     ----------------------------------------------
 #
       CALL I_HF
-      execute print_scalar etemp 
-#
-#     Transform the one-particle density to the AO basis.
-#     ---------------------------------------------------
-#
-       
 #
 #     'Contract' the backtransformed intermediates with S''.
 #     ------------------------------------------------------
 #
       CALL SXY_CONT   # Passed 
-      execute print_scalar etemp 
 #
 #     'Contract' the backtransformed density with H''.
 #     ------------------------------------------------
 #
       CALL DXY_CONT # Passed  
-      execute print_scalar etemp 
 #
 #     'Contract' the backtransformed gamma array with <mu nu|lambda sigma>^x.
 #     -----------------------------------------------------------------------
 #
-      
       CALL GIJAB_CONT  
-      
-      execute print_scalar etemp 
+      sip_barrier 
 #
 #     Compute quantities depending on the perturbed two-electron derivative
 #     integrals. 
 #     --------------------------------------------------------------------- 
 #
       CALL ALLTRAN_VX_XIXI
+      sip_barrier 
       
-      execute print_scalar etemp 
       CALL FORM_UCAI  
-      execute print_scalar etemp 
-      
+      sip_barrier 
 #
 # Loop over unique Hessian elements. The Hessian will be viewed as a two
 # dimensional array HESS(x,y). The first loop will be over y the second
@@ -8183,20 +8087,22 @@ import "scf_hess_uhf_defs.sialx"
 # considered first.
 # ----------------------------------------------------------------------
 #
+
       DO jatom 
 #
       IF jatom >= jhess1 
       IF jatom <= jhess2 
+      cmp3 = 0.0
 #
       DO jx 
+
+      cmp3 = cmp3 + 1.0
 #
           
          server_barrier 
 #
 #        Set flags --> perturbation. 
 #        --------------------------- 
-#
-         execute set_flags2 dflags2[jatom,jx]   
 #
 #        Compute the perturbed quantities DTpppi, DTqqqj, DTppqi
 #        and DTqqpi.

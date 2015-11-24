@@ -13,18 +13,20 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
 C
-      subroutine compute_return_1el_grdints(
+      subroutine compute_return_1el_gradient(
      &
-     &                              der_ints, type, component,
-     &
+     &                              der_ints, density, gradient, 
+     &                              type,
+     & 
      &                              da1, da2, db1, db2,
-     &
+     &                              dc1, dc2, dd1, dd2,
+     & 
      &                              ncenters, coords, tcoords,
      &
      &                              scr,iscr)
 c---------------------------------------------------------------------------
 c  Computes the set of OED derivative integrals matching "type" and 
-c  and return them.
+c  and contracts them with density block (da1:da2, db1:db2).
 c
 c   type = 1 --> NAI integrals
 c          2 --> KIN integrals
@@ -42,6 +44,8 @@ c---------------------------------------------------------------------------
       integer type
       integer da1, da2, db1, db2, dc1, dc2, dd1, dd2
       double precision der_ints(da1:da2, db1:db2)
+      double precision density(dc1:dc2, dd1:dd2)
+      double precision gradient(3*ncenters)
       double precision scr(*) 
       integer iscr(*)
       Integer (C_INT) one
@@ -328,6 +332,9 @@ C#ifdef _DEBUG_LVL0
       sumy=0.0d0
       sumz=0.0d0
 C#endif
+c-------------------------------------------------------------------------
+c Find the shells we need to loop over for this block of density data.
+c--------------------------------------------------------------------------
 
       Ind(1) = 1
       Ind(2) = 2
@@ -380,7 +387,7 @@ c loop over derivatives on centers
 
             iatom = ixderc 
  
-CSSS            do component = 1, 3   ! component is x, y, or z term of gradient
+            do component = 1, 3   ! component is x, y, or z term of gradient
 
 c-------------------------------------------------------------------------
 c   Clear the integral block.
@@ -458,8 +465,31 @@ c-------------------------------------------------------------------------
                  call move_integrals2(der_ints, da1,da2,db1,db2,
      *                 scr(nfirst),a1,a2,b1,b2)
 
-               endif ! nints 
+c--------------------------------------------------------------------------
+c   Contract the density block with the block of integrals.
+c--------------------------------------------------------------------------
 
+                 call cwork0222(grad,
+     *                          density,da1,da2,db1,db2,
+     *                          da1,da2,db1,db2,ind,
+     *                          der_ints,dc1,dc2,dd1,dd2,
+     *                          dc1,dc2,dd1,dd2,1,2,flopcount)
+
+c---------------------------------------------------------------------------
+c   Sum into the gradient.
+c---------------------------------------------------------------------------
+#ifdef _DEBUG_LVL0
+       if (type .eq. 1) then
+       Write(6,*)
+       Write(6,"(a)") "The nuclear attraction gradient"
+       Write(6,"(2I4,F15.10)") iatom, component, grad 
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       endif 
+#endif
+                igrad = (iatom-1)*3 + component 
+                gradient(igrad) = gradient(igrad) + grad
+
+               endif ! nints 
 #ifdef _DEBUG_LVL0
       do b = da1, da2
       do a = db1, db2
@@ -473,7 +503,7 @@ c-------------------------------------------------------------------------
       enddo
 
 #endif
-CSSS            enddo ! component
+            enddo ! component
             enddo ! ixderc  
      
          endif ! type = 1 
@@ -482,7 +512,7 @@ CSSS            enddo ! component
 
 c loop over derivatives on centers
 
-CSSD         do component = 1, 3   ! component is x, y, or z term of gradient
+         do component = 1, 3   ! component is x, y, or z term of gradient
          do ix = 1, 2          ! index of desired center
 
 c-------------------------------------------------------------------------
@@ -586,6 +616,23 @@ c-------------------------------------------------------------------------
                 call move_integrals2(der_ints, da1,da2,db1,db2,
      *                 scr(nfirst),a1,a2,b1,b2)
 
+c--------------------------------------------------------------------------
+c   Contract the density block with the block of integrals.
+c--------------------------------------------------------------------------
+
+               call cwork0222(grad,
+     *                        density,da1,da2,db1,db2,
+     *                        da1,da2,db1,db2, ind,
+     *                        der_ints,da1,da2,db1,db2,
+     *                        da1,da2,db1,db2,1,2,flopcount)
+C
+c---------------------------------------------------------------------------
+c   Sum into the gradient.
+c---------------------------------------------------------------------------
+
+              igrad = (iatom-1)*3 + component
+              gradient(igrad) = gradient(igrad) + grad 
+
              endif
 
 C#ifdef _DEBUG_LVL0
@@ -601,13 +648,29 @@ C#ifdef _DEBUG_LVL0
       enddo
 C#endif
          enddo ! ix
-
-CSSS         enddo ! component
+         enddo ! component
 
          endif ! ktype = 2,3
 
          enddo   ! n shells
          enddo   ! m shells
+
+C#ifdef _DEBUG_LVL0
+       if (type .eq. 1) then
+       Write(6,*)
+       Write(6,"(a)") "The nuclear attraction gradient"
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       else if (type .eq. 2) then
+       Write(6,*)
+       Write(6,"(a)") "The kinetic energy gradient"
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       else if (type .eq. 3) then
+       Write(6,*)
+       Write(6,"(a)") "The overlap gradient"
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       endif 
+C#endif
+
 
 #ifdef _DEBUG_LVL0
       if (type .eq. 1) then
@@ -634,6 +697,7 @@ CSSS         enddo ! component
       write(6,"(a,F20.10)")" The 1-el (ovl) der. integral checksumz =",
      &sumz
       write(6,*)
+ 
       endif
 #endif
 

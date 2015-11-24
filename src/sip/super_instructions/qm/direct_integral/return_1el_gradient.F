@@ -1,25 +1,26 @@
 C-----------------------------------------------------------------
-!> special  return_1el_gradints wrr
+!> special  return_1el_gradient wrur
 !> 
-!> Return the one-particle gradient integrals: overlap, kintetic
-!> nuclear repulsilon. The first input variable controls which one. its values
-!> should be  1 (for NAI), iflag = 2 (for Kin) and iflag = 3 (for overlap)
-!> The second input variable controls which component of the integral 
-!> is computed,
+!> Return the one-particle part of the gradient by taking the 
+!> diect prodcut of the one paticle density matrix and the 
+!> derivative integrals. The space for the deriavtive integrals is a
+!> temp array in SIAL (customarily) and the density matix 
+!> can be of anytype. The gradient are returned in the static arrray.
 !>
 !>  do mu
 !>  do nu
-!>     excecute return_1el_grdints I(mu,nu) type component 
+!>     excecute return_1el_gradient I(mu,nu) D(mu,nu) Grad(3*natoms) type
 !>  enddo nu
 !>  enddo mu
 !> 
-!>  Ajith Perera, 11/2015.
+!>  Ajith Perera, 09/2015.
 C-----------------------------------------------------------------
 
-      subroutine return_1el_grdints(
+      subroutine return_1el_gradient(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
      c array_slot_2, rank_2, index_values_2, size_2, extents_2, data_2,
+     c array_slot_3, rank_3, index_values_3, size_3, extents_3, data_3,
      c  ierr) BIND(C)
 
       use, intrinsic :: ISO_C_BINDING
@@ -51,7 +52,14 @@ c---------------------------------------------------------------------------
       integer(C_INT), intent(in)::index_values_2(1:rank_2)
       integer(C_INT), intent(in)::size_2
       integer(C_INT), intent(in)::extents_2(1:rank_2)
-      real(C_DOUBLE), intent(in)::data_2(1:size_2)
+      real(C_DOUBLE), intent(out)::data_2(1:size_2)
+
+      integer(C_INT), intent(in)::array_slot_3
+      integer(C_INT), intent(in)::rank_3
+      integer(C_INT), intent(in)::index_values_3(1:rank_3)
+      integer(C_INT), intent(in)::size_3
+      integer(C_INT), intent(in)::extents_3(1:rank_3)
+      real(C_DOUBLE), intent(in)::data_3(1:size_3)
 
       integer(C_INT), intent(out)::ierr
 
@@ -62,6 +70,9 @@ c---------------------------------------------------------------------------
       integer, pointer :: iscr(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
+
+      TYPE(C_PTR) :: cptr_zsum1
+      real(C_DOUBLE), pointer :: fptr_zsum1(:)
 
 c Nuclear coordinates 
 c --------------------------------------------------------------------------- 
@@ -86,8 +97,11 @@ c     integer(C_INT) n_ao_segs(1), aosegs(6)
       integer(C_INT) offset_01, offset_02
       integer(C_INT) offset_11, offset_12 
       integer(C_INT) nscr, niscr   
-      integer i, j, type,component 
+      integer i, j, type
 C
+      integer(C_INT) zsum_length01, zsum_length02, zsum_length1
+      integer(C_INT) zsum_length11, zsum_length12, zsum_length2
+
       ierr = 0
 c-------------------------------------------------------------------------
 c Get the data needed to do the computation.  
@@ -137,21 +151,27 @@ c   Compute data block of integrals.
 c---------------------------------------------------------------------------
 c Find the offset index ranges 
 c
-      type      = INT(data_1(1))
-      component = INT(data_2(1))
+      type = INT(data_3(1))
 
       offset_01 = 0 
       offset_02 = 0 
+      offset_11 = 0 
+      offset_12 = 0 
 
       if (index_values_0(1) .gt. 1) offset_01 
      &                              = paosegs(index_values_0(1)-1) 
       if (index_values_0(2) .gt. 1) offset_02 
      &                              = paosegs(index_values_0(2)-1) 
 
+      if (index_values_1(1) .gt. 1) offset_11 
+     &                              = paosegs(index_values_1(1)-1) 
+      if (index_values_1(2) .gt. 1) offset_12 
+     &                              = paosegs(index_values_1(2)-1) 
+
 C#ifdef _DEBUG_LVL0
       write(6,"(a)") " At the entry to compute_return_1el_grdnts"
-      Write(6,"(a)") " ncenters, type,component"
-      Write(6,"(3I4)") ncenters,type,component 
+      Write(6,"(a)") " ncenters, type, zsum_length1"
+      Write(6,"(3I4)") ncenters,type,zsum_length1
       Write(6,*)
       Write(6,"(a)") " The atom coordinates" 
       Write(6,"(3F12.6)") (coords(i),i=1,3*sDimCoords(2))
@@ -161,22 +181,30 @@ C#ifdef _DEBUG_LVL0
      *                                     sDimTCoords(2))
       Write(*,*)
       Write(*,"(a)") " The extents of arrays passed in from SIAL"
-      Write(*,"(2I4)") extents_0(1),extents_0(2)
+      Write(*,"(4I4)")
+     *                        extents_0(1),extents_0(2),
+     *                        extents_1(1),extents_1(2)
+      write(6,"(3(1x,F12.6))")(data_2(i),i=1,3*ncenters)
 C#endif 
 
-      call compute_return_1el_grdints(
-     &                                data_0, type, component, 
+      call compute_return_1el_gradient(
+     &                                data_0, data_1, data_2, type,
      &
      &                                1+offset_01, 
      &                                extents_0(1)+offset_01,
      &                                1+offset_02, 
      &                                extents_0(2)+offset_02, 
      &
+     &                                1+offset_11, 
+     &                                extents_1(1)+offset_11, 
+     &                                1+offset_12, 
+     &                                extents_1(2)+offset_12, 
+     &  
      &                                ncenters, coords, tcoords, 
      &  
      &                                scr,iscr)
 c
-c  Remove scratch space  
+c  Remove scratch space   
 c
       call delete_scratch_array(cscr)
       call delete_integer_scratch_array(ciscr)

@@ -46,6 +46,7 @@ QM_SOURCE_FILES=\
 ./qm/qm-generic/set_ijk_aab.F\
 ./qm/qm-generic/energy_ty_denominator_rhf.F\
 ./qm/qm-generic/energy_denominator_rhf.F\
+./qm/qm-generic/energy_denominator.F\
 ./qm/qm-generic/energy_numerator_rhf.F\
 ./qm/utility/return_diagonal.F\
 ./qm/utility/print_block_and_index.F\
@@ -91,6 +92,8 @@ QM_SOURCE_FILES=\
 ./qm/direct_integral/compute_return_1el_ecp_grdints.F\
 ./qm/direct_integral/return_1el_grdints.F\
 ./qm/direct_integral/compute_return_1el_grdints.F\
+./qm/direct_integral/return_1el_gradient.F\
+./qm/direct_integral/compute_return_1el_gradient.F\
 ./qm/direct_integral/return_2el_grdints.F\
 ./qm/direct_integral/compute_return_2el_grdints.F\
 ./qm/direct_integral/return_kin_ovl_hessints.F\

@@ -124,6 +124,13 @@ void energy_denominator_rhf(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
 	int& ierr);
 
+void energy_denominator(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
+
 void energy_numerator_rhf(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
@@ -326,16 +333,22 @@ void a4_dscale(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
 	int& ierr);
 
-void return_1el_grdints(
+void return_1el_gradient(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
         int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
 	int& ierr);
 
+void return_1el_grdints(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
 void return_2el_grdints(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
 
 void return_2el_gradient(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
@@ -357,7 +370,7 @@ void return_nai_hessints(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
 	int& ierr);
 
-void compute_2el_hessian(
+void return_2el_hessian(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
 	int& ierr);
@@ -571,6 +584,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["compute_int_scratchmem"]=(fp0)&compute_int_scratchmem;
 	procmap_["compute_int_scratchmem_lowmem"]=(fp0)&compute_int_scratchmem_lowmem;
 	procmap_["energy_denominator_rhf"]=(fp0)&energy_denominator_rhf;
+	procmap_["energy_denominator"]=(fp0)&energy_denominator;
 	procmap_["energy_numerator_rhf"]=(fp0)&energy_numerator_rhf;
 	procmap_["return_vpq"]=(fp0)&return_vpq;
 	procmap_["return_diagonal"]=(fp0)&return_diagonal;
@@ -617,12 +631,13 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
     procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
+    procmap_["return_1el_gradient"]=(fp0)&return_1el_gradient;
     procmap_["return_1el_grdints"]=(fp0)&return_1el_grdints;
     procmap_["return_2el_grdints"]=(fp0)&return_2el_grdints;
     procmap_["return_2el_gradient"]=(fp0)&return_2el_gradient;
     procmap_["return_nai_hessints"]=(fp0)&return_nai_hessints;
     procmap_["return_kin_ovl_hessints"]=(fp0)&return_kin_ovl_hessints;
-    procmap_["compute_2el_hessian"]=(fp0)&compute_2el_hessian;
+    procmap_["return_2el_hessian"]=(fp0)&return_2el_hessian;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
     procmap_["compute_nn_repulsion_grad"]=(fp0)&compute_nn_repulsion_grad;
 

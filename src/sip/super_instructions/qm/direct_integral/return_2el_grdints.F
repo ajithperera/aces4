@@ -1,12 +1,14 @@
 C-----------------------------------------------------------------
-!> special return_2el_grdints wr
+!> special return_2el_grdints wrr
 !>
 !> Return the two-particle derivative integrals. The space for the 
-!> deriavtive integrals is a temp array in SIAL (customarily)
+!> deriavtive integrals is a temp array in SIAL (customarily). The
+!> two flags indentify the component (x,y,z) and the center that 
+!> derivatives are computed
 !>
 !> PARDO mu, nu, lambda, sigma
 !>
-!>      execute return_2el_grdints aoint[mu,nu,lambda,sigma] flag
+!>      execute return_2el_grdints aoint[mu,nu,lambda,sigma] flag center
 !>
 !> ENDPARDO mu, nu, lambda, sigma
 !>
@@ -16,6 +18,7 @@ C-----------------------------------------------------------------
       subroutine return_2el_grdints(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
+     c array_slot_2, rank_2, index_values_2, size_2, extents_2, data_2,
      c  ierr) BIND(C)
 
       use, intrinsic :: ISO_C_BINDING
@@ -40,6 +43,13 @@ c Interface added BUT should be include NOT added in the future
       integer(C_INT), intent(in)::size_1
       integer(C_INT), intent(in)::extents_1(1:rank_1)
       real(C_DOUBLE), intent(in)::data_1(1:size_1)
+
+      integer(C_INT), intent(in)::array_slot_2
+      integer(C_INT), intent(in)::rank_2
+      integer(C_INT), intent(in)::index_values_2(1:rank_2)
+      integer(C_INT), intent(in)::size_2
+      integer(C_INT), intent(in)::extents_2(1:rank_2)
+      real(C_DOUBLE), intent(in)::data_2(1:size_2)
 
       integer(C_INT), intent(out)::ierr
 
@@ -70,8 +80,7 @@ c ---------------------------------------------------------------------------
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
       integer(C_INT) i, j, one, two
       integer(C_INT) nscr, niscr
-      integer der_flags(12)
-      integer Derv_component 
+      integer component, center
 
       ierr = 0 
       one  = 1
@@ -123,13 +132,8 @@ c     call TAU_STOP("start scratch_array")
 
 c     call TAU_START("start compute_uintegrals1")   
 
-      Derv_component = INT(data_1(1))
-
-      do j = 1, 12
-         der_flags(j) = 0
-      enddo 
-
-      der_flags(Derv_component) = 1
+      component = INT(data_1(1))
+      center    = INT(data_2(1))
 
       call compute_return_2el_grdints(
      &
@@ -144,7 +148,7 @@ c     call TAU_START("start compute_uintegrals1")
      & 
      &                        coords, tcoords,
      & 
-     &                        der_flags)
+     &                        component, center)
 
 
 c     call TAU_STOP("start compute_uintegrals1")   
