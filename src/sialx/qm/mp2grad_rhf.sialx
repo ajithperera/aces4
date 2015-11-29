@@ -1,0 +1,2574 @@
+import "mp2grad_rhf_defs.sialx"
+#import "diis_2index_rhf.sialx"
+#
+#  Copyright (c) 2003-2010 University of Florida
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  The GNU General Public License is included in this distribution
+#  in the file COPYRIGHT.
+                           SIAL MBPT2_GRAD_AO2      
+#
+# This SIAL program computes the second-order correction to the density
+# and the second-order correction to the energy-weighted density matrix. 
+# They are written to file to be used in the final gradient construction. 
+#
+# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+#
+# Declare indices 
+# --------------- 
+#
+      index kiter    = 1: cc_iter 
+      index jiter    = 1: cc_iter
+      index   kptr1  = 1: 2
+      index   kptr2  = 1: 2
+      index   kone   = 1: 1   
+      index Ngrads   = 1: Three_Natoms 
+      Index Twelve   = 1: 12 
+      Index Idiis    = 1: 30
+#
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
+#                
+      aoindex m      = 1: norb
+      aoindex n      = 1: norb
+      aoindex l      = 1: norb
+      aoindex s      = 1: norb
+#
+      moaindex i = baocc: eaocc
+      moaindex i1= baocc: eaocc
+      moaindex i2= baocc: eaocc
+      moaindex i3= baocc: eaocc
+#
+      moaindex a = bavirt: eavirt
+      moaindex a1= bavirt: eavirt
+      moaindex a2= bavirt: eavirt
+      moaindex a3= bavirt: eavirt
+#
+      moaindex j = baocc: eaocc
+      moaindex j1= baocc: eaocc
+      moaindex j2= baocc: eaocc
+      moaindex j3= baocc: eaocc
+#
+      moaindex b = bavirt: eavirt
+      moaindex b1= bavirt: eavirt
+      moaindex b2= bavirt: eavirt
+      moaindex b3= bavirt: eavirt
+#
+      moaindex p = baocc: eavirt
+      moaindex p1= baocc: eavirt
+      moaindex p2= baocc: eavirt
+      moaindex p3= baocc: eavirt
+#
+      moaindex q = baocc: eavirt
+      moaindex q1= baocc: eavirt
+      moaindex q2= baocc: eavirt
+      moaindex q3= baocc: eavirt
+# 
+# Served arrays 
+
+      served Vxixi[mu,i1,lambda,i]
+      served Vxxii[mu,nu,i1,i]
+      served Viixx[i1,i,mu,nu]
+      served Vixxi[i1,nu,lambda,i]
+      served Vxipi[mu,i,p,i1]
+      served Vixai[i,mu,a,i1]
+      served Vxaii[mu,a,i,i1]
+      served Vxxxi[mu,nu,lambda,i] 
+      served VSpipi[p1,i,p,i1]
+      served ASpipi[a,i,a1,i1] 
+      served Apiqj[a,i,a1,i1] 
+      served Vxxjj[mu,nu,j1,j]
+      served Vjjxx[j1,nu,lambda,j]
+      served Vjxxj[j1,nu,lambda,j]
+      served Vxjqj[mu,j,q,j1]
+      served Vjxbj[j,mu,b,j1]
+      served Vxbjj[mu,b,j,j1]
+      served Vxixj[mu,i,nu,j]
+      served Vxiqj[mu,i,q,j]
+      served Vpiqj[p,i,q,j]
+      served Viixb[i,i1,mu,b]
+      served Viibb[i,i1,b1,b]
+      served Vxajj[mu,a,j,j1]
+      served Vixxj[i,mu,nu,j]
+      served Vixbj[i,mu,b,j]
+      served Viabj[i,a,b,j]
+      served Vaajj[a,a1,j,j1]
+      served Vxbii[mu,b,i,i1]
+# 
+# Distributed arrays 
+#
+      distributed Pij_aa[i,i1]
+      distributed Pab_aa[a,a1]
+      distributed Lai_aa[a,i]
+      distributed Painew_aa[a,i]
+      distributed Paiold_aa[a,i]
+      distributed Wab_aa[a,a1]
+      distributed Wij_aa[i,i1]
+      distributed Wai_aa[a,i]
+      distributed P2_ao[mu,nu]
+      distributed P2A_ao[mu,nu]
+      distributed W2_ao[mu,nu]
+      distributed Paa_ao[mu,nu]
+      distributed Whfa[mu,nu]
+      distributed Dhfa[mu,nu]
+      distributed Dhf[mu,nu]
+      distributed Lxi[mu,i]
+      distributed Yxi[mu,i]
+      distributed D0ai[a,i]
+      distributed Dai[a,i,idiis]
+      distributed eai[a,i,idiis]
+
+      distributed D_gradient[Ngrads]
+#
+# Temporary arrays 
+#
+      temp aoint[mu,nu,lambda,sigma]
+      temp Txjxj[mu,j1,lambda,j]
+      temp T1xjxj[mu,j1,lambda,j]
+      temp Txxjj[mu,nu,j1,j]
+      temp Tjjxx[j1,nu,lambda,j]
+      temp Tjxxj[j1,nu,lambda,j]
+      temp Txjqj[mu,j,q,j1]
+      temp Tqjqj[q1,j,q,j1]
+      temp T1qjqj[q1,j,q,j1]
+      temp T2qjqj[q1,j,q,j1]
+      temp Tjxbj[j,mu,b,j1]
+      temp Txbjj[mu,b,j,j1]
+      temp Tjbbj[j,b1,b,j1]
+      temp Tbbjj[b,b1,j,j1]
+      temp Txbbj[mu,b1,b,j]
+      temp Tbbbj[b2,b,b1,j]
+      temp T1bbbj[b2,b,b1,j]
+      temp Txxbj[mu,nu,b,j]
+      temp Txixj[mu,i,nu,j]
+      temp T1xixj[mu,i,nu,j]
+      temp Txiqj[mu,i,q,j]
+      temp Tpiqj[p,i,q,j]
+      temp T1piqj[p,i,q,j]
+      temp T2piqj[p,i,q,j]
+      temp Tiixx[i,i1,mu,nu]
+      temp Tiixb[i,i1,mu,b]
+      temp Tiibb[i,i1,b1,b]
+      temp Txajj[mu,a,j,j1]
+      temp Taajj[a,a1,j,j1]
+      temp Txabj[mu,a,b,j]
+      temp Tixxj[i,mu,nu,j]
+      temp Tixbj[i,mu,b,j]
+      temp Tiabj[i,a,b,j]
+      temp Taabj[a,a1,b,j]
+      temp Taiai[a,i,a1,i1] 
+      temp T1aiai[a,i,a1,i1] 
+      temp Txbii[mu,b,i,i1]
+      temp Tbbii[b,b1,i,i1]
+      temp Tjbii[j,b,i,i1]
+      temp Txbai[mu,b,a,i]
+      temp Tbbai[b,b1,a,i]
+
+      temp Txixi[mu,i1,lambda,i]
+      temp T1xixi[mu,i1,lambda,i]
+      temp Txxii[mu,nu,i1,i]
+      temp T1xxii[mu,nu,i1,i]
+      temp T2xxii[mu,nu,i1,i]
+      temp T3xxii[mu,nu,i1,i]
+      temp Tixxi[i1,nu,lambda,i]
+      temp T1ixxi[i1,nu,lambda,i]
+      temp Txipi[mu,i,p,i1]
+      temp Tpipi[p1,i,p,i1]
+      temp T1pipi[p1,i,p,i1]
+      temp T2pipi[p1,i,p,i1]
+      temp Tixai[i,mu,a,i1]
+      temp Txaii[mu,a,i,i1]
+      temp Tiaai[i,a1,a,i1]
+      temp Taaii[a,a1,i,i1]
+      temp Txaai[mu,a1,a,i]
+      temp Taaai[a2,a,a1,i]
+      temp T1aaai[a2,a,a1,i]
+      temp Txxai[mu,nu,a,i]
+      temp txxix[nu,mu,i,lambda]
+      temp Txxxx[mu,nu,lambda,sigma] 
+      temp TSxxxx[mu,nu,lambda,sigma] 
+      temp T1xxxx[mu,nu,lambda,sigma] 
+      temp Txxxi[mu,nu,lambda,i] 
+      temp Tixxx[i,mu,nu,lambda] 
+      temp T1xxxi[mu,nu,lambda,i] 
+      temp T2xxxi[mu,nu,lambda,i] 
+      temp T3xxxi[mu,nu,lambda,i] 
+      temp T4xxxi[mu,nu,lambda,i] 
+      temp Txxxj[mu,nu,lambda,j] 
+      temp T1xxxj[mu,nu,lambda,j] 
+      temp T2xxxj[mu,nu,lambda,j] 
+      temp T3xxxj[mu,nu,lambda,j] 
+      temp T4xxxj[mu,nu,lambda,j] 
+      temp Txixx[mu,i,nu,lambda] 
+      temp Txjxx[mu,j,nu,lambda] 
+      temp Txxjx[mu,nu,j,lambda] 
+      temp gaa[mu,i,nu,lambda] 
+      temp gab[mu,i,nu,lambda] 
+      temp gbb[mu,i,nu,lambda] 
+      temp TAxxxi[mu,lambda,nu,i1]     
+      temp TBxxxi[mu,lambda,sigma,i1]  
+      temp TAxxxj[mu,lambda,nu,j1]     
+      temp TBxxxj[mu,lambda,sigma,j1]  
+      temp V0xxxi[mu,nu,lambda,i]
+      temp V2xxxi[mu,nu,sigma,i]
+      temp V3xxxi[mu,nu,lambda,i]
+      temp V4xxxi[mu,nu,sigma,i]
+      temp Tii[i,i1] 
+      temp T1ii[i,i1] 
+      temp Tjj[j,j1] 
+      temp T1jj[j,j1] 
+      temp Taa[a,a1] 
+      temp Tbb[b,b1] 
+      temp Tai[a,i] 
+      temp T1ai[a,i] 
+      temp Tbj[b,j] 
+      temp T1bj[b,j] 
+      temp Tiiaa[i,i1,a,a1] 
+      temp T1iiaa[i,i1,a,a1] 
+      temp Tjjbb[j,j1,b,b1] 
+      temp T1jjbb[j,j1,b,b1] 
+      temp Txi[mu,i] 
+      temp Ixi[mu,i] 
+      temp I1xi[mu,i] 
+      temp Jxi[mu,i] 
+      temp Kxi[mu,i] 
+      temp Txj[mu,j] 
+      temp Ixj[mu,j] 
+      temp I1xj[mu,j] 
+      temp Jxj[mu,j] 
+      temp Kxj[mu,j] 
+      temp Ixx[mu,nu] 
+      temp I1xx[mu,nu] 
+      temp I2xx[mu,nu] 
+      temp Jxx[mu,nu] 
+      temp J1xx[mu,nu] 
+      temp Kxx[mu,nu] 
+      temp K1xx[mu,nu] 
+      temp Ixa[mu,a] 
+      temp Jxa[mu,a] 
+      temp Ixb[mu,b] 
+      temp Jxb[mu,b] 
+      temp Kxa[mu,a] 
+      temp Kxb[mu,b] 
+      temp Tpq[mu,nu]  
+      temp Txx[mu,nu]  
+      temp T1xx[mu,nu]  
+      temp Xa[lambda,i,sigma,mu] 
+      temp  D2[mu,lambda,nu,sigma] 
+      temp GRAD_AO_INTS[mu,nu,lambda,sigma]
+#
+# Staic and local arrays 
+#
+      static Spq[mu,nu] 
+      local xb[sigma,mu,lambda,i]
+      local LPaa_ao[mu,nu] 
+      local LLai_aa[a,i] 
+      local LLxi[mu,i] 
+      local LYxi[mu,i] 
+      local LDhfa[mu,nu]   
+      local LP2A_ao[mu,nu] 
+      local La[p,mu] 
+      local L0xxxi[mu,nu,lambda,i]
+      local Lxixi[mu,i1,lambda,i] 
+      local Lxixj[mu,i,lambda,j] 
+      local Lxjxj[mu,j1,lambda,j] 
+      local Lxxii[mu,nu,i1,i] 
+      local Lxxjj[mu,nu,j1,j] 
+      local Lixxi[i1,nu,lambda,i] 
+      local Lixxj[i,nu,lambda,j] 
+      local Ljxxj[j1,nu,lambda,j] 
+      local Lxipi[mu,i,p,i1] 
+      local Lpipi[p1,i,p,i1]  
+      local Lxaii[mu,a,i,i1] 
+      local Laaii[a1,a,i,i1] 
+      local Lixai[i,mu,a,i1] 
+      local Liaai[i,a1,a,i1] 
+      local Lxjqj[mu,j,q,j1] 
+      local Lqjqj[q1,j,q,j1]  
+      local Lxbjj[mu,b,j,j1] 
+      local Lbbjj[b1,b,j,j1] 
+      local Ljxbj[j,mu,b,j1] 
+      local Ljbbj[j,b1,b,j1] 
+      local Lxbii[mu,b,i,i1] 
+      local Lbbii[b1,b,i,i1] 
+      local Lxajj[mu,a,j,j1] 
+      local Laajj[a1,a,j,j1] 
+      local Lixbj[i,mu,b,j] 
+      local Liabj[i,a,b,j] 
+      local Liixb[i,i1,mu,b] 
+      local Liibb[i,i1,b1,b] 
+      local Lxiqj[mu,i,q,j] 
+      local Lpiqj[p,i,q,j] 
+      local Lxiai[mu,i,a1,i1] 
+      local Lxjbj[mu,j,b1,j1] 
+      local Lxibj[mu,i,b,j] 
+      local L1xixi[mu,i,nu,i1] 
+      local L1xjxj[mu,j,nu,j1] 
+      local L1xixj[mu,i,nu,j] 
+#
+#     contiguous local L_gradient[Ngrads]
+      static L_gradient[Ngrads]
+      static gradient[Ngrads]
+#
+# scalars 
+#
+      scalar n_seg
+      scalar ml
+      scalar ns
+      scalar mm
+      scalar nn
+      scalar ll
+      scalar ss
+      scalar efact
+      scalar eleven
+      scalar rank
+      scalar one
+      scalar two
+      scalar five
+      scalar six
+      scalar seven
+      scalar ncount1
+      scalar ncount2
+      scalar etemp
+      scalar esum
+      scalar esumaa 
+      scalar ecorraa
+      scalar toteneg 
+      scalar enew 
+      scalar eold 
+      scalar ecrit 
+      scalar ediff 
+      scalar mp2_energy
+      scalar zmax
+      scalar imax 
+      scalar flag
+      scalar AAAA
+      scalar ABAB
+# 
+#---------------------------------------------------------------------------
+#
+#      PROC GET_2EL_INTS
+#     -----------------
+#
+#     PARDO mu, nu, lambda, sigma
+#                 execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
+#                 PUT Daoint[mu,nu,lambda,sigma] = aoint[mu,nu,lambda,sigma]
+#     ENDPARDO mu, nu, lambda, sigma
+#
+#     sip_barrier
+#
+#     ENDPROC GET_2EL_INTS
+#    --------------------
+
+     PROC ZERO_ARRAYS
+#    -----------------
+     PARDO mu, nu, lambda, i
+           V0xxxi[mu,nu,lambda,i] = 0.0
+           PREPARE Vxxxi[mu,nu,lambda,i] =  V0xxxi[mu,nu,lambda,i]
+     ENDPARDO mu, nu, lambda, i
+     server_barrier 
+
+     ENDPROC ZERO_ARRAYS
+#    -------------------
+
+     PROC TRAN_XXII
+#    --------------
+#
+     PARDO mu, nu, lambda, sigma 
+
+           execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
+
+           DO i
+              V0xxxi[mu,nu,lambda,i]  = AOINT[mu,nu,lambda,sigma]*ca[sigma,i]
+              PREPARE Vxxxi[mu,nu,lambda,i] +=  V0xxxi[mu,nu,lambda,i]
+           ENDDO i
+
+     ENDPARDO mu, nu, lambda, sigma
+
+     server_barrier 
+
+     PARDO mu, nu, lambda, i 
+#
+              REQUEST                 Vxxxi[mu,nu,lambda,i] 
+              txixx[lambda,i,mu,nu] = Vxxxi[mu,nu,lambda,i] 
+              txxix[nu,mu,i,lambda] = Vxxxi[mu,nu,lambda,i]  
+#
+              DO i1
+#
+                 Txixi[lambda,i,mu,i1] = txixx[lambda,i,mu,nu]*ca[nu,i1]
+                 Txxii[nu,mu,i,i1]     = txxix[nu,mu,i,lambda]*ca[lambda,i1]
+                 Tixxi[i1,nu,lambda,i] = Vxxxi[mu,nu,lambda,i]*ca[mu,i1] 
+#
+                 prepare Vxixj[lambda,i,mu,i1] += Txixi[lambda,i,mu,i1]
+                 prepare Vxxjj[nu,mu,i,i1]     += Txxii[nu,mu,i,i1] 
+                 prepare Vixxj[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i] 
+#
+              ENDDO i1 
+#
+     ENDPARDO mu, nu, lambda, i  
+#
+     server_barrier
+#
+     ENDPROC TRAN_XXII
+#    -----------------
+
+     PROC TRAN_AAJJ
+#    --------------
+
+     PARDO nu, mu, j, j1
+#
+              REQUEST Vxxjj[mu,nu,j,j1] 
+#
+              DO a
+#
+                 Txajj[mu,a,j,j1]  = Vxxjj[mu,nu,j,j1]*ca[nu,a]
+                 PREPARE Vxajj[mu,a,j,j1] += Txajj[mu,a,j,j1]
+#
+              ENDDO a
+#
+     ENDPARDO nu, mu, j, j1
+#
+     server_barrier
+#
+     PARDO mu, a, j, j1
+#
+              REQUEST Vxajj[mu,a,j,j1] 
+#
+              DO a1
+#
+                 Taajj[a1,a,j,j1]  = Vxajj[mu,a,j,j1]*ca[mu,a1]
+                 PREPARE Vaajj[a1,a,j,j1] += Taajj[a1,a,j,j1]
+#
+              ENDDO a1
+#
+     ENDPARDO mu, a, j, j1
+#
+     server_barrier
+#
+     ENDPROC TRAN_AAJJ
+#    -----------------
+#
+     PROC TRAN_IABJ
+#    --------------
+#
+     PARDO nu, mu, i, j
+#
+              REQUEST Vixxj[i,mu,nu,j]
+#
+              DO b
+#
+                 Tixbj[i,mu,b,j]  = Vixxj[i,mu,nu,j]*ca[nu,b]
+                 PREPARE Vixbj[i,mu,b,j] += Tixbj[i,mu,b,j]
+#
+              ENDDO b
+#
+     ENDPARDO nu, mu, i, j
+#
+     server_barrier
+#
+     PARDO mu, b, i, j
+#
+              REQUEST Vixbj[i,mu,b,j]
+#
+              DO a
+#
+                 Tiabj[i,a,b,j]  = Vixbj[i,mu,b,j]*ca[mu,a]
+                 PREPARE Viabj[i,a,b,j] += Tiabj[i,a,b,j]
+#
+              ENDDO a
+#
+     ENDPARDO mu, b, i, j
+#
+     server_barrier
+
+     ENDPROC TRAN_IABJ
+#    -----------------
+#
+     PROC TRAN_IIBB
+#    --------------
+#
+     PARDO nu, mu, i, i1
+#
+              REQUEST Viixx[i,i1,mu,nu] 
+#
+              DO b
+#
+                 Tiixb[i,i1,mu,b]  = Viixx[i,i1,mu,nu]*ca[nu,b]
+                 PREPARE Viixb[i,i1,mu,b] += Tiixb[i,i1,mu,b]
+#
+              ENDDO b
+#
+     ENDPARDO nu, mu, i, i1
+#
+     server_barrier
+
+     PARDO mu, b, i, i1
+#
+              REQUEST Viixb[i,i1,mu,b] 
+#
+              DO b1
+#
+                 Tiibb[i,i1,b1,b]  = Viixb[i,i1,mu,b]*ca[mu,b1]
+                 PREPARE Viibb[i,i1,b1,b] += Tiibb[i,i1,b1,b]
+#
+              ENDDO b1
+#
+     ENDPARDO mu, b, i, i1
+#
+     server_barrier
+
+     ENDPROC TRAN_IIBB
+#    -----------------
+#
+     PROC TRAN_PIQJ
+#    -------------
+#
+     PARDO nu, mu, i, j
+#
+              REQUEST Vxixj[mu,i,nu,j] 
+#
+              DO q
+#
+                 Txiqj[mu,i,q,j]  = Vxixj[mu,i,nu,j]*ca[nu,q]
+                 PREPARE Vxiqj[mu,i,q,j] += Txiqj[mu,i,q,j]
+#
+              ENDDO q
+#
+     ENDPARDO nu, mu, i, j
+#
+     server_barrier
+#
+     PARDO mu, q, i, j
+#
+              REQUEST Vxiqj[mu,i,q,j] 
+#
+              DO p
+#
+                 Tpiqj[p,i,q,j]  = Vxiqj[mu,i,q,j]*ca[mu,p]
+                 PREPARE Vpiqj[p,i,q,j] += Tpiqj[p,i,q,j]
+
+              ENDDO p
+#
+     ENDPARDO mu, q, i, j
+#
+     server_barrier
+#
+     PARDO p, i, q, j 
+           REQUEST                   Vpiqj[p,i,q,j] 
+           REQUEST                   Vpiqj[p,j,q,i]  
+
+           Tpiqj[p,i,q,j]          = Vpiqj[p,i,q,j]  
+           T1piqj[p,i,q,j]         = Vpiqj[p,j,q,i]  
+           Tpiqj[p,i,q,j]         -= T1piqj[p,i,q,j] 
+
+           PREPARE VSpipi[p,i,q,j] = Tpiqj[p,i,q,j] 
+#
+     ENDPARDO p, i, q, j 
+
+     server_barrier 
+
+     ENDPROC TRAN_PIQJ
+#    ----------------
+#
+     PROC TRAN_PPPP
+#    --------------
+
+        CALL TRAN_XXII
+        CALL TRAN_PIQJ
+        CALL TRAN_AAJJ
+        CALL TRAN_IABJ
+#
+#
+     ENDPROC TRAN_PPPP
+#    -----------------
+#
+     PROC TRAN_RHF 
+#    -------------
+        CALL TRAN_PPPP  
+#
+     ENDPROC TRAN_RHF 
+#    ----------------
+#
+      PROC WHFDENS
+#     ------------
+#
+      PARDO mu, nu, i 
+#
+            Ixi[nu,i] = 0.0  
+#
+            DO i1 
+#
+               I1xi[nu,i] = ca[nu,i1]*fock_a[i,i1] 
+               Ixi[nu,i] -= I1xi[nu,i] 
+#
+            ENDDO i1  
+#
+            Tpq[mu,nu]       = ca[mu,i]*Ixi[nu,i]
+            PUT Whfa[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, i  
+#
+      sip_barrier 
+#
+      ENDPROC WHFDENS
+#     --------------
+#
+      PROC HFDENS
+#     -----------
+#
+      PARDO mu, nu, i
+#
+            Txi[nu,i]        = ca[nu,i]
+            Tpq[mu,nu]       = ca[mu,i]*Txi[nu,i]
+            PUT Dhfa[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, i
+      sip_barrier 
+#
+      ENDPROC HFDENS
+#     --------------
+#
+      PROC D1TRANS
+#     ------------
+#
+# Contract with the derivative integrals
+# --------------------------------------
+#
+        PARDO mu, nu
+#
+           GET            P2A_ao[mu,nu]
+           GET            DHFA[mu,nu]
+#
+           Tpq[mu,nu]   = DHFA[mu,nu]
+           Tpq[mu,nu]  += P2A_ao[mu,nu]
+           Tpq[mu,nu]  *= 2.0  
+           Spq[mu,nu]   = Tpq[mu,nu] 
+
+            flag = 1.0
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+            Do Ngrads
+              L_Gradient[Ngrads] = 0.0
+            Enddo Ngrads
+
+            flag = 2.0
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+         ENDPARDO mu, nu
+         sip_barrier 
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+#
+      ENDPROC D1TRANS
+#     ---------------
+
+      PROC S1TRANS
+#     ------------
+#
+# Contract with the derivative integrals
+# --------------------------------------
+#
+      flag = 3.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+
+      PARDO mu, nu
+#
+            Txx[mu,nu] = 0.0
+
+            GET W2_ao[mu,nu]
+            GET WHFa[mu,nu]
+#
+            Tpq[mu,nu]   = W2_ao[mu,nu]
+            Tpq[mu,nu]  += WHFa[mu,nu]
+            Tpq[mu,nu]  *= 2.0  
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+      ENDPARDO mu, nu
+      sip_barrier
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+
+      ENDPROC S1TRANS
+#     ---------------
+# --------------------------------------------------------------------------- 
+#
+# The following procedure computes the contribution to Lai which 
+# depends on the VVVO integrals directly. 
+#
+      PROC LAIAO1
+#     -----------
+#
+#     First half backtransform vvoo integrals
+#     ---------------------------------------
+#
+#     AABB spin case
+#     --------------
+#
+      PARDO b, i, j 
+#
+            allocate Lxibj[*,i,b,j] 
+#
+            DO a 
+#
+               REQUEST                    Apiqj[a,i,b,j] 
+#
+               DO mu
+#
+                  Txiqj[mu,i,b,j]  = Apiqj[a,i,b,j]*ca[mu,a]
+                  Lxibj[mu,i,b,j] += Txiqj[mu,i,b,j] 
+#
+               ENDDO mu
+#
+            ENDDO a 
+#
+            DO mu
+#
+               Txiqj[mu,i,b,j]         = Lxibj[mu,i,b,j] 
+               PREPARE Vxiqj[mu,i,b,j] = Txiqj[mu,i,b,j] 
+#
+            ENDDO mu
+#
+            deallocate Lxibj[*,i,b,j] 
+#
+      ENDPARDO b, i, j
+#
+      server_barrier 
+#
+      PARDO mu, i, j 
+#
+            allocate L1xixj[mu,i,*,j] 
+#
+            DO b 
+#
+               REQUEST Vxiqj[mu,i,b,j] 
+#
+               DO nu
+#
+                  Txixj[mu,i,nu,j]   = Vxiqj[mu,i,b,j]*La[b,nu]
+                  L1xixj[mu,i,nu,j] += Txixj[mu,i,nu,j]
+#
+               ENDDO nu
+#
+            ENDDO b  
+#
+            DO nu
+#
+               Txixj[mu,i,nu,j]         = L1xixj[mu,i,nu,j] 
+               PREPARE Vxixj[mu,i,nu,j] = Txixj[mu,i,nu,j]
+#
+            ENDDO nu
+#
+            deallocate L1xixj[mu,i,*,j] 
+#
+      ENDPARDO mu, i, j
+#
+      server_barrier 
+#
+      allocate LPaa_ao[*,*]
+      PARDO lambda, i, sigma, i1
+
+            REQUEST                            Vxixj[lambda,i,sigma,i1] 
+            REQUEST                            Vxixj[sigma,i,lambda,i1] 
+#     
+            Txixi[lambda,i,sigma,i1]         = Vxixj[lambda,i,sigma,i1]
+            T1xixi[lambda,i,sigma,i1]        = Vxixj[sigma,i,lambda,i1]
+            T1xixi[lambda,i,sigma,i1]       *= 2.0
+            Txixi[lambda,i,sigma,i1]        -= T1xixi[lambda,i,sigma,i1]
+
+            PREPARE Vxixi[lambda,i,sigma,i1] = Txixi[lambda,i,sigma,i1]
+
+      ENDPARDO lambda, i, sigma, i1  
+#
+      PARDO mu, sigma
+         GET                 Paa_ao[sigma,mu]
+         LPaa_ao[sigma,mu] = Paa_ao[sigma,mu]
+      ENDPARDO mu, sigma  
+                  
+      allocate LLxi[*,*]
+      allocate LYxi[*,*]
+
+      server_barrier
+#
+#     Perform intermediate contraction to get contribution to Lxi and Lxj 
+#     -------------------------------------------------------------------
+#
+      PARDO mu, lambda, sigma
+#     
+            allocate xb[sigma,mu,lambda,*]
+#     
+#           Form Xa
+#           -------
+#
+            DO i
+               xa[lambda,i,sigma,mu] = 0.0
+#
+               DO i1
+#
+                  REQUEST                     Vxixi[lambda,i,sigma,i1] 
+                  Txixx[lambda,i,sigma,mu]  = Vxixi[lambda,i,sigma,i1]*La[i1,mu] # ca[mu,i1]
+                  xa[lambda,i,sigma,mu]    += Txixx[lambda,i,sigma,mu]
+#
+               ENDDO i1
+#
+               xb[sigma,mu,lambda,i] = xa[lambda,i,sigma,mu]
+#
+            ENDDO i
+#
+            DO nu
+#
+               execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+#
+#              Finish Lxi
+#              ----------
+#
+               DO i
+                  Ixi[nu,i]             = aoint[nu,sigma,mu,lambda]*xb[sigma,mu,lambda,i]
+                  LLxi[nu,i]           += Ixi[nu,i]
+               ENDDO i
+#
+#              Start third-term
+#              ----------------
+#
+               I1xx[sigma,nu]  = LPaa_ao[sigma,nu]
+               I1xx[sigma,nu] *= 2.0
+               Ixx[mu,lambda]  = aoint[nu,sigma,mu,lambda]*I1xx[sigma,nu]
+               I2xx[nu,lambda] = aoint[nu,sigma,mu,lambda]*LPaa_ao[sigma,mu]
+#
+               DO i
+#
+                  Ixi[lambda,i]      = Ixx[mu,lambda]*ca[mu,i]
+                  I1xi[lambda,i]     = I2xx[nu,lambda]*ca[nu,i]
+                  Ixi[lambda,i]     -= I1xi[lambda,i]
+#
+                  LYxi[lambda,i] += Ixi[lambda,i]
+#
+               ENDDO i
+#
+            ENDDO nu
+#
+            deallocate xb[sigma,mu,lambda,*]
+#
+      ENDPARDO mu, lambda, sigma
+      server_barrier
+
+      DO mu
+      DO i
+         txi[mu,i]      = LLXi[mu,i]
+         PUT Lxi[mu,i] += txi[mu,i]
+      ENDDO i
+      ENDDO mu
+
+      DO mu
+      DO i
+         txi[mu,i]      = LYXi[mu,i]
+         PUT Yxi[mu,i] += txi[mu,i]
+      ENDDO i
+      ENDDO mu
+      sip_barrier
+#
+      PARDO mu, nu, i, j
+            REQUEST                    Vxixj[mu,i,nu,j]
+            REQUEST                    Vxixj[mu,j,nu,i] 
+
+            Txixj[mu,i,nu,j]         = Vxixj[mu,i,nu,j]
+            Txixj[mu,i,nu,j]        *= 2.0
+            T1xixj[mu,i,nu,j]        = Vxixj[mu,j,nu,i]
+            Txixj[mu,i,nu,j]        -= T1xixj[mu,i,nu,j]
+
+            PREPARE Vxixi[mu,i,nu,j] = Txixj[mu,i,nu,j]
+      ENDPARDO mu, nu, i, j
+#
+#
+      PARDO a, lambda, i
+#
+            GET                Yxi[lambda,i]
+            Tai[a,i]         = ca[lambda,a]*Yxi[lambda,i]
+            Tai[a,i]        *= -1.0
+            LLai_aa[a,i] += tai[a,i]
+#
+      ENDPARDO a, lambda, i
+#
+#     Perform final transformation to get contribution to Lai
+#     -------------------------------------------------------
+#
+      PARDO a, i, nu
+#
+           GET                Lxi[nu,i]
+           tai[a,i]         = Lxi[nu,i]*ca[nu,a]
+           LLai_aa[a,i] += tai[a,i]
+#
+      ENDPARDO a, i, nu
+      sip_barrier
+      deallocate LPaa_ao[*,*]
+      deallocate LLxi[*,*]
+      deallocate LYxi[*,*]
+#
+#     Done direct contribution of Lai and Lbj
+#     ---------------------------------------
+#
+      ENDPROC LAIAO1
+#     --------------
+#
+# ---------------------------------------------------------------------------
+#
+# Procedure DPQRSSEP computes the seperable part of the two-particle
+# 'density' matrix.
+#
+      PROC DPQRSSEP
+#     -------------
+#
+#          Get 1-particle pieces
+#          ---------------------
+#
+           GET DHFa[mu,lambda]
+           GET DHFa[mu,sigma]
+           GET DHFa[mu,nu]
+           GET DHFa[nu,sigma]
+           GET DHFa[nu,lambda]
+           GET DHFa[sigma,lambda]
+#
+           GET DHFa[mu,lambda]
+           GET DHFa[mu,sigma]
+           GET DHFa[mu,nu]
+           GET DHFa[nu,sigma]
+           GET DHFa[nu,lambda]
+           GET DHFa[sigma,lambda]
+#
+           GET P2A_ao[mu,lambda]
+           GET P2A_ao[mu,sigma]
+           GET P2A_ao[mu,nu] 
+           GET P2A_ao[nu,lambda]
+           GET P2A_ao[nu,sigma]
+           GET P2A_ao[sigma,lambda] 
+#
+           GET P2A_ao[mu,lambda]
+           GET P2A_ao[mu,nu] 
+           GET P2A_ao[mu,sigma]
+           GET P2A_ao[nu,lambda]
+           GET P2A_ao[nu,sigma]
+           GET P2A_ao[sigma,lambda] 
+#
+#          HF only
+#          -------
+           Txx[nu,sigma]              = DHFa[nu,sigma] 
+           Txx[nu,sigma]             += DHFa[nu,sigma] 
+           Txx[nu,sigma]             += P2A_ao[nu,sigma] 
+           Txx[nu,sigma]             += P2A_ao[nu,sigma] 
+           T1xx[mu,lambda]            = DHFa[mu,lambda] 
+           T1xx[mu,lambda]           += DHFa[mu,lambda] 
+
+           Txxxx[mu,lambda,nu,sigma]  = T1xx[mu,lambda]^Txx[nu,sigma]
+#
+           Txx[nu,lambda]             = DHFa[nu,lambda] 
+           Txx[nu,lambda]            += P2A_ao[nu,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFa[mu,sigma]^Txx[nu,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txx[nu,lambda]             = DHFa[nu,lambda] 
+           Txx[nu,lambda]            += P2A_ao[nu,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFa[mu,sigma]^Txx[nu,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txx[sigma,lambda]          = DHFa[sigma,lambda] 
+           Txx[sigma,lambda]         += P2A_ao[sigma,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFa[mu,nu]^Txx[sigma,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txx[sigma,lambda]          = DHFa[sigma,lambda] 
+           Txx[sigma,lambda]         += P2A_ao[sigma,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFa[mu,nu]^Txx[sigma,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+#          Correlation Only 
+#          ----------------
+#
+           Txx[nu,sigma]              = DHFA[nu,sigma] 
+           Txx[nu,sigma]             += DHFa[nu,sigma] 
+           T1xxxx[mu,lambda,nu,sigma] = P2A_ao[mu,lambda]^Txx[nu,sigma]
+           Txxxx[mu,lambda,nu,sigma] += T1xxxx[mu,lambda,nu,sigma]
+#
+           T1xxxx[mu,lambda,nu,sigma] = P2A_ao[mu,lambda]^Txx[nu,sigma]
+           Txxxx[mu,lambda,nu,sigma] += T1xxxx[mu,lambda,nu,sigma]
+#
+           T1xxxx[mu,lambda,nu,sigma] = P2A_ao[mu,sigma]^DHFA[nu,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           T1xxxx[mu,lambda,nu,sigma] = P2A_ao[mu,nu]^DHFA[sigma,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           T1xxxx[mu,lambda,nu,sigma] = P2A_ao[mu,sigma]^DHFa[nu,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           T1xxxx[mu,lambda,nu,sigma] = P2A_ao[mu,nu]^DHFa[sigma,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txxxx[mu,lambda,nu,sigma] *= 0.5
+#
+      ENDPROC DPQRSSEP
+#     ----------------
+#
+      PROC D2TRANS
+#     ------------
+#
+      allocate LDhfa[*,*] 
+      allocate LP2A_ao[*,*] 
+      sip_barrier 
+      DO mu 
+      DO nu 
+         GET              DHFa[mu,nu] 
+         GET              P2A_ao[mu,nu] 
+         LDhfa[mu,nu]   = DHFa[mu,nu] 
+         LP2A_ao[mu,nu] = P2A_ao[mu,nu] 
+      ENDDO nu 
+      ENDDO mu 
+
+      n_seg = 0.0
+      DO mu
+         n_seg += 1.0
+      ENDDO mu
+      sip_barrier 
+#
+      PARDO mu, nu, lambda, sigma    
+#
+              WHERE mu < lambda  
+              WHERE nu < sigma   
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+                 ml = 0.0
+                 mm = 0.0
+                 ll = 0.0
+
+                 DO m
+                    if m <= mu
+                       mm += 1.0
+                    endif
+                 ENDDO m
+
+                 DO l
+                    if l <= lambda
+                       ll += 1.0
+                    endif
+                 ENDDO l
+
+                 etemp = ll - 1.0
+                 etemp *= n_seg
+                 ml += etemp
+#
+                 ns = 0.0
+                 nn = 0.0
+
+                 DO n
+                    if n <= nu
+                       nn += 1.0
+                    endif
+                 ENDDO n
+
+                 ss = 0.0
+                 DO s
+                    if s <= sigma
+                       ss += 1.0
+                    endif
+                 ENDDO s
+
+                 etemp = ss - 1.0
+                 etemp *= n_seg
+                 ns += etemp
+
+                 efact = 1.0
+                 if ml < ns
+                    efact = 2.0
+                 endif
+
+                if ml <= ns
+#
+                 D2[mu,lambda,nu,sigma] = 0.0 
+#
+                 DO j
+                    TAxxxj[mu,lambda,nu,j]     = 0.0
+                    TBxxxj[mu,lambda,sigma,j]  = 0.0
+                    DO i
+#
+                       REQUEST Vxixi[mu,i,nu,j] 
+                       REQUEST Vxixi[lambda,i,nu,j] 
+                       REQUEST Vxixi[mu,i,sigma,j] 
+                       REQUEST Vxixi[lambda,i,sigma,j] 
+#
+                       T1xxxj[mu,lambda,nu,j]    = Vxixi[mu,i,nu,j]*La[i,lambda]
+                       T2xxxj[mu,lambda,nu,j]    = Vxixi[lambda,i,nu,j]*ca[mu,i]
+                       TAxxxj[mu,lambda,nu,j]   += T1xxxj[mu,lambda,nu,j]
+                       TAxxxj[mu,lambda,nu,j]   += T2xxxj[mu,lambda,nu,j]
+#
+                       T3xxxj[mu,lambda,sigma,j] = Vxixi[mu,i,sigma,j]*La[i,lambda]
+                       T4xxxj[mu,lambda,sigma,j] = Vxixi[lambda,i,sigma,j]*ca[mu,i]
+                       TBxxxj[mu,lambda,sigma,j]+= T4xxxj[mu,lambda,sigma,j]
+                       TBxxxj[mu,lambda,sigma,j]+= T3xxxj[mu,lambda,sigma,j] 
+#
+                    ENDDO i
+#
+                    Txxjx[mu,lambda,j,sigma]   = TBxxxj[mu,lambda,sigma,j]  
+                    Txxxx[mu,lambda,nu,sigma]  = Txxjx[mu,lambda,j,sigma]*La[j,nu] 
+                    Txxxx[mu,lambda,nu,sigma] *= 2.0  
+                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    Txxxx[mu,lambda,nu,sigma]  = TAxxxj[mu,lambda,nu,j]*La[j,sigma]
+                    Txxxx[mu,lambda,nu,sigma] *= 2.0  
+                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+#
+                 ENDDO j
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LP2A_ao[nu,sigma] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = LDHFa[mu,lambda]^Txx[nu,sigma]
+                 Txxxx[mu,lambda,nu,sigma] *= 4.0  
+#
+                 Txx[nu,lambda]             = LDHFa[nu,lambda] 
+                 Txx[nu,lambda]            += LP2A_ao[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^Txx[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txx[sigma,lambda]          = LDHFa[sigma,lambda] 
+                 Txx[sigma,lambda]         += LP2A_ao[sigma,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^Txx[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+#                Correlation Only 
+#                ----------------
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,lambda]^LDHFA[nu,sigma]
+                 T1xxxx[mu,lambda,nu,sigma]*= 4.0  
+                 Txxxx[mu,lambda,nu,sigma] += T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,sigma]^LDHFA[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,nu]^LDHFA[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txxxx[mu,lambda,nu,sigma] *= 0.5
+                 TSxxxx[mu,lambda,nu,sigma] = Txxxx[mu,lambda,nu,sigma]  
+#                CALL DPQRSSEP 
+#                TSxxxx(mu,lambda,nu,sigma)  = Txxxx(mu,lambda,nu,sigma) 
+                 TSxxxx[mu,lambda,nu,sigma] *= 4.0  
+#
+#                Add the the nonseparable part
+#                -----------------------------
+                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] *= efact  
+#
+#                Compute integral block
+#                ----------------------
+
+                 Do Twelve
+
+                 flag = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] TSxxxx[mu,lambda,nu,sigma] L_Gradient flag
+
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 Enddo Twelve
+
+            endif 
+#
+      ENDPARDO mu, nu, lambda, sigma    
+      sip_barrier 
+#
+      PARDO mu, nu, lambda, sigma    
+#
+            WHERE mu == lambda  
+            WHERE nu < sigma   
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+                 ml = 0.0
+                 mm = 0.0
+                 ll = 0.0
+
+                 DO m
+                    if m <= mu
+                       mm += 1.0
+                    endif
+                 ENDDO m
+
+                 DO l
+                    if l <= lambda
+                       ll += 1.0
+                    endif
+                 ENDDO l
+
+                 etemp = ll - 1.0
+                 etemp *= n_seg
+                 ml += etemp
+#
+                 ns = 0.0
+                 nn = 0.0
+
+                 DO n
+                    if n <= nu
+                       nn += 1.0
+                    endif
+                 ENDDO n
+
+                 ss = 0.0
+                 DO s
+                    if s <= sigma
+                       ss += 1.0
+                    endif
+                 ENDDO s
+
+                 etemp = ss - 1.0
+                 etemp *= n_seg
+                 ns += etemp
+
+                 efact = 1.0
+                 if ml < ns
+                    efact = 2.0
+                 endif
+
+                if ml <= ns
+#
+#
+                 D2[mu,lambda,nu,sigma] = 0.0 
+#
+                 DO j
+                    TAxxxj[mu,lambda,nu,j]     = 0.0
+                    TBxxxj[mu,lambda,sigma,j]  = 0.0
+                    DO i
+
+                       REQUEST                     Vxixi[mu,i,nu,j]    
+                       REQUEST                     Vxixi[mu,i,sigma,j] 
+
+                       T1xxxj[mu,lambda,nu,j]    = Vxixi[mu,i,nu,j]*La[i,lambda]
+                       TAxxxj[mu,lambda,nu,j]   += T1xxxj[mu,lambda,nu,j]
+                       T3xxxj[mu,lambda,sigma,j] = Vxixi[mu,i,sigma,j]*La[i,lambda]
+                       TBxxxj[mu,lambda,sigma,j]+= T3xxxj[mu,lambda,sigma,j] 
+
+                    ENDDO i
+
+                    Txxjx[mu,lambda,j,sigma]   = TBxxxj[mu,lambda,sigma,j]  
+                    Txxxx[mu,lambda,nu,sigma]  = Txxjx[mu,lambda,j,sigma]*La[j,nu]
+                    Txxxx[mu,lambda,nu,sigma] *= 2.0  
+                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    Txxxx[mu,lambda,nu,sigma]  = TAxxxj[mu,lambda,nu,j]*La[j,sigma]
+                    Txxxx[mu,lambda,nu,sigma] *= 2.0  
+                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                 ENDDO j
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LP2A_ao[nu,sigma] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = LDHFa[mu,lambda]^Txx[nu,sigma]
+                 Txxxx[mu,lambda,nu,sigma] *= 4.0  
+#
+                 Txx[nu,lambda]             = LDHFa[nu,lambda] 
+                 Txx[nu,lambda]            += LP2A_ao[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^Txx[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txx[sigma,lambda]          = LDHFa[sigma,lambda] 
+                 Txx[sigma,lambda]         += LP2A_ao[sigma,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^Txx[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+#                Correlation Only 
+#                ----------------
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,lambda]^LDHFa[nu,sigma]
+                 T1xxxx[mu,lambda,nu,sigma]*= 4.0  
+                 Txxxx[mu,lambda,nu,sigma] += T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,sigma]^LDHFA[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,nu]^LDHFA[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txxxx[mu,lambda,nu,sigma] *= 0.5
+                 TSxxxx[mu,lambda,nu,sigma] = Txxxx[mu,lambda,nu,sigma]  
+#                CALL DPQRSSEP 
+#                TSxxxx(mu,lambda,nu,sigma)  = Txxxx(mu,lambda,nu,sigma) 
+                 TSxxxx[mu,lambda,nu,sigma] *= 2.0  
+#
+#                Add the the nonseparable part
+#                -----------------------------
+                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] *= efact  
+#
+#                Compute integral block
+#                ----------------------
+                 Do Twelve
+
+                 flag = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] TSxxxx[mu,lambda,nu,sigma] L_Gradient flag
+
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 Enddo Twelve
+
+            endif 
+#
+      ENDPARDO mu, nu, lambda, sigma    
+      sip_barrier 
+#
+      PARDO mu, nu, lambda, sigma    
+#
+            WHERE mu < lambda  
+            WHERE nu == sigma   
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+                 ml = 0.0
+                 mm = 0.0
+                 ll = 0.0
+
+                 DO m
+                    if m <= mu
+                       mm += 1.0
+                    endif
+                 ENDDO m
+
+                 DO l
+                    if l <= lambda
+                       ll += 1.0
+                    endif
+                 ENDDO l
+
+                 etemp = ll - 1.0
+                 etemp *= n_seg
+                 ml += etemp
+#
+                 ns = 0.0
+                 nn = 0.0
+
+                 DO n
+                    if n <= nu
+                       nn += 1.0
+                    endif
+                 ENDDO n
+
+                 ss = 0.0
+                 DO s
+                    if s <= sigma
+                       ss += 1.0
+                    endif
+                 ENDDO s
+
+                 etemp = ss - 1.0
+                 etemp *= n_seg
+                 ns += etemp
+
+                 efact = 1.0
+                 if ml < ns
+                    efact = 2.0
+                 endif
+
+                if ml <= ns
+#
+#
+                 D2[mu,lambda,nu,sigma] = 0.0 
+#
+                 DO j
+                    TAxxxj[mu,lambda,nu,j]     = 0.0
+                    DO i
+
+                       REQUEST                     Vxixi[mu,i,nu,j] 
+                       REQUEST                     Vxixi[lambda,i,nu,j] 
+
+                       T1xxxj[mu,lambda,nu,j]    = Vxixi[mu,i,nu,j]*La[i,lambda] 
+                       T2xxxj[mu,lambda,nu,j]    = Vxixi[lambda,i,nu,j]*ca[mu,i]
+                       TAxxxj[mu,lambda,nu,j]   += T1xxxj[mu,lambda,nu,j]
+                       TAxxxj[mu,lambda,nu,j]   += T2xxxj[mu,lambda,nu,j] 
+                    ENDDO i
+                    Txxxx[mu,lambda,nu,sigma]  = TAxxxj[mu,lambda,nu,j]*La[j,sigma] # ca[sigma,j]
+                    Txxxx[mu,lambda,nu,sigma] *= 2.0  
+                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                 ENDDO j
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LP2A_ao[nu,sigma] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = LDHFa[mu,lambda]^Txx[nu,sigma]
+                 Txxxx[mu,lambda,nu,sigma] *= 4.0  
+#
+                 Txx[nu,lambda]             = LDHFa[nu,lambda] 
+                 Txx[nu,lambda]            += LP2A_ao[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^Txx[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txx[sigma,lambda]          = LDHFa[sigma,lambda] 
+                 Txx[sigma,lambda]         += LP2A_ao[sigma,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^Txx[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+#                Correlation Only 
+#                ----------------
+#
+                 Txx[nu,sigma]              = LDHFA[nu,sigma] 
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,lambda]^Txx[nu,sigma]
+                 T1xxxx[mu,lambda,nu,sigma]*= 4.0  
+                 Txxxx[mu,lambda,nu,sigma] += T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,sigma]^LDHFA[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,nu]^LDHFA[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txxxx[mu,lambda,nu,sigma] *= 0.5
+                 TSxxxx[mu,lambda,nu,sigma] = Txxxx[mu,lambda,nu,sigma]  
+#                CALL DPQRSSEP 
+#                TSxxxx(mu,lambda,nu,sigma)  = Txxxx(mu,lambda,nu,sigma) 
+                 TSxxxx[mu,lambda,nu,sigma] *= 2.0  
+#
+#                Add the the nonseparable part
+#                -----------------------------
+                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] *= efact  
+
+#                Compute integral block
+#                ----------------------
+                 Do Twelve
+
+                 flag = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] TSxxxx[mu,lambda,nu,sigma] L_Gradient flag
+
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 Enddo Twelve
+#
+            endif 
+#
+      ENDPARDO mu, nu, lambda, sigma    
+      sip_barrier 
+#
+      PARDO mu, nu, lambda, sigma    
+#
+            WHERE mu == lambda  
+            WHERE nu == sigma   
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+                 ml = 0.0
+                 mm = 0.0
+                 ll = 0.0
+
+                 DO m
+                    if m <= mu
+                       mm += 1.0
+                    endif
+                 ENDDO m
+
+                 DO l
+                    if l <= lambda
+                       ll += 1.0
+                    endif
+                 ENDDO l
+
+                 etemp = ll - 1.0
+                 etemp *= n_seg
+                 ml += etemp
+#
+                 ns = 0.0
+                 nn = 0.0
+
+                 DO n
+                    if n <= nu
+                       nn += 1.0
+                    endif
+                 ENDDO n
+
+                 ss = 0.0
+                 DO s
+                    if s <= sigma
+                       ss += 1.0
+                    endif
+                 ENDDO s
+
+                 etemp = ss - 1.0
+                 etemp *= n_seg
+                 ns += etemp
+
+                 efact = 1.0
+                 if ml < ns
+                    efact = 2.0
+                 endif
+
+                if ml <= ns
+#
+#
+                 D2[mu,lambda,nu,sigma] = 0.0 
+#
+                 DO i1  
+                    TAxxxi[mu,lambda,nu,i1] = 0.0 
+                    DO i 
+                       REQUEST                    Vxixi[mu,i,nu,i1]
+                       T1xxxi[mu,lambda,nu,i1]  = Vxixi[mu,i,nu,i1]*La[i,lambda] 
+                       TAxxxi[mu,lambda,nu,i1] += T1xxxi[mu,lambda,nu,i1]
+                    ENDDO i 
+                    Txxxx[mu,lambda,nu,sigma] = TAxxxi[mu,lambda,nu,i1]*La[i1,sigma]
+                    Txxxx[mu,lambda,nu,sigma]*= 2.0  
+                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                 ENDDO i1
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LP2A_ao[nu,sigma] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = LDHFa[mu,lambda]^Txx[nu,sigma]
+                 Txxxx[mu,lambda,nu,sigma] *= 4.0  
+#
+                 Txx[nu,lambda]             = LDHFa[nu,lambda] 
+                 Txx[nu,lambda]            += LP2A_ao[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^Txx[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txx[sigma,lambda]          = LDHFa[sigma,lambda] 
+                 Txx[sigma,lambda]         += LP2A_ao[sigma,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^Txx[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+#                Correlation Only 
+#                ----------------
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,lambda]^LDHFa[nu,sigma]
+                 T1xxxx[mu,lambda,nu,sigma]*= 4.0  
+                 Txxxx[mu,lambda,nu,sigma] += T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,sigma]^LDHFA[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T1xxxx[mu,lambda,nu,sigma] = LP2A_ao[mu,nu]^LDHFA[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 Txxxx[mu,lambda,nu,sigma] *= 0.5
+                 TSxxxx[mu,lambda,nu,sigma] = Txxxx[mu,lambda,nu,sigma]  
+#                CALL DPQRSSEP 
+#                TSxxxx(mu,lambda,nu,sigma) = Txxxx(mu,lambda,nu,sigma) 
+#
+#                Add the the nonseparable part
+#                -----------------------------
+                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] *= efact  
+
+#                Compute integral block
+#                ----------------------
+                 Do Twelve
+
+                 flag = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] TSxxxx[mu,lambda,nu,sigma] L_Gradient flag
+
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 Enddo Twelve
+
+            endif 
+#
+      ENDPARDO mu, nu, lambda, sigma    
+      sip_barrier 
+#
+      ENDPROC D2TRANS
+#     ---------------
+
+      PROC UPDATE_PAI
+#     ---------------
+#
+         PARDO a, i
+#
+               GET                        Painew_aa[a,i]
+               GET                        Paiold_aa[a,i]
+               Tai[a,i]                 = Painew_aa[a,i]
+               execute energy_denominator Tai[a,i] fock_a fock_a AAAA
+               Tai[a,i]                -= Paiold_aa[a,i]
+#
+               If kiter < diis_order 
+                  PUT eai[a,i,kiter] = tai[a,i]
+               Endif 
+
+               If kiter >= diis_order 
+                  Do idiis 
+                     If idiis == diis_order
+                        PUT eai[a,i,kiter] = tai[a,i]
+                        Exit 
+                     Endif 
+                 ENDDO idiis 
+               Endif 
+#
+         ENDPARDO a, i
+         sip_barrier 
+#
+      ENDPROC UPDATE_PAI
+#     ------------------
+#
+      PROC MOVE_PAI
+#     -------------
+#
+      PARDO a, i
+#
+            GET        Paiold_aa[a,i]
+            tai[a,i] = Paiold_aa[a,i]
+
+            If kiter < diis_order
+               PUT dai[a,i,kiter] = tai[a,i]
+             Endif
+
+               If kiter >= diis_order
+                  Do idiis
+                     If idiis == diis_order
+                        PUT dai[a,i,kiter] = tai[a,i]
+                        Exit
+                     Endif
+                 ENDDO idiis
+               Endif
+
+      ENDPARDO a, i
+#
+      ENDPROC MOVE_PAI
+#     ----------------
+#
+     PROC ENERGY  
+#    -----------
+#
+     PARDO a, a1, i, i1
+#
+           request                    Vpiqj[a,i1,a1,i]
+           request                    Vpiqj[a1,i1,a,i]
+           Taiai[a,i1,a1,i]         = Vpiqj[a,i1,a1,i]
+           T1aiai[a,i1,a1,i]        = Vpiqj[a1,i1,a,i]
+           Taiai[a,i1,a1,i]        *= 2.0
+           Taiai[a,i1,a1,i]        -= T1aiai[a,i1,a1,i]
+
+           execute energy_denominator Taiai[a,i1,a1,i] fock_a fock_a  AAAA 
+
+           etemp                    = Taiai[a,i1,a1,i]*Vpiqj[a,i1,a1,i]
+           esumaa                  += etemp
+#
+     ENDPARDO a, a1, i, i1
+#
+     sip_barrier
+     collective ecorraa += esumaa
+     sip_barrier
+#
+     totenerg  = ecorraa  
+     totenerg += scf_energy
+#bgn_debug
+     print "" 
+     print totenerg 
+#enddebg 
+#
+     ENDPROC ENERGY  
+#    -------------
+
+     PROC DENSOO
+#    -----------
+#
+# First compute the occupied-occupied block of the density correction
+# -------------------------------------------------------------------
+#
+#     AAAA/AAAA piece
+#     ---------------
+      PARDO i, a, a1, i2
+#
+            REQUEST            ASpipi[a,i,a1,i2]
+            Tpipi[a,i,a1,i2] = ASpipi[a,i,a1,i2]
+#
+            DO i1
+#
+               REQUEST             ASpipi[a,i1,a1,i2]
+               Tii[i,i1]         = Tpipi[a,i,a1,i2]*ASpipi[a,i1,a1,i2]
+               Tii[i,i1]        *= -0.5
+               PUT Pij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i, a, a1, i2
+#
+#     AABB/AABB piece
+#     ---------------
+      PARDO i, a, b, j
+#
+            REQUEST          Apiqj[a,i,b,j]
+            Tpiqj[a,i,b,j] = Apiqj[a,i,b,j]
+#
+            DO i1
+#
+               REQUEST             Apiqj[a,i1,b,j] 
+               Tii[i,i1]         = Tpiqj[a,i,b,j]*Apiqj[a,i1,b,j]
+               Tii[i,i1]        *= -1.0
+               PUT Pij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i, a, b, j
+#
+# Done compute the occupied-occupied block of the density correction
+# -------------------------------------------------------------------
+
+     ENDPROC DENSOO
+#    --------------
+
+     PROC DENSVV
+#    -----------
+# First compute the occupied-occupied block of the density correction
+# -------------------------------------------------------------------
+#
+#     AAAA/AAAA piece
+#     ---------------
+      PARDO i, a, a1, i2
+#
+            REQUEST            ASpipi[a,i,a1,i2]
+            Tpipi[a,i,a1,i2] = ASpipi[a,i,a1,i2]
+#
+            DO i1
+#
+               REQUEST             ASpipi[a,i1,a1,i2]
+               Tii[i,i1]         = Tpipi[a,i,a1,i2]*ASpipi[a,i1,a1,i2]
+               Tii[i,i1]        *= -0.5
+               PUT Pij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i, a, a1, i2
+#
+#     AABB/AABB piece
+#     ---------------
+      PARDO i, a, b, j
+#
+            REQUEST          Apiqj[a,i,b,j]
+            Tpiqj[a,i,b,j] = Apiqj[a,i,b,j]
+#
+            DO i1
+#
+               REQUEST             Apiqj[a,i1,b,j] 
+               Tii[i,i1]         = Tpiqj[a,i,b,j]*Apiqj[a,i1,b,j]
+               Tii[i,i1]        *= -1.0
+               PUT Pij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i, a, b, j
+#
+# Done compute the occupied-occupied block of the density correction
+#
+     ENDPROC DENSVV
+#    --------------
+
+     PROC FORM_LAI
+#    -------------
+#
+# Backtransform Pab to be used in the 'direct' contribution to Lai
+# ----------------------------------------------------------------
+#
+#     Transform Pab_aa
+#     ----------------
+      PARDO a, a1
+#
+            GET Pab_aa[a,a1]
+#
+            DO mu
+#
+               Ixa[mu,a1] = Pab_aa[a,a1]*ca[mu,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu]         = Ixa[mu,a1]*ca[nu,a1]
+                  PUT Paa_ao[mu,nu] += Ixx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, a1
+#
+      sip_barrier
+#
+# Compute the right-hand side of Eq. 10 --> Lai_aa
+# ------------------------------------------------
+#
+#     Compute the 'direct' contributions
+#     ---------------------------------
+#
+      allocate LLai_aa[*,*]
+      CALL LAIAO1
+#
+#     Second-term
+#     -----------
+#
+      PARDO a, a1, i1, i2
+#
+            REQUEST                    ASpipi[a,i1,a1,i2]
+#
+            DO i
+#
+               REQUEST            VSpipi[a1,i2,i,i1]
+               Tai[a,i]         = ASpipi[a,i1,a1,i2]*VSpipi[a1,i2,i,i1]
+               Tai[a,i]        *= 0.5
+               LLai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, i1, i2
+#
+      PARDO a, b, i1, j
+#
+            REQUEST                    Apiqj[a,i1,b,j]
+#
+            DO i
+#
+               REQUEST            Vpiqj[i,i1,b,j]
+               Tai[a,i]         = Apiqj[a,i1,b,j]*Vpiqj[i,i1,b,j]
+               LLai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, i1, j
+#
+#     Fourth-term
+#     -----------
+#
+      PARDO i, i1, i2, a
+#
+            REQUEST            VSpipi[a,i,i1,i2]
+            GET                Pij_aa[i1,i2]
+#
+            Tai[a,i]         = VSpipi[a,i,i1,i2]*Pij_aa[i1,i2]
+            Tai[a,i]        *= -1.0
+            LLai_aa[a,i] += Tai[a,i]
+#
+      ENDPARDO i, i1, i2, a
+#
+      PARDO i, j, j1, a
+#
+            REQUEST            Vpiqj[a,i,j,j1]
+            GET                Pij_aa[j,j1]
+#
+            Tai[a,i]         = Vpiqj[a,i,j,j1]*Pij_aa[j,j1]
+            Tai[a,i]        *= -1.0
+            LLai_aa[a,i] += Tai[a,i]
+#
+      ENDPARDO i, j, j1, a
+#
+# Done compute the right-hand side of Eq. 10 --> Lai_aa
+# -----------------------------------------------------
+#
+      sip_barrier
+      DO a
+      DO i
+         tai[a,i]         = LLai_aa[a,i]
+         PUT Lai_aa[a,i] += tai[a,i]
+      ENDDO i
+      ENDDO a
+      server_barrier
+      deallocate LLai_aa[*,*]
+
+     ENDPROC FORM_LAI
+#    ----------------
+
+     PROC FORM_GUESS 
+#    ---------------
+
+     PARDO a, i
+#
+            GET                        Lai_aa[a,i]
+            Tai[a,i]                 = Lai_aa[a,i]
+            Tai[a,i]                *= -1.0
+            execute energy_denominator Tai[a,i] fock_a fock_a AAAA
+            etemp                    = Tai[a,i]*Tai[a,i]
+            esum                    += etemp
+            PUT Paiold_aa[a,i]      = Tai[a,i]
+#
+      ENDPARDO a, i
+      sip_barrier 
+
+      PARDO a, i
+
+            GET Paiold_aa[a,i]
+            Tai[a,i]      = Paiold_aa[a,i] 
+            PUT D0ai[a,i] = Tai[a,i]
+
+      ENDPARDO a, i
+#
+#     Form a couple of 'intermediate' quantities.
+#     -------------------------------------------
+#
+      PARDO a, a1, i, i1
+#
+            REQUEST                    VSpipi[a,i,a1,i1]
+            REQUEST                    Vaajj[a,a1,i1,i]
+            REQUEST                    Viabj[i,a,a1,i1]
+#
+            Tpipi[a,i,a1,i1]         = VSpipi[a,i,a1,i1]
+            T1pipi[a,i,a1,i1]        = Vaajj[a,a1,i1,i]
+            T2pipi[a,i,a1,i1]        = Viabj[i,a,a1,i1]
+#
+            Tpipi[a,i,a1,i1]        -= T1pipi[a,i,a1,i1]
+            Tpipi[a,i,a1,i1]        += T2pipi[a,i,a1,i1]
+#
+            PREPARE ASpipi[a,i,a1,i1] = Tpipi[a,i,a1,i1]
+#
+      ENDPARDO a, a1, i, i1
+#
+      PARDO a, b, i, j
+#
+            REQUEST                  Vpiqj[a,i,b,j]
+            REQUEST                  Viabj[i,a,b,j]
+#
+            Tpiqj[a,i,b,j]         = Vpiqj[a,i,b,j]
+            T2piqj[a,i,b,j]        = Viabj[i,a,b,j]
+            Tpiqj[a,i,b,j]        += T2piqj[a,i,b,j]
+#
+            PREPARE Apiqj[a,i,b,j] = Tpiqj[a,i,b,j]
+#
+      ENDPARDO a, b, i, j
+      server_barrier
+      collective eold += esum
+#
+     ENDPROC FORM_GUESS 
+#    -----------------
+
+     PROC FORM_PAI_NEW
+#    -----------------
+
+         PARDO a, i
+#
+               GET                        Lai_aa[a,i]
+               Tai[a,i]                 = Lai_aa[a,i]
+               Tai[a,i]                *= -1.0
+               PUT Painew_aa[a,i]      += Tai[a,i]
+#
+         ENDPARDO a, i
+#
+         PARDO a, a1, i, i1
+#
+               REQUEST                    ASpipi[a,i,a1,i1]
+               GET                        Paiold_aa[a1,i1]
+#
+               Tai[a,i]                 = ASpipi[a,i,a1,i1]*Paiold_aa[a1,i1]
+               PUT Painew_aa[a,i]      += Tai[a,i]
+#
+         ENDPARDO a, a1, i, i1
+#
+         PARDO a, b, i, j
+#
+               REQUEST                    Apiqj[a,i,b,j]
+               GET                        Paiold_aa[b,j]
+#
+               Tai[a,i]                 = Apiqj[a,i,b,j]*Paiold_aa[b,j]
+               PUT Painew_aa[a,i]      += Tai[a,i]
+#
+         ENDPARDO a, b, i, j
+         sip_barrier
+
+     ENDPROC FORM_PAI_NEW
+#    -------------------
+
+     PROC FORM_W
+#    -----------
+#
+# Compute the second-order corrections to the energy weighted
+# density matrix.
+# -----------------------------------------------------------
+#
+#      Compute Wab_aa
+#      --------------
+#
+       PARDO a, a1, a2
+#
+             GET Pab_aa[a2,a1]
+             Taa[a,a1]         = Pab_aa[a2,a1]*Fock_a[a2,a]
+             Taa[a,a1]        *= -1.0
+             PUT Wab_aa[a,a1] += Taa[a,a1]
+#
+       ENDPARDO a, a1, a2
+#
+       PARDO a1, a2, i, i1
+#
+             REQUEST                    VSpipi[a1,i,a2,i1]
+             Tpipi[a1,i,a2,i1]        = VSpipi[a1,i,a2,i1]
+             execute energy_denominator Tpipi[a1,i,a2,i1] fock_a fock_a AAAA
+#
+             DO a
+#
+                REQUEST             VSpipi[a,i1,a2,i]
+#
+                Taa[a,a1]         = VSpipi[a,i1,a2,i]*Tpipi[a1,i,a2,i1]
+                Taa[a,a1]        *= 0.5
+                PUT Wab_aa[a,a1] += Taa[a,a1]
+#
+             ENDDO a
+#
+       ENDPARDO a1, a2, i, i1
+#
+       PARDO a1, b, i, j
+#
+             REQUEST                    Vpiqj[a1,i,b,j]
+             Tpiqj[a1,i,b,j]          = Vpiqj[a1,i,b,j]
+             execute energy_denominator Tpiqj[a1,i,b,j] fock_a fock_a AAAA
+#
+             DO a
+#
+                REQUEST             Vpiqj[a,i,b,j]
+#
+                Taa[a,a1]         = Vpiqj[a,i,b,j]*Tpiqj[a1,i,b,j]
+                Taa[a,a1]        *= -1.0
+                PUT Wab_aa[a,a1] += Taa[a,a1]
+#
+             ENDDO a
+       ENDPARDO a1, b, i, j
+#
+#      Done compute Wab_aa
+#      -------------------
+#
+#      Second-term in Eq. 12
+#      ---------------------
+       PARDO i, i1, i2
+#
+             GET Pij_aa[i2,i1]
+#
+             T1ii[i,i1]        = Pij_aa[i2,i1]*Fock_a[i2,i]
+             T1ii[i,i1]       *= -1.0
+             PUT Wij_aa[i,i1] += T1ii[i,i1]
+#
+       ENDPARDO i, i1, i2
+#
+#      Fourth-term in Eq. 12
+#      ---------------------
+       PARDO a, a1, i1, i2
+#
+             REQUEST                    VSpipi[a,i1,a1,i2]
+             Tpipi[a,i1,a1,i2]        = VSpipi[a,i1,a1,i2]
+             execute energy_denominator Tpipi[a,i1,a1,i2] fock_a fock_a AAAA
+#
+             DO i
+#
+                REQUEST             VSpipi[a,i2,a1,i]
+#
+                Tii[i,i1]         = VSpipi[a,i2,a1,i]*Tpipi[a,i1,a1,i2]
+                Tii[i,i1]        *= 0.5
+                PUT Wij_aa[i,i1] += Tii[i,i1]
+#
+             ENDDO i
+#
+       ENDPARDO a, a1, i1, i2
+#
+       PARDO a, b, i1, j
+#
+             REQUEST                    Vpiqj[a,i1,b,j]
+             Tpiqj[a,i1,b,j]          = Vpiqj[a,i1,b,j]
+             execute energy_denominator Tpiqj[a,i1,b,j] fock_a fock_a AAAA
+#
+             DO i
+#
+                REQUEST             Vpiqj[a,i,b,j]
+#
+                Tii[i,i1]         = Vpiqj[a,i,b,j]*Tpiqj[a,i1,b,j]
+                Tii[i,i1]        *= -1.0
+                PUT Wij_aa[i,i1] += Tii[i,i1]
+#
+             ENDDO i
+#
+       ENDPARDO a, b, i1, j
+#
+#      Third-term in Eq. 12
+#      --------------------
+#
+#      occupied-occupied contribution
+#      ------------------------------
+#
+       PARDO i, i1, i2, i3
+#
+             REQUEST             VSpipi[i,i1,i2,i3]
+             GET                 Pij_aa[i2,i3]
+#
+             Tii[i,i1]         = VSpipi[i,i1,i2,i3]*Pij_aa[i2,i3]
+             Tii[i,i1]        *= -1.0
+             PUT Wij_aa[i,i1] += Tii[i,i1]
+#
+       ENDPARDO i, i1, i2, i3
+#
+       PARDO i, i1, j, j1
+#
+             REQUEST             Vpiqj[i,i1,j,j1]
+             GET                 Pij_aa[j,j1]
+#
+             Tii[i,i1]         = Vpiqj[i,i1,j,j1]*Pij_aa[j,j1]
+             Tii[i,i1]        *= -1.0
+             PUT Wij_aa[i,i1] += Tii[i,i1]
+#
+       ENDPARDO i, i1, j, j1
+#
+#      virtual-virtual contribution
+#      ----------------------------
+       PARDO i, i1, a, a1
+#
+             REQUEST Vaajj[a,a1,i,i1]
+             REQUEST Viabj[i,a1,a,i1]
+             GET Pab_aa[a,a1]
+#
+             Tiiaa[i,i1,a,a1]  = Vaajj[a,a1,i,i1]
+             T1iiaa[i,i1,a,a1] = Viabj[i,a1,a,i1]
+             Tiiaa[i,i1,a,a1] -= T1iiaa[i,i1,a,a1]
+#
+             Tii[i,i1]         = Tiiaa[i,i1,a,a1]*Pab_aa[a,a1]
+             Tii[i,i1]        *= -1.0
+             PUT Wij_aa[i,i1] += Tii[i,i1]
+#
+       ENDPARDO i, i1, a, a1
+#
+       PARDO i, i1, b, b1
+#
+             REQUEST Vaajj[b,b1,i,i1]
+             GET Pab_aa[b,b1]
+#
+             Tii[i,i1]         = Vaajj[b,b1,i,i1]*Pab_aa[b,b1]
+             Tii[i,i1]        *= -1.0
+             PUT Wij_aa[i,i1] += Tii[i,i1]
+#
+       ENDPARDO i, i1, b, b1
+#
+#      virtual-occupied contribution
+#      -----------------------------
+       PARDO i, i1, i2, a
+#
+             REQUEST             VSpipi[i,i1,a,i2]
+             GET                 Paiold_aa[a,i2]
+#
+             Tii[i,i1]         = VSpipi[i,i1,a,i2]*Paiold_aa[a,i2]
+             Tii[i,i1]        *= -1.0
+             PUT Wij_aa[i,i1] += Tii[i,i1]
+             T1ii[i1,i]        = Tii[i,i1]
+             PUT Wij_aa[i1,i] += T1ii[i1,i]
+#
+       ENDPARDO i, i1, i2, a
+#
+       PARDO i, i1, j, b
+#
+             REQUEST             Vpiqj[i,i1,b,j]
+             GET                 Paiold_aa[b,j]
+#
+             Tii[i,i1]         = Vpiqj[i,i1,b,j]*Paiold_aa[b,j]
+             Tii[i,i1]        *= -1.0
+             PUT Wij_aa[i,i1] += Tii[i,i1]
+             T1ii[i1,i]        = Tii[i,i1]
+             PUT Wij_aa[i1,i] += T1ii[i1,i]
+
+       ENDPARDO i, i1, j, b
+#
+#      Compute Wai_aa
+#      --------------
+       PARDO a, i, i1
+#
+             GET Paiold_aa[a,i1]
+             Tai[a,i]         = Paiold_aa[a,i1]*Fock_a[i1,i]
+             Tai[a,i]        *= -1.0
+             PUT Wai_aa[a,i] += Tai[a,i]
+#
+       ENDPARDO a, i, i1
+#
+       PARDO a, a1, i1, i2
+#
+             REQUEST                    VSpipi[a1,i1,a,i2]
+             Tpipi[a1,i1,a,i2]        = VSpipi[a1,i1,a,i2]
+             execute energy_denominator Tpipi[a1,i1,a,i2] fock_a fock_a AAAA
+#
+             DO i #
+                REQUEST            VSpipi[a1,i2,i,i1]
+#
+                Tai[a,i]         = Tpipi[a1,i1,a,i2]*VSpipi[a1,i2,i,i1]
+                Tai[a,i]        *= 0.5
+                PUT Wai_aa[a,i] += Tai[a,i]
+#
+             ENDDO i
+#
+       ENDPARDO a, a1, i1, i2
+#
+       PARDO a, b, j, i2
+#
+             REQUEST                    Vpiqj[a,i2,b,j]
+             Tpiqj[a,i2,b,j]          = Vpiqj[a,i2,b,j]
+             execute energy_denominator Tpiqj[a,i2,b,j]  fock_a fock_a AAAA
+#
+             DO i
+#
+                REQUEST            Vpiqj[i,i2,b,j]
+#
+                Tai[a,i]         = Tpiqj[a,i2,b,j]*Vpiqj[i,i2,b,j]
+                Tai[a,i]        *= -1.0
+                PUT Wai_aa[a,i] += Tai[a,i]
+#
+             ENDDO i
+#
+       ENDPARDO a, b, j, i2
+#
+      sip_barrier
+
+     ENDPROC FORM_W
+#    --------------
+
+     PROC BACKTRAN
+#    -------------
+
+# Backtransform Ppq --> P2_ao Wpq --> W2_ao
+# -----------------------------------------
+#
+#     Transform Pij_aa
+#     ----------------
+      PARDO i, i1
+#
+            GET Pij_aa[i,i1]
+            GET Wij_aa[i,i1]
+#
+            DO mu
+#
+               Ixi[mu,i1] = Pij_aa[i,i1]*ca[mu,i]
+               Jxi[mu,i1] = Wij_aa[i,i1]*ca[mu,i]
+#
+               DO nu
+#
+                  Ixx[mu,nu]         = Ixi[mu,i1]*ca[nu,i1]
+                  Jxx[mu,nu]         = Jxi[mu,i1]*ca[nu,i1]
+                  PUT P2A_ao[mu,nu] += Ixx[mu,nu]
+                  PUT W2_ao[mu,nu]  += Jxx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO i, i1
+#
+#     Transform Pab_aa
+#     ----------------
+      PARDO a, a1
+#
+            GET Pab_aa[a,a1]
+            GET Wab_aa[a,a1]
+#
+            DO mu
+#
+               Ixa[mu,a1] = Pab_aa[a,a1]*ca[mu,a]
+               Jxa[mu,a1] = Wab_aa[a,a1]*ca[mu,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu]         = Ixa[mu,a1]*ca[nu,a1]
+                  Jxx[mu,nu]         = Jxa[mu,a1]*ca[nu,a1]
+                  PUT P2A_ao[mu,nu] += Ixx[mu,nu]
+                  PUT W2_ao[mu,nu]  += Jxx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, a1
+#
+#     Transform Pai_aa
+#     ----------------
+      PARDO a, i
+#
+            GET Paiold_aa[a,i]
+            GET Wai_aa[a,i]
+#
+            DO mu
+#
+               Ixi[mu,i] = Paiold_aa[a,i]*ca[mu,a]
+               Jxi[mu,i] = Wai_aa[a,i]*ca[mu,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu]  = Ixi[mu,i]*ca[nu,i]
+                  Jxx[mu,nu]  = Jxi[mu,i]*ca[nu,i]
+                  I1xx[nu,mu] = Ixx[mu,nu]
+                  J1xx[nu,mu] = Jxx[mu,nu]
+#
+                  PUT P2A_ao[mu,nu] += Ixx[mu,nu]
+                  PUT W2_ao[mu,nu]  += Jxx[mu,nu]
+                  PUT P2A_ao[nu,mu] += I1xx[nu,mu]
+                  PUT W2_ao[nu,mu]  += J1xx[nu,mu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, i
+      sip_barrier
+#
+# Done backtransform Ppq --> P2_ao Wpq --> W2_ao
+# ----------------------------------------------
+
+    ENDPROC BACKTRAN
+#   -----------------
+############################################################################## 
+#
+#                         START OF MAIN PROGRAM 
+#
+############################################################################## 
+#
+# Transform integrals
+# ------------------- 
+#
+     esumaa = 0.
+     zmax   = 0.0
+     imax   = 0.0
+     one = 1.0 
+     two = 2.0 
+     six = 6.0 
+
+     execute compute_int_scratchmem oed_ovl zmax imax
+
+#bgn_debug
+      print "reference, the zmax and imax"
+      print reference
+#end_debug
+
+      sip_barrier
+      Restore_persistent ca "ca"
+      restore_persistent Fock_a "fock_a"
+      restore_persistent scf_energy "scf_energy"
+      restore_persistent scf_energy "scf_energy"
+      restore_persistent totenerg "totenerg"
+      sip_barrier
+
+      allocate La[*,*] 
+
+      AAAA = 1.0
+      ABAB = 3.0
+ 
+      CALL ZERO_ARRAYS 
+      CALL TRAN_RHF 
+
+      DO p 
+      DO mu 
+         La[p,mu] = ca[mu,p] 
+      ENDDO mu 
+      ENDDO p 
+
+      CALL ENERGY 
+
+#     Compute the HF contribution to the weighted density matrix 
+#     ---------------------------------------------------------- 
+#
+      call WHFDENS
+#
+#     Create the second-order 'amplitudes' 
+#     ------------------------------------ 
+#
+      PARDO a, i, a1, i1 
+            REQUEST                     VSpipi[a,i,a1,i1] 
+            Tpipi[a,i,a1,i1]          = VSpipi[a,i,a1,i1]
+            execute energy_denominator  Tpipi[a,i,a1,i1] fock_a fock_a AAAA
+            PREPARE ASpipi[a,i,a1,i1] = Tpipi[a,i,a1,i1] 
+      ENDPARDO a, i, a1, i1 
+#
+      PARDO a, i, a1, i1 
+            REQUEST                    Vpiqj[a,i,a1,i1] 
+            Tpipi[a,i,a1,i1]         = Vpiqj[a,i,a1,i1]
+            execute energy_denominator Tpipi[a,i,a1,i1] fock_a fock_a AAAA
+            PREPARE Apiqj[a,i,a1,i1] = Tpipi[a,i,a1,i1] 
+      ENDPARDO a, i, a1, i1 
+      server_barrier 
+
+      CALL DENSOO 
+      CALL DENSVV
+      sip_barrier 
+
+      CALL FORM_LAI
+#
+# Get initial guess 
+# ----------------- 
+#
+      eold = 0.0 
+      esum = 0.0 
+      ecrit = cc_conv 
+
+      CALL FORM_GUESS 
+
+# Done initial guess; start iterations 
+# ------------------------------------
+#
+      DO kiter 
+
+         CALL FORM_PAI_NEW
+
+#  Update error vector for diis
+#  ----------------------------
+#
+         CALL UPDATE_PAI 
+#bgn_debug
+         print eold 
+#end_debug
+
+         if kiter >= diis_start 
+#            CALL DO_DIIS
+         endif 
+         esum = 0.0
+         enew = 0.0
+
+         PARDO a, i
+#
+               GET        Painew_aa[a,i]
+               Tai[a,i] = Painew_aa[a,i] 
+               execute energy_denominator Tai[a,i]  fock_a fock_a AAAA
+
+               PUT  Paiold_aa[a,i] = Tai[a,i]
+
+               etemp    = Painew_aa[a,i]*Painew_aa[a,i]
+               esum    += etemp
+
+               Tai[a,i]             = 0.0
+               PUT Painew_aa[a,i]   = Tai[a,i]
+#
+         ENDPARDO a, i
+         sip_barrier 
+         collective enew += esum 
+
+#bgn_debug
+         print enew
+#end_debug
+
+         assert_same enew
+         assert_same eold 
+
+#  Check on convergence
+#  --------------------
+
+         etemp = (eold - enew)**(2.0)
+         ediff = (etemp)**(0.5)
+         assert_same ediff
+         print ediff
+
+         IF ediff < ecrit
+            exit 
+         ENDIF
+#
+#   Reset eold --> enew
+#   -------------------
+#
+         eold = enew 
+
+         CALL MOVE_PAI
+#
+      ENDDO kiter 
+#
+# Form the correlated whighted density and backtransform.
+#
+
+      CALL FORM_W
+      CALL BACKTRAN 
+
+# Form the HF density
+# -------------------
+#
+      CALL HFDENS
+#
+# Contract the density with the AO basis core Hamiltonian
+# -------------------------------------------------------
+#
+      CALL D1TRANS
+      CALL S1TRANS
+#
+# Contract the 'two-particle' contributions
+# -----------------------------------------
+#
+      CALL D2TRANS
+      sip_barrier 
+#
+                           ENDSIAL MBPT2_GRAD_AO2      
+#
+###############################################################################
+#
+#

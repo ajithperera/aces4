@@ -6,7 +6,6 @@
 # --------------- 
 #
       index   kiter  = 1: scf_iter  
-      #index   kiter  = 1, 1  
       index   kbeg   = 1: scf_beg
       index   korder = 1: scf_hist
       index   kptr1  = 1: 2
