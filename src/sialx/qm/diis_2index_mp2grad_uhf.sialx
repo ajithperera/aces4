@@ -1,0 +1,264 @@
+import "mp2grad_uhf_defs.sialx"
+import "mp2grad_uhf_vars.sialx"
+#
+# This is a standalone sial procedure to DIIS only two index array
+# vectors are involved. This is open shell version. 
+# The definition of arrays are as follows.
+# The arrays that are specific to DIIS do not need to be declared in the
+# calling program. The follwing arrrays must match (the names and the
+# data) for this to work (and avoid duplicate copying).
+
+#      Scalar scale2               : Scaling factor; set it to the correct
+#                                  : value from the actual SIAL code.
+#
+#
+#      Distributed Dai[a,i,kdiis]  : The vector that is being extrapolated
+#      Distributed Eai[a,i,jdiis]  : The error vector (diffrence between
+#                                    n and n-1 vectors, n= no. iteration)
+#      Served D0ai[a,i]            : The vector at zero iteration.
+#
+#      Distributed XX_old_a[a,i]   : The extrapolated vector returns
+#                                    in this generic distributed array. 
+#                                    Copy this to the name of the variable 
+#                                    name being used in the calling
+#                                    program to proceed.
+#
+#      Distributed Dbj[b,j,kdiis]  : SAME as above for beta spin
+#      Distributed Ebj[b,j,jdiis]  : 
+#                                    
+#      Served D0bj[b,j]            :  SAME AS ABOVE now for beta spin.
+#
+#      Distributed PAIold_aa[a,i]  :  Extrapolated vectors returns
+#      Distributed PAIold_bb[b,j]  :  Extrapolated vectors returns
+#
+      SIAL DIIS_2INDEX_UHF 
+#     --------------------
+# 
+      PROC DO_DIIS
+#     ------------
+      worder = kiter
+      scale2 = 1.0
+      If niter >= diis_order 
+         worder = diis_order
+      Endif 
+      Iorder = worder 
+      sip_barrier 
+
+      PARDO a, i
+         DO jdiis
+         where jdiis <= Iorder
+
+               GET Eai[a,i,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               GET Eai[a,i,j1diis]
+
+               tbb[jdiis,j1diis]          = Eai[a,i,jdiis]*Eai[a,i,j1diis]
+               tbb[jdiis,j1diis]         *= Scale2
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+      ENDPARDO a, i
+
+      PARDO b, j
+         DO jdiis
+         where jdiis <= Iorder
+
+               GET Ebj[b,j,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               GET Ebj[b,j,j1diis]
+
+               tbb[jdiis,j1diis]          = Ebj[b,j,jdiis]*Eai[b,j,j1diis]
+               tbb[jdiis,j1diis]         *= Scale2 
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+      ENDPARDO b, j
+
+      sip_barrier
+
+      DO jdiis
+      where jdiis <= Iorder
+          DO j1diis
+          where j1diis <= Iorder
+                GET DIST_BB[jdiis,j1diis]
+                BB[jdiis,j1diis] = DIST_BB[jdiis,j1diis]
+          ENDDO j1diis
+      ENDDO jdiis
+
+      execute compute_diis BB
+
+      sip_barrier
+
+      PARDO a, i
+            tai[a,i] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+               GET         Dai[a,i,kdiis]
+               t2ai[a,i] = Dai[a,i,kdiis]
+
+                DO d2
+                where d2 <= Iorder
+                   n2 = (scalar)d2
+                   kcount  = n2
+                   kcount -= n1
+                   if kcount == one
+                      GET         Eai[a,i,d2]
+                      t3ai[a,i] = Eai[a,i,d2]
+                      etemp = BB[d2,d2]
+                      t3ai[a,i] += t2ai[a,i]
+                      t3ai[a,i] *= etemp
+                      tai[a,i]  += t3ai[a,i]
+                   endif
+                ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST D0ai[a,i]
+                  t2ai[a,i] = D0ai[a,i]
+                  GET         Eai[a,i,d2]
+                  t3ai[a,i] = Eai[a,i,d2]
+                  etemp = BB[d2,d2]
+                  t3ai[a,i] += t2ai[a,i]
+                  t3ai[a,i] *= etemp
+                  tai[a,i]  += t3ai[a,i]
+               endif
+            ENDDO d2
+
+            PUT PAI_old_a[a,i] = tai[a,i]
+      ENDPARDO a, i
+
+      PARDO b, j
+            tbj[b,j] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+               GET         Dbj[b,j,kdiis]
+               t2bj[b,j] = Dbj[b,j,kdiis]
+
+                DO d2
+                where d2 <= Iorder
+                   n2 = (scalar)d2
+                   kcount  = n2
+                   kcount -= n1
+                   if kcount == one
+                      GET         Ebj[b,j,d2]
+                      t3bj[b,j] = Ebj[b,j,d2]
+                      etemp = BB[d2,d2]
+                      t3bj[b,j] += t2bj[b,j]
+                      t3bj[b,j] *= etemp
+                      tbj[b,j]  += t3bj[b,j]
+                   endif
+                ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST D0bj[b,j]
+                  t2bj[b,j] = D0bj[b,j]
+                  GET         Ebj[b,j,d2]
+                  t3bj[b,j] = Ebj[b,j,d2]
+                  etemp = BB[d2,d2]
+                  t3bj[b,j] += t2bj[b,j]
+                  t3bj[b,j] *= etemp
+                  tai[b,j]  += t3bj[b,j]
+               endif
+            ENDDO d2
+
+            PUT PAI_old_b[b,j] = tbj[b,j]
+      ENDPARDO b, j
+
+      server_barrier
+
+# If history space is full shift (downward) history end error vectors
+
+      PARDO a, i
+      DO kdiis
+      where kdiis < Iorder
+          n1 = (scalar)kdiis
+          GET Dai[a,i,kdiis]
+          tai[a,i] = Dai[a,i,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Dai[a,i,k1diis] = tai[a,i]
+             endif
+          ENDDO k1diis
+          if n1 == one
+             PREPARE D0ai[a,i] = tai[a,i]
+          endif
+      ENDDO kdiis
+      ENDPARDO a, i
+
+      PARDO a, i
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         GET Eai[a,i,kdiis]
+         tai[a,i] = Eai[a,i,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Eai[a,i,k1diis] = tai[a,i]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO a, i
+
+     PARDO b, j
+      DO kdiis
+      where kdiis < Iorder
+          n1 = (scalar)kdiis
+          GET Dbj[b,j,kdiis]
+          tbj[b,j] = Dbj[b,j,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Dbj[b,j,k1diis] = tbj[b,j]
+             endif
+          ENDDO k1diis
+          if n1 == one
+             PREPARE D0bj[b,j] = tbj[b,j]
+          endif
+      ENDDO kdiis
+      ENDPARDO b, j
+
+      PARDO b, j
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         GET Ebj[b,j,kdiis]
+         tbj[b,j] = Ebj[b,j,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Ebj[b,j,k1diis] = tbj[b,j]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO b, j
+
+      server_barrier
+
+      ENDPROC DO_DIIS
+#     ---------------
+
+      ENDSIAL DIIS_2INDEX_UHF 
+#     ----------------------

@@ -696,19 +696,16 @@ import "scf_grad_ru_hf_defs.sialx"
       execute compute_int_scratchmem oed_ovl zmax imax
 #
 #      Allocate L_Gradient[*]
-
 #bgn_debug
       print "reference, the zmax and imax"
       print reference
 #end_debug
 
-      Server_barrier
-      Restore_persistent ca "ca"
-      Restore_persistent cb "cb"
-      restore_persistent Fock_a "fock_a"
-      restore_persistent Fock_b "fock_b"
-      Server_barrier
-
+         Restore_persistent ca "ca"
+         Restore_persistent cb "cb"
+         restore_persistent Fock_a "fock_a"
+         restore_persistent Fock_b "fock_b"
+         Server_barrier
 #bgn_debug
 #       execute get_my_rank rank
 #       if rank==0.0

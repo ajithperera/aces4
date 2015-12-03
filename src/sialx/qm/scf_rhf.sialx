@@ -177,6 +177,8 @@ import "scf_rhf_defs.sialx"
       static X1[mu,nu] 
       static pinf[kiter,kptr1]
       static BB[kdiis,kdiis] 
+      static cb_dummy[mu,p]
+      static fock_b_dummy[p,p1]
 #
 # The temporary arrays 
 # ------------------------ 
@@ -3534,21 +3536,31 @@ import "scf_rhf_defs.sialx"
 
       sip_barrier
 
-#      execute print_rel_info two pinf
-#      execute print_rel_info three Fock_a
+# This is for SCF gradient codes. We don't have a separate gradient 
+# UHF gradient code. Having writtent Cb_dummy (=Ca) and 
+# Fock_b_dummy (=Fock_a) we can still run closed shell SCF code 
+# and continue to do the gradients with UHF codes. Notice that
+# this only works if alpha and beta segements are the same
+# and they should be for a closed shell. Ajith Perera, 12/2015.
 
-#      if rank == 0.0
-#         DO mu
-#         DO p
-#            txp[mu,p] = ca[mu,p]
-#            execute dump_amp txp[mu,p]
-#         ENDDO p
-#         ENDDO mu
-#      execute print_rel_info zero ca
-#      endif
+      DO mu
+      DO p
+         txp[mu,p]       = ca[mu,p]
+         cb_dummy[mu,p]  = txp[mu,p]
+      ENDDO p
+      ENDDO mu
+
+      DO p
+      DO p1
+         Tpp1[p,p1]         = fock_a[p,p1]
+         fock_b_dummy[p,p1] = Tpp1[p,p1]
+      ENDDO p1
+      ENDDO p
 
       set_persistent ca "ca"
+      set_persistent cb_dummy "cb"
       set_persistent Fock_a "fock_a"
+      set_persistent Fock_b_dummy "fock_b"
 #
       scf_energy = energy
       totenerg = scf_energy

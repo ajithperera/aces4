@@ -1,3 +1,5 @@
+import "mp2grad_uhf_defs.sialx"
+import "mp2grad_uhf_vars.sialx"
 #
 # This is a standalone sial procedure to DIIS only two index array
 # vectors are involved. This is a closed shell only version. 
@@ -48,110 +50,7 @@
 #
       SIAL DIIS_2INDEX_UHF 
 #     --------------------
-#
-predefined  int baocc   # begin of occupied orbital segment range (alpha)
-predefined  int eaocc   # end occupied orbital segment range (alpha)
-predefined  int bavirt  # begin of virtual orbital segment range (alpha)
-predefined  int eavirt  # end of virtual orbital segment range (alpha)
-#
-predefined  int bbocc   # begin of occupied orbital segment range (beta)
-predefined  int ebocc   # end occupied orbital segment range (beta)
-predefined  int bbvirt  # begin of virtual orbital segment range (beta)
-predefined  int ebvirt  # end of virtual orbital segment range (beta)
-#
-predefined  int diis_start
-predefined  int diis_order
-special compute_diis u
 
-# 
-# Variable declarations 
-#
-      index   kdiis  = 1: 30
-      index   k1diis = 1: 30
-      index   jdiis  = 1: 30
-      index   j1diis = 1: 30
-      index      D1  = 1: 30
-      index      D2  = 1: 30
-#
-      moaindex i = baocc: eaocc
-      moaindex i1= baocc: eaocc
-      moaindex i2= baocc: eaocc
-      moaindex i3= baocc: eaocc
-#
-      moaindex a = bavirt: eavirt
-      moaindex a1= bavirt: eavirt
-      moaindex a2= bavirt: eavirt
-      moaindex a3= bavirt: eavirt
-#
-      moaindex j = bbocc: ebocc
-      moaindex j1= bbocc: ebocc
-      moaindex j2= bbocc: ebocc
-      moaindex j3= bbocc: ebocc
-#
-      moaindex b = bbvirt: ebvirt
-      moaindex b1= bbvirt: ebvirt
-      moaindex b2= bbvirt: ebvirt
-      moaindex b3= bbvirt: ebvirt
-#
-      Served D0aiai[a,i,a1,i1]
-      Served D0bjbj[b,j,b1,j1]
-      Served D0aibj[a,i,b,j]
-      Served D0ai[a,i]
-      Served D0bj[b,j]
-
-      Served Eaiai[a,i,a1,i1,jdiis]
-      Served Ebjbj[b,j,b1,j1,jdiis]
-      Served Eaibj[a,i,b,j,jdiis]
-      Distributed Eai[a,i,jdiis]
-      Distributed Ebj[b,j,jdiis]
-
-      Served Daiai[a,i,a1,i1,kdiis]
-      Served Dbjbj[b,j,b1,j1,kdiis]
-      Served Daibj[a,i,b,j,kdiis]
-      Distributed Dai[a,i,kdiis]
-      Distributed Dbj[b,j,kdiis]
-#
-      Distributed DIST_BB[d1,d2]
-      static BB[d1,d2]
-
-      Served XXXX_old_aa[a,i,a1,i1] 
-      Served XXXX_old_bb[b,j,b1,j1] 
-      Served XXXX_old_ab[a,i,b,j] 
-      Distributed XXa_old[a,i] 
-      Distributed XXb_old[b,j] 
-#
-      Temp Tbb[d1,d2]
-      Temp Tai[a,i]
-      Temp T3ai[a,i]
-      Temp T2ai[a,i]
-      Temp Tbj[b,j]
-      Temp T3bj[b,j]
-      Temp T2bj[b,j]
-
-      Temp taiai[a,i,a1,i1]
-      Temp t2aiai[a,i,a1,i1]
-      Temp t3aiai[a,j,a1,i1]
-
-      Temp tbjbj[b,i,b1,i1]
-      Temp t2bjbj[b,i,b1,i1]
-      Temp t3bjbj[b,i,b1,i1]
-
-      Temp taibj[a,i,b,j]
-      Temp t2aibj[a,i,b,j]
-      Temp t3aibj[a,j,b,i]
-
-      Int worder 
-      Int Iorder 
-      Int niter 
-    
-      Scalar n1
-      Scalar n2
-      Scalar one
-      Scalar etemp
-      Scalar kcount 
-      Scalar scale2
-      Scalar scale4
-# 
       PROC DO_DIIS
 #     ------------
 

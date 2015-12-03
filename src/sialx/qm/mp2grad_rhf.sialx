@@ -1,5 +1,6 @@
 import "mp2grad_rhf_defs.sialx"
-#import "diis_2index_rhf.sialx"
+import "mp2grad_rhf_vars.sialx"
+import "diis_2index_mp2grad_rhf.sialx"
 #
 #  Copyright (c) 2003-2010 University of Florida
 #
@@ -21,341 +22,6 @@ import "mp2grad_rhf_defs.sialx"
 # and the second-order correction to the energy-weighted density matrix. 
 # They are written to file to be used in the final gradient construction. 
 #
-# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
-#
-# Declare indices 
-# --------------- 
-#
-      index kiter    = 1: cc_iter 
-      index jiter    = 1: cc_iter
-      index   kptr1  = 1: 2
-      index   kptr2  = 1: 2
-      index   kone   = 1: 1   
-      index Ngrads   = 1: Three_Natoms 
-      Index Twelve   = 1: 12 
-      Index Idiis    = 1: 30
-#
-      aoindex mu     = 1: norb
-      aoindex nu     = 1: norb
-      aoindex lambda = 1: norb
-      aoindex sigma  = 1: norb
-#                
-      aoindex m      = 1: norb
-      aoindex n      = 1: norb
-      aoindex l      = 1: norb
-      aoindex s      = 1: norb
-#
-      moaindex i = baocc: eaocc
-      moaindex i1= baocc: eaocc
-      moaindex i2= baocc: eaocc
-      moaindex i3= baocc: eaocc
-#
-      moaindex a = bavirt: eavirt
-      moaindex a1= bavirt: eavirt
-      moaindex a2= bavirt: eavirt
-      moaindex a3= bavirt: eavirt
-#
-      moaindex j = baocc: eaocc
-      moaindex j1= baocc: eaocc
-      moaindex j2= baocc: eaocc
-      moaindex j3= baocc: eaocc
-#
-      moaindex b = bavirt: eavirt
-      moaindex b1= bavirt: eavirt
-      moaindex b2= bavirt: eavirt
-      moaindex b3= bavirt: eavirt
-#
-      moaindex p = baocc: eavirt
-      moaindex p1= baocc: eavirt
-      moaindex p2= baocc: eavirt
-      moaindex p3= baocc: eavirt
-#
-      moaindex q = baocc: eavirt
-      moaindex q1= baocc: eavirt
-      moaindex q2= baocc: eavirt
-      moaindex q3= baocc: eavirt
-# 
-# Served arrays 
-
-      served Vxixi[mu,i1,lambda,i]
-      served Vxxii[mu,nu,i1,i]
-      served Viixx[i1,i,mu,nu]
-      served Vixxi[i1,nu,lambda,i]
-      served Vxipi[mu,i,p,i1]
-      served Vixai[i,mu,a,i1]
-      served Vxaii[mu,a,i,i1]
-      served Vxxxi[mu,nu,lambda,i] 
-      served VSpipi[p1,i,p,i1]
-      served ASpipi[a,i,a1,i1] 
-      served Apiqj[a,i,a1,i1] 
-      served Vxxjj[mu,nu,j1,j]
-      served Vjjxx[j1,nu,lambda,j]
-      served Vjxxj[j1,nu,lambda,j]
-      served Vxjqj[mu,j,q,j1]
-      served Vjxbj[j,mu,b,j1]
-      served Vxbjj[mu,b,j,j1]
-      served Vxixj[mu,i,nu,j]
-      served Vxiqj[mu,i,q,j]
-      served Vpiqj[p,i,q,j]
-      served Viixb[i,i1,mu,b]
-      served Viibb[i,i1,b1,b]
-      served Vxajj[mu,a,j,j1]
-      served Vixxj[i,mu,nu,j]
-      served Vixbj[i,mu,b,j]
-      served Viabj[i,a,b,j]
-      served Vaajj[a,a1,j,j1]
-      served Vxbii[mu,b,i,i1]
-# 
-# Distributed arrays 
-#
-      distributed Pij_aa[i,i1]
-      distributed Pab_aa[a,a1]
-      distributed Lai_aa[a,i]
-      distributed Painew_aa[a,i]
-      distributed Paiold_aa[a,i]
-      distributed Wab_aa[a,a1]
-      distributed Wij_aa[i,i1]
-      distributed Wai_aa[a,i]
-      distributed P2_ao[mu,nu]
-      distributed P2A_ao[mu,nu]
-      distributed W2_ao[mu,nu]
-      distributed Paa_ao[mu,nu]
-      distributed Whfa[mu,nu]
-      distributed Dhfa[mu,nu]
-      distributed Dhf[mu,nu]
-      distributed Lxi[mu,i]
-      distributed Yxi[mu,i]
-      distributed D0ai[a,i]
-      distributed Dai[a,i,idiis]
-      distributed eai[a,i,idiis]
-
-      distributed D_gradient[Ngrads]
-#
-# Temporary arrays 
-#
-      temp aoint[mu,nu,lambda,sigma]
-      temp Txjxj[mu,j1,lambda,j]
-      temp T1xjxj[mu,j1,lambda,j]
-      temp Txxjj[mu,nu,j1,j]
-      temp Tjjxx[j1,nu,lambda,j]
-      temp Tjxxj[j1,nu,lambda,j]
-      temp Txjqj[mu,j,q,j1]
-      temp Tqjqj[q1,j,q,j1]
-      temp T1qjqj[q1,j,q,j1]
-      temp T2qjqj[q1,j,q,j1]
-      temp Tjxbj[j,mu,b,j1]
-      temp Txbjj[mu,b,j,j1]
-      temp Tjbbj[j,b1,b,j1]
-      temp Tbbjj[b,b1,j,j1]
-      temp Txbbj[mu,b1,b,j]
-      temp Tbbbj[b2,b,b1,j]
-      temp T1bbbj[b2,b,b1,j]
-      temp Txxbj[mu,nu,b,j]
-      temp Txixj[mu,i,nu,j]
-      temp T1xixj[mu,i,nu,j]
-      temp Txiqj[mu,i,q,j]
-      temp Tpiqj[p,i,q,j]
-      temp T1piqj[p,i,q,j]
-      temp T2piqj[p,i,q,j]
-      temp Tiixx[i,i1,mu,nu]
-      temp Tiixb[i,i1,mu,b]
-      temp Tiibb[i,i1,b1,b]
-      temp Txajj[mu,a,j,j1]
-      temp Taajj[a,a1,j,j1]
-      temp Txabj[mu,a,b,j]
-      temp Tixxj[i,mu,nu,j]
-      temp Tixbj[i,mu,b,j]
-      temp Tiabj[i,a,b,j]
-      temp Taabj[a,a1,b,j]
-      temp Taiai[a,i,a1,i1] 
-      temp T1aiai[a,i,a1,i1] 
-      temp Txbii[mu,b,i,i1]
-      temp Tbbii[b,b1,i,i1]
-      temp Tjbii[j,b,i,i1]
-      temp Txbai[mu,b,a,i]
-      temp Tbbai[b,b1,a,i]
-
-      temp Txixi[mu,i1,lambda,i]
-      temp T1xixi[mu,i1,lambda,i]
-      temp Txxii[mu,nu,i1,i]
-      temp T1xxii[mu,nu,i1,i]
-      temp T2xxii[mu,nu,i1,i]
-      temp T3xxii[mu,nu,i1,i]
-      temp Tixxi[i1,nu,lambda,i]
-      temp T1ixxi[i1,nu,lambda,i]
-      temp Txipi[mu,i,p,i1]
-      temp Tpipi[p1,i,p,i1]
-      temp T1pipi[p1,i,p,i1]
-      temp T2pipi[p1,i,p,i1]
-      temp Tixai[i,mu,a,i1]
-      temp Txaii[mu,a,i,i1]
-      temp Tiaai[i,a1,a,i1]
-      temp Taaii[a,a1,i,i1]
-      temp Txaai[mu,a1,a,i]
-      temp Taaai[a2,a,a1,i]
-      temp T1aaai[a2,a,a1,i]
-      temp Txxai[mu,nu,a,i]
-      temp txxix[nu,mu,i,lambda]
-      temp Txxxx[mu,nu,lambda,sigma] 
-      temp TSxxxx[mu,nu,lambda,sigma] 
-      temp T1xxxx[mu,nu,lambda,sigma] 
-      temp Txxxi[mu,nu,lambda,i] 
-      temp Tixxx[i,mu,nu,lambda] 
-      temp T1xxxi[mu,nu,lambda,i] 
-      temp T2xxxi[mu,nu,lambda,i] 
-      temp T3xxxi[mu,nu,lambda,i] 
-      temp T4xxxi[mu,nu,lambda,i] 
-      temp Txxxj[mu,nu,lambda,j] 
-      temp T1xxxj[mu,nu,lambda,j] 
-      temp T2xxxj[mu,nu,lambda,j] 
-      temp T3xxxj[mu,nu,lambda,j] 
-      temp T4xxxj[mu,nu,lambda,j] 
-      temp Txixx[mu,i,nu,lambda] 
-      temp Txjxx[mu,j,nu,lambda] 
-      temp Txxjx[mu,nu,j,lambda] 
-      temp gaa[mu,i,nu,lambda] 
-      temp gab[mu,i,nu,lambda] 
-      temp gbb[mu,i,nu,lambda] 
-      temp TAxxxi[mu,lambda,nu,i1]     
-      temp TBxxxi[mu,lambda,sigma,i1]  
-      temp TAxxxj[mu,lambda,nu,j1]     
-      temp TBxxxj[mu,lambda,sigma,j1]  
-      temp V0xxxi[mu,nu,lambda,i]
-      temp V2xxxi[mu,nu,sigma,i]
-      temp V3xxxi[mu,nu,lambda,i]
-      temp V4xxxi[mu,nu,sigma,i]
-      temp Tii[i,i1] 
-      temp T1ii[i,i1] 
-      temp Tjj[j,j1] 
-      temp T1jj[j,j1] 
-      temp Taa[a,a1] 
-      temp Tbb[b,b1] 
-      temp Tai[a,i] 
-      temp T1ai[a,i] 
-      temp Tbj[b,j] 
-      temp T1bj[b,j] 
-      temp Tiiaa[i,i1,a,a1] 
-      temp T1iiaa[i,i1,a,a1] 
-      temp Tjjbb[j,j1,b,b1] 
-      temp T1jjbb[j,j1,b,b1] 
-      temp Txi[mu,i] 
-      temp Ixi[mu,i] 
-      temp I1xi[mu,i] 
-      temp Jxi[mu,i] 
-      temp Kxi[mu,i] 
-      temp Txj[mu,j] 
-      temp Ixj[mu,j] 
-      temp I1xj[mu,j] 
-      temp Jxj[mu,j] 
-      temp Kxj[mu,j] 
-      temp Ixx[mu,nu] 
-      temp I1xx[mu,nu] 
-      temp I2xx[mu,nu] 
-      temp Jxx[mu,nu] 
-      temp J1xx[mu,nu] 
-      temp Kxx[mu,nu] 
-      temp K1xx[mu,nu] 
-      temp Ixa[mu,a] 
-      temp Jxa[mu,a] 
-      temp Ixb[mu,b] 
-      temp Jxb[mu,b] 
-      temp Kxa[mu,a] 
-      temp Kxb[mu,b] 
-      temp Tpq[mu,nu]  
-      temp Txx[mu,nu]  
-      temp T1xx[mu,nu]  
-      temp Xa[lambda,i,sigma,mu] 
-      temp  D2[mu,lambda,nu,sigma] 
-      temp GRAD_AO_INTS[mu,nu,lambda,sigma]
-#
-# Staic and local arrays 
-#
-      static Spq[mu,nu] 
-      local xb[sigma,mu,lambda,i]
-      local LPaa_ao[mu,nu] 
-      local LLai_aa[a,i] 
-      local LLxi[mu,i] 
-      local LYxi[mu,i] 
-      local LDhfa[mu,nu]   
-      local LP2A_ao[mu,nu] 
-      local La[p,mu] 
-      local L0xxxi[mu,nu,lambda,i]
-      local Lxixi[mu,i1,lambda,i] 
-      local Lxixj[mu,i,lambda,j] 
-      local Lxjxj[mu,j1,lambda,j] 
-      local Lxxii[mu,nu,i1,i] 
-      local Lxxjj[mu,nu,j1,j] 
-      local Lixxi[i1,nu,lambda,i] 
-      local Lixxj[i,nu,lambda,j] 
-      local Ljxxj[j1,nu,lambda,j] 
-      local Lxipi[mu,i,p,i1] 
-      local Lpipi[p1,i,p,i1]  
-      local Lxaii[mu,a,i,i1] 
-      local Laaii[a1,a,i,i1] 
-      local Lixai[i,mu,a,i1] 
-      local Liaai[i,a1,a,i1] 
-      local Lxjqj[mu,j,q,j1] 
-      local Lqjqj[q1,j,q,j1]  
-      local Lxbjj[mu,b,j,j1] 
-      local Lbbjj[b1,b,j,j1] 
-      local Ljxbj[j,mu,b,j1] 
-      local Ljbbj[j,b1,b,j1] 
-      local Lxbii[mu,b,i,i1] 
-      local Lbbii[b1,b,i,i1] 
-      local Lxajj[mu,a,j,j1] 
-      local Laajj[a1,a,j,j1] 
-      local Lixbj[i,mu,b,j] 
-      local Liabj[i,a,b,j] 
-      local Liixb[i,i1,mu,b] 
-      local Liibb[i,i1,b1,b] 
-      local Lxiqj[mu,i,q,j] 
-      local Lpiqj[p,i,q,j] 
-      local Lxiai[mu,i,a1,i1] 
-      local Lxjbj[mu,j,b1,j1] 
-      local Lxibj[mu,i,b,j] 
-      local L1xixi[mu,i,nu,i1] 
-      local L1xjxj[mu,j,nu,j1] 
-      local L1xixj[mu,i,nu,j] 
-#
-#     contiguous local L_gradient[Ngrads]
-      static L_gradient[Ngrads]
-      static gradient[Ngrads]
-#
-# scalars 
-#
-      scalar n_seg
-      scalar ml
-      scalar ns
-      scalar mm
-      scalar nn
-      scalar ll
-      scalar ss
-      scalar efact
-      scalar eleven
-      scalar rank
-      scalar one
-      scalar two
-      scalar five
-      scalar six
-      scalar seven
-      scalar ncount1
-      scalar ncount2
-      scalar etemp
-      scalar esum
-      scalar esumaa 
-      scalar ecorraa
-      scalar toteneg 
-      scalar enew 
-      scalar eold 
-      scalar ecrit 
-      scalar ediff 
-      scalar mp2_energy
-      scalar zmax
-      scalar imax 
-      scalar flag
-      scalar AAAA
-      scalar ABAB
-# 
 #---------------------------------------------------------------------------
 #
 #      PROC GET_2EL_INTS
@@ -1128,7 +794,7 @@ import "mp2grad_rhf_defs.sialx"
 
                 if ml <= ns
 #
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
 #
                  DO j
                     TAxxxj[mu,lambda,nu,j]     = 0.0
@@ -1155,10 +821,10 @@ import "mp2grad_rhf_defs.sialx"
                     Txxjx[mu,lambda,j,sigma]   = TBxxxj[mu,lambda,sigma,j]  
                     Txxxx[mu,lambda,nu,sigma]  = Txxjx[mu,lambda,j,sigma]*La[j,nu] 
                     Txxxx[mu,lambda,nu,sigma] *= 2.0  
-                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
                     Txxxx[mu,lambda,nu,sigma]  = TAxxxj[mu,lambda,nu,j]*La[j,sigma]
                     Txxxx[mu,lambda,nu,sigma] *= 2.0  
-                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
 #
                  ENDDO j
 #
@@ -1204,7 +870,7 @@ import "mp2grad_rhf_defs.sialx"
 #
 #                Add the the nonseparable part
 #                -----------------------------
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
                  TSxxxx[mu,lambda,nu,sigma] *= efact  
 #
 #                Compute integral block
@@ -1214,7 +880,6 @@ import "mp2grad_rhf_defs.sialx"
 
                  flag = (scalar)Twelve
                  execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
-#
 #                Contract density with integral derivatives
 #                ------------------------------------------
 
@@ -1287,7 +952,7 @@ import "mp2grad_rhf_defs.sialx"
                 if ml <= ns
 #
 #
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
 #
                  DO j
                     TAxxxj[mu,lambda,nu,j]     = 0.0
@@ -1307,10 +972,10 @@ import "mp2grad_rhf_defs.sialx"
                     Txxjx[mu,lambda,j,sigma]   = TBxxxj[mu,lambda,sigma,j]  
                     Txxxx[mu,lambda,nu,sigma]  = Txxjx[mu,lambda,j,sigma]*La[j,nu]
                     Txxxx[mu,lambda,nu,sigma] *= 2.0  
-                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
                     Txxxx[mu,lambda,nu,sigma]  = TAxxxj[mu,lambda,nu,j]*La[j,sigma]
                     Txxxx[mu,lambda,nu,sigma] *= 2.0  
-                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
                  ENDDO j
 #
 #                Get the separable part  
@@ -1355,7 +1020,7 @@ import "mp2grad_rhf_defs.sialx"
 #
 #                Add the the nonseparable part
 #                -----------------------------
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
                  TSxxxx[mu,lambda,nu,sigma] *= efact  
 #
 #                Compute integral block
@@ -1437,7 +1102,7 @@ import "mp2grad_rhf_defs.sialx"
                 if ml <= ns
 #
 #
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
 #
                  DO j
                     TAxxxj[mu,lambda,nu,j]     = 0.0
@@ -1453,7 +1118,7 @@ import "mp2grad_rhf_defs.sialx"
                     ENDDO i
                     Txxxx[mu,lambda,nu,sigma]  = TAxxxj[mu,lambda,nu,j]*La[j,sigma] # ca[sigma,j]
                     Txxxx[mu,lambda,nu,sigma] *= 2.0  
-                    D2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += Txxxx[mu,lambda,nu,sigma]
                  ENDDO j
 #
 #                Get the separable part  
@@ -1499,7 +1164,7 @@ import "mp2grad_rhf_defs.sialx"
 #
 #                Add the the nonseparable part
 #                -----------------------------
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
                  TSxxxx[mu,lambda,nu,sigma] *= efact  
 
 #                Compute integral block
@@ -1581,7 +1246,7 @@ import "mp2grad_rhf_defs.sialx"
                 if ml <= ns
 #
 #
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
 #
                  DO i1  
                     TAxxxi[mu,lambda,nu,i1] = 0.0 
@@ -1592,7 +1257,7 @@ import "mp2grad_rhf_defs.sialx"
                     ENDDO i 
                     Txxxx[mu,lambda,nu,sigma] = TAxxxi[mu,lambda,nu,i1]*La[i1,sigma]
                     Txxxx[mu,lambda,nu,sigma]*= 2.0  
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO i1
 #
 #                Get the separable part  
@@ -1636,7 +1301,7 @@ import "mp2grad_rhf_defs.sialx"
 #
 #                Add the the nonseparable part
 #                -----------------------------
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
                  TSxxxx[mu,lambda,nu,sigma] *= efact  
 
 #                Compute integral block
@@ -1661,7 +1326,14 @@ import "mp2grad_rhf_defs.sialx"
 #
       ENDPARDO mu, nu, lambda, sigma    
       sip_barrier 
-#
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap+2-el gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+
       ENDPROC D2TRANS
 #     ---------------
 
@@ -1809,39 +1481,39 @@ import "mp2grad_rhf_defs.sialx"
 #
 #     AAAA/AAAA piece
 #     ---------------
-      PARDO i, a, a1, i2
+      PARDO a, a2, i, i1
 #
-            REQUEST            ASpipi[a,i,a1,i2]
-            Tpipi[a,i,a1,i2] = ASpipi[a,i,a1,i2]
+            REQUEST            ASpipi[a,i,a2,i1]
+            Tpipi[a,i,a2,i1] = ASpipi[a,i,a2,i1]
 #
-            DO i1
+            DO a1
 #
-               REQUEST             ASpipi[a,i1,a1,i2]
-               Tii[i,i1]         = Tpipi[a,i,a1,i2]*ASpipi[a,i1,a1,i2]
-               Tii[i,i1]        *= -0.5
-               PUT Pij_aa[i,i1] += Tii[i,i1]
+               REQUEST             ASpipi[a1,i,a2,i1]
+               Taa[a,a1]         = Tpipi[a,i,a2,i1]*ASpipi[a1,i,a2,i1]
+               Taa[a,a1]        *= 0.5
+               PUT Pab_aa[a,a1] += Taa[a,a1]
 #
-            ENDDO i1
+            ENDDO a1
 #
-      ENDPARDO i, a, a1, i2
-#
+      ENDPARDO a, a2, i, i1
+
+
 #     AABB/AABB piece
 #     ---------------
-      PARDO i, a, b, j
+      PARDO a, b, i, j
 #
             REQUEST          Apiqj[a,i,b,j]
             Tpiqj[a,i,b,j] = Apiqj[a,i,b,j]
 #
-            DO i1
+            DO a1
 #
-               REQUEST             Apiqj[a,i1,b,j] 
-               Tii[i,i1]         = Tpiqj[a,i,b,j]*Apiqj[a,i1,b,j]
-               Tii[i,i1]        *= -1.0
-               PUT Pij_aa[i,i1] += Tii[i,i1]
+               REQUEST             Apiqj[a1,i,b,j] 
+               Taa[a,a1]         = Tpiqj[a,i,b,j]*Apiqj[a1,i,b,j]
+               PUT Pab_aa[a,a1] += Taa[a,a1]
 #
-            ENDDO i1
+            ENDDO a1
 #
-      ENDPARDO i, a, b, j
+      ENDPARDO a, b, i, j
 #
 # Done compute the occupied-occupied block of the density correction
 #
@@ -1956,6 +1628,17 @@ import "mp2grad_rhf_defs.sialx"
       server_barrier
       deallocate LLai_aa[*,*]
 
+#bgn_debug
+     etmp = 0.0
+     do a 
+     do i 
+        get Lai_aa[a,i]
+        etmp += Lai_aa[a,i] * Lai_aa[a,i]
+     enddo i
+     enddo a
+     print "checksum of Lai"
+     print etmp
+#end_debug
      ENDPROC FORM_LAI
 #    ----------------
 
@@ -1979,9 +1662,11 @@ import "mp2grad_rhf_defs.sialx"
 
             GET Paiold_aa[a,i]
             Tai[a,i]      = Paiold_aa[a,i] 
-            PUT D0ai[a,i] = Tai[a,i]
+            PREPARE D0ai[a,i] = Tai[a,i]
 
-      ENDPARDO a, i
+     ENDPARDO a, i
+     server_barrier 
+      
 #
 #     Form a couple of 'intermediate' quantities.
 #     -------------------------------------------
@@ -2386,6 +2071,27 @@ import "mp2grad_rhf_defs.sialx"
 #
       ENDPARDO a, i
       sip_barrier
+#bgn_debug
+     etmp = 0.0
+     do mu 
+     do nu
+        get P2A_ao[mu,nu]
+        etmp += P2A_ao[mu,nu] * P2A_ao[mu,nu]
+     enddo nu
+     enddo mu 
+     print "checksum of P2A_ao"
+     print etmp 
+     etmp = 0.0
+     do mu 
+     do nu
+        get W2_ao[mu,nu]
+        etmp += W2_ao[mu,nu] * W2_ao[mu,nu]
+     enddo nu
+     enddo mu 
+     print "checksum of W2A_ao"
+     print etmp 
+#end_debug
+
 #
 # Done backtransform Ppq --> P2_ao Wpq --> W2_ao
 # ----------------------------------------------
@@ -2413,15 +2119,40 @@ import "mp2grad_rhf_defs.sialx"
 #bgn_debug
       print "reference, the zmax and imax"
       print reference
+      print zmax 
+      print imax 
+      print diis_order 
+      print diis_start 
 #end_debug
 
       sip_barrier
       Restore_persistent ca "ca"
+      Restore_persistent cb "cb"
       restore_persistent Fock_a "fock_a"
+      restore_persistent Fock_b "fock_b"
       restore_persistent scf_energy "scf_energy"
-      restore_persistent scf_energy "scf_energy"
-      restore_persistent totenerg "totenerg"
       sip_barrier
+
+     execute compute_nn_repulsion_grad Gradient
+
+     DO Ngrads
+        Put D_gradient[Ngrads] = Gradient[Ngrads]
+     Enddo Ngrads
+
+#bgn_debug
+     etmp = 0.0
+     sip_barrier 
+     DO Ngrads
+         get D_gradient[Ngrads]
+         etmp += D_Gradient[Ngrads] * D_Gradient[Ngrads]
+     enddo Ngrads
+     print "checksum of nuc-nuc gradient"
+     print  etmp
+#end_debug
+
+#bgn_debug
+      print scf_energy
+#end_debug
 
       allocate La[*,*] 
 
@@ -2488,20 +2219,14 @@ import "mp2grad_rhf_defs.sialx"
 #  ----------------------------
 #
          CALL UPDATE_PAI 
-#bgn_debug
-         print eold 
-#end_debug
 
-         if kiter >= diis_start 
-#            CALL DO_DIIS
-         endif 
          esum = 0.0
          enew = 0.0
 
          PARDO a, i
 #
                GET        Painew_aa[a,i]
-               Tai[a,i] = Painew_aa[a,i] 
+               Tai[a,i] = Painew_aa[a,i]
                execute energy_denominator Tai[a,i]  fock_a fock_a AAAA
 
                PUT  Paiold_aa[a,i] = Tai[a,i]
@@ -2513,12 +2238,8 @@ import "mp2grad_rhf_defs.sialx"
                PUT Painew_aa[a,i]   = Tai[a,i]
 #
          ENDPARDO a, i
-         sip_barrier 
-         collective enew += esum 
-
-#bgn_debug
-         print enew
-#end_debug
+         sip_barrier
+         collective enew += esum
 
          assert_same enew
          assert_same eold 
@@ -2534,7 +2255,17 @@ import "mp2grad_rhf_defs.sialx"
          IF ediff < ecrit
             exit 
          ENDIF
-#
+
+#bgn_debug
+         print eold
+         print enew
+         print ediff 
+#end_debug
+
+         if kiter >= diis_start 
+            CALL DO_DIIS
+         endif 
+
 #   Reset eold --> enew
 #   -------------------
 #
@@ -2565,7 +2296,6 @@ import "mp2grad_rhf_defs.sialx"
 # -----------------------------------------
 #
       CALL D2TRANS
-      sip_barrier 
 #
                            ENDSIAL MBPT2_GRAD_AO2      
 #
