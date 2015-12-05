@@ -7,7 +7,7 @@ import "mp2grad_uhf_defs.sialx"
 # ---------------
 #
       index kiter    = 1: cc_iter
-      index jiter    = 1: cc_iter
+      index jiter    = 1: cc_iter 
       index   kptr1  = 1: 2
       index   kptr2  = 1: 2
       index   kone   = 1: 1
@@ -15,7 +15,7 @@ import "mp2grad_uhf_defs.sialx"
       Index Twelve   = 1: 12
       Index Idiis    = 1: 30
       Index jdiis    = 1: 30
-      Index j1dii    = 1: 30
+      Index j1diis   = 1: 30
       Index kdiis    = 1: 30
       Index k1diis   = 1: 30
       Index d1       = 1: 30
@@ -97,6 +97,9 @@ import "mp2grad_uhf_defs.sialx"
       served Vaajj[a,a1,j,j1]
       served Vxbii[mu,b,i,i1]
       served Vbbii[b,b1,i,i1]
+      served D0ai[a,i]
+      served D0bj[b,j]
+
 # distributed arrays
 
       distributed Pij_aa[i,i1]
@@ -130,13 +133,12 @@ import "mp2grad_uhf_defs.sialx"
       distributed Lxj[nu,j]
       distributed Yxi[mu,i]
       distributed Yxj[nu,j]
-      distributed D0ai[a,i]
-      distributed D0bj[b,j]
       distributed Dai[a,i,idiis]
       distributed Dbj[b,j,idiis]
       distributed eai[a,i,idiis]
       distributed ebj[b,j,idiis]
       distributed D_Gradient[Ngrads]
+      Distributed DIST_BB[d1,d2]
 
 #
 # Temporary arrays
@@ -271,9 +273,13 @@ import "mp2grad_uhf_defs.sialx"
       temp T9xx[mu,nu]
       temp AOINT[mu,nu,lambda,sigma]
       temp GRAD_AO_INTS[mu,nu,lambda,sigma]
-      temp  D2[mu,lambda,nu,sigma]
-      temp  D3[mu,lambda,nu,sigma]
-#
+      temp TD2[mu,lambda,nu,sigma]
+      temp D3[mu,lambda,nu,sigma]
+      temp tdd[d1,d2]
+      temp T2ai[a,i]
+      temp T2bj[b,j]
+      temp T3ai[a,i]
+      temp T3bj[b,j]
 #
 # Local and static arrays
 #
@@ -329,6 +335,7 @@ import "mp2grad_uhf_defs.sialx"
 #     contiguous local L_gradient[Ngrads]
       static L_gradient[Ngrads]
       static gradient[Ngrads]
+      static BB[d1,d2]
 #
 # scalars
 #
@@ -369,6 +376,15 @@ import "mp2grad_uhf_defs.sialx"
       scalar BBBB
       scalar ABAB
       scalar flag
+      Scalar n1
+      Scalar n2
+      Scalar kcount
+      Scalar scale2
+      Scalar etmp 
+
+      Int worder
+      Int Iorder
+      Int niter
 
       ENDSIAL mp2grad_uhf_VARS
 #     ------------------------

@@ -1,0 +1,9 @@
+     sial test_diag_vars
+#    -------------------
+     do d1 = 1:5
+     d0 d2 = 1:5
+
+     static BB[d1,d2]
+
+     endsial test_diag_vars
+#    ---------------------

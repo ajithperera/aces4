@@ -39,7 +39,7 @@ c--------------------------------------------------------------------------
       real(c_double), pointer :: scr2(:)
       real(c_double), pointer :: scr3(:)
 
-      integer(C_INT)  size, size2  
+      integer(C_INT)  size, size2, i 
 
       size = extents_0(2)   
       size2= (extents_0(2) + 1)**2   

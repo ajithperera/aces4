@@ -55,9 +55,9 @@ import "mp2grad_uhf_vars.sialx"
 
                GET Eai[a,i,j1diis]
 
-               tbb[jdiis,j1diis]          = Eai[a,i,jdiis]*Eai[a,i,j1diis]
-               tbb[jdiis,j1diis]         *= Scale2
-               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+               tdd[jdiis,j1diis]          = Eai[a,i,jdiis]*Eai[a,i,j1diis]
+               tdd[jdiis,j1diis]         *= Scale2
+               PUT DIST_BB[jdiis,j1diis] += tdd[jdiis,j1diis]
 
          ENDDO j1diis
          ENDDO jdiis
@@ -74,9 +74,9 @@ import "mp2grad_uhf_vars.sialx"
 
                GET Ebj[b,j,j1diis]
 
-               tbb[jdiis,j1diis]          = Ebj[b,j,jdiis]*Eai[b,j,j1diis]
-               tbb[jdiis,j1diis]         *= Scale2 
-               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+               tdd[jdiis,j1diis]          = Ebj[b,j,jdiis]*Ebj[b,j,j1diis]
+               tdd[jdiis,j1diis]         *= Scale2 
+               PUT DIST_BB[jdiis,j1diis] += tdd[jdiis,j1diis]
 
          ENDDO j1diis
          ENDDO jdiis
@@ -93,9 +93,31 @@ import "mp2grad_uhf_vars.sialx"
           ENDDO j1diis
       ENDDO jdiis
 
-      execute compute_diis BB
+#bgn_debug
+#     print "BB elements"
+#     do d1
+#     where d1 <=iorder
+#     do d2
+#     where d2 <=iorder
+#     print BB[d1,d2]
+#     enddo d2
+#     enddo d1
+#end_debug
 
+      execute compute_diis BB
       sip_barrier
+
+
+#bgn_debug
+#     print ""
+#     do d1
+#     where d1 <=iorder
+#     do d2
+#     where d2 <=iorder
+#     print BB[d1,d2]
+#     enddo d2
+#     enddo d1
+#end_debug
 
       PARDO a, i
             tai[a,i] = 0.0
@@ -134,7 +156,7 @@ import "mp2grad_uhf_vars.sialx"
                endif
             ENDDO d2
 
-            PUT PAI_old_a[a,i] = tai[a,i]
+            PUT PAIold_aa[a,i] = tai[a,i]
       ENDPARDO a, i
 
       PARDO b, j
@@ -170,11 +192,11 @@ import "mp2grad_uhf_vars.sialx"
                   etemp = BB[d2,d2]
                   t3bj[b,j] += t2bj[b,j]
                   t3bj[b,j] *= etemp
-                  tai[b,j]  += t3bj[b,j]
+                  tbj[b,j]  += t3bj[b,j]
                endif
             ENDDO d2
 
-            PUT PAI_old_b[b,j] = tbj[b,j]
+            PUT PAIold_bb[b,j] = tbj[b,j]
       ENDPARDO b, j
 
       server_barrier

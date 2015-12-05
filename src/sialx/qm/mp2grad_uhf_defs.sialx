@@ -63,6 +63,7 @@ special eigen_calc uu
 special energy_denominator urrr
 special compute_integral_batch w
 special compute_int_scratchmem uuu
+special compute_diis u
 
 #     NOT PORTED 
 #special blocks_to_list r

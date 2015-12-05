@@ -1,6 +1,6 @@
 import "mp2grad_uhf_defs.sialx"
 import "mp2grad_uhf_vars.sialx"
-#import "diis_2index_mp2grad_uhf.sialx"
+import "diis_2index_mp2grad_uhf.sialx"
 #  Copyright (c) 2003-2010 University of Florida
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ import "mp2grad_uhf_vars.sialx"
            esumaa += etemp
 
      ENDPARDO a, a1, i, i1
+     print "aaaa"
 #
      ecorrbb = 0.0
      esumbb    = 0.0
@@ -53,6 +54,7 @@ import "mp2grad_uhf_vars.sialx"
            esumbb += etemp
 #
      ENDPARDO b, b1, j, j1
+     print "bbbb"
 
      ecorrab = 0.0
      esumab    = 0.0
@@ -66,6 +68,7 @@ import "mp2grad_uhf_vars.sialx"
            esumab += etemp
 #
      ENDPARDO a, b, i, j
+     print "abab"
 
      sip_barrier
      collective ecorraa += esumaa
@@ -581,7 +584,7 @@ import "mp2grad_uhf_vars.sialx"
 #
            ENDDO b
 #
-           deallocate Ljxbj[j,nu,*,j1] 
+           deallocate Ljxbj[j,mu,*,j1] 
 #
      ENDPARDO mu, j, j1
 #
@@ -954,7 +957,6 @@ import "mp2grad_uhf_vars.sialx"
           CALL TRAN_PIQJ
           CALL TRAN_AAJJ
           CALL TRAN_IABJ
-#
           CALL TRAN_BBII
 #
      ENDPROC TRAN_PPPP
@@ -1039,6 +1041,37 @@ import "mp2grad_uhf_vars.sialx"
 # Contract with the derivative integrals
 # --------------------------------------
 #
+
+#bgn_debug
+#     etmp = 0.0
+#     do mu
+#     do nu
+#        get P2A_ao[mu,nu]
+#        etmp += P2A_ao[mu,nu] * P2A_ao[mu,nu]
+#     enddo nu
+#     enddo mu
+#     print "checksum of P2A_aa"
+#     print etmp
+#     etmp = 0.0
+#     do mu
+#     do nu
+#        get P2B_ao[mu,nu]
+#        etmp += P2B_ao[mu,nu] * P2B_ao[mu,nu]
+#     enddo nu
+#     enddo mu
+#     print "checksum of P2B_bb"
+#     print etmp
+#     etmp = 0.0
+#     do mu
+#     do nu
+#        get W2_ao[mu,nu]
+#        etmp += W2_ao[mu,nu] * W2_ao[mu,nu]
+#     enddo nu
+#     enddo mu
+#     print "checksum of W2_ao"
+#     print etmp
+##end_debug
+
          DO mu 
          DO nu
 #
@@ -1053,8 +1086,10 @@ import "mp2grad_uhf_vars.sialx"
             Tpq[mu,nu]  += P2B_ao[mu,nu]
             Spq[mu,nu]   = Tpq[mu,nu] 
 
+            Txx[mu,nu]   = 0.0
+
             flag = 1.0
-            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Spq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
@@ -1065,7 +1100,7 @@ import "mp2grad_uhf_vars.sialx"
             Enddo Ngrads
 
             flag = 2.0
-            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Spq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
@@ -1105,6 +1140,7 @@ import "mp2grad_uhf_vars.sialx"
             Tpq[mu,nu]   = W2_ao[mu,nu]
             Tpq[mu,nu]  += WHFa[mu,nu]
             Tpq[mu,nu]  += WHFb[mu,nu]
+            Txx[mu,nu]  = 0.0
 
             execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
@@ -1203,7 +1239,7 @@ import "mp2grad_uhf_vars.sialx"
 #
                DO nu
 #
-                  Txixi[mu,i,nu,i1]   = Vxipi[mu,i,a1,i1]*La[a1,nu] # ca[nu,a1]
+                  Txixi[mu,i,nu,i1]   = Vxipi[mu,i,a1,i1]*La[a1,nu] 
                   L1xixi[mu,i,nu,i1] += Txixi[mu,i,nu,i1]
 #
                ENDDO nu
@@ -1264,7 +1300,7 @@ import "mp2grad_uhf_vars.sialx"
 #
                DO nu
 #
-                  Txjxj[mu,j,nu,j1]   = Vxjqj[mu,j,b1,j1]*Lb[b1,nu] # cb[nu,b1]
+                  Txjxj[mu,j,nu,j1]   = Vxjqj[mu,j,b1,j1]*Lb[b1,nu]
                   L1xjxj[mu,j,nu,j1] += Txjxj[mu,j,nu,j1]
 #
                ENDDO nu
@@ -1325,7 +1361,7 @@ import "mp2grad_uhf_vars.sialx"
 #
                DO nu
 #
-                  Txixj[mu,i,nu,j]   = Vxiqj[mu,i,b,j]*Lb[b,nu] # cb[nu,b]
+                  Txixj[mu,i,nu,j]   = Vxiqj[mu,i,b,j]*Lb[b,nu] 
                   L1xixj[mu,i,nu,j] += Txixj[mu,i,nu,j]
 #
                ENDDO nu
@@ -1687,7 +1723,7 @@ import "mp2grad_uhf_vars.sialx"
               WHERE mu < lambda  
               WHERE nu < sigma   
 
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
                  D3[mu,lambda,sigma,nu] = 0.0 
 #
                  DO i1
@@ -1717,7 +1753,7 @@ import "mp2grad_uhf_vars.sialx"
                     D3[mu,lambda,sigma,nu]    += Txxxx[mu,lambda,sigma,nu]
 #
                     T1xxxx[mu,lambda,nu,sigma] = TAxxxi[mu,lambda,nu,i1]*La[i1,sigma]
-                    D2[mu,lambda,nu,sigma]    += T1xxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += T1xxxx[mu,lambda,nu,sigma]
                  ENDDO i1
 #
                  DO j1
@@ -1747,7 +1783,7 @@ import "mp2grad_uhf_vars.sialx"
                     D3[mu,lambda,sigma,nu]    += Txxxx[mu,lambda,sigma,nu]
 #
                     T1xxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j1]*Lb[j1,sigma] 
-                    D2[mu,lambda,nu,sigma]    += T1xxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += T1xxxx[mu,lambda,nu,sigma]
                  ENDDO j1
 #
                  DO j
@@ -1779,7 +1815,7 @@ import "mp2grad_uhf_vars.sialx"
 #
                     T1xxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j]*Lb[j,sigma] 
                     T1xxxx[mu,lambda,nu,sigma]*= 2.0  
-                    D2[mu,lambda,nu,sigma]    += T1xxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]    += T1xxxx[mu,lambda,nu,sigma]
                  ENDDO j
 #
 #                Get the separable part  
@@ -1857,7 +1893,7 @@ import "mp2grad_uhf_vars.sialx"
 #                Add the the nonseparable part
 #                -----------------------------
                  Txxxx[mu,lambda,nu,sigma]   = D3[mu,lambda,sigma,nu]    
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
                  TSxxxx[mu,lambda,nu,sigma] += txxxx[mu,lambda,nu,sigma]  
 
                  Do Twelve
@@ -1884,7 +1920,7 @@ import "mp2grad_uhf_vars.sialx"
               WHERE mu == lambda  
               WHERE nu < sigma   
 
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
                  D3[mu,lambda,sigma,nu] = 0.0 
 #
                  DO i1
@@ -1905,7 +1941,7 @@ import "mp2grad_uhf_vars.sialx"
                     D3[mu,lambda,sigma,nu]   += Txxxx[mu,lambda,sigma,nu]
 #
                     T1xxxx[mu,lambda,nu,sigma] = TAxxxi[mu,lambda,nu,i1]*La[i1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += T1xxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += T1xxxx[mu,lambda,nu,sigma]
                  ENDDO i1
 #
                  DO j1
@@ -1926,7 +1962,7 @@ import "mp2grad_uhf_vars.sialx"
                     D3[mu,lambda,sigma,nu]   += Txxxx[mu,lambda,sigma,nu]
 #
                     T1xxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j1]*Lb[j1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += T1xxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += T1xxxx[mu,lambda,nu,sigma]
                  ENDDO j1
 #
                  DO j
@@ -1949,7 +1985,7 @@ import "mp2grad_uhf_vars.sialx"
 #
                     T1xxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j]*Lb[j,sigma]
                     T1xxxx[mu,lambda,nu,sigma]*= 2.0  
-                    D2[mu,lambda,nu,sigma]   += T1xxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += T1xxxx[mu,lambda,nu,sigma]
                  ENDDO j
 #
 #                Get the separable part  
@@ -2027,7 +2063,7 @@ import "mp2grad_uhf_vars.sialx"
 #                Add the the nonseparable part
 #                -----------------------------
                  txxxx[mu,lambda,nu,sigma]   = D3[mu,lambda,sigma,nu] 
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
                  TSxxxx[mu,lambda,nu,sigma] += txxxx[mu,lambda,nu,sigma]  
 
                  Do Twelve
@@ -2054,7 +2090,7 @@ import "mp2grad_uhf_vars.sialx"
               WHERE mu < lambda  
               WHERE nu == sigma   
 
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
                  D3[mu,lambda,sigma,nu] = 0.0 
 #
                  DO i1
@@ -2071,9 +2107,9 @@ import "mp2grad_uhf_vars.sialx"
 
                     ENDDO i
                     Txxxx[mu,lambda,nu,sigma] = TBxxxi[mu,lambda,nu,i1]*La[i1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                     Txxxx[mu,lambda,nu,sigma] = TAxxxi[mu,lambda,nu,i1]*La[i1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO i1
 #
                  DO j1
@@ -2090,9 +2126,9 @@ import "mp2grad_uhf_vars.sialx"
 #
                     ENDDO j
                     Txxxx[mu,lambda,nu,sigma] = TBxxxj[mu,lambda,nu,j1]*Lb[j1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                     Txxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j1]*Lb[j1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO j1
 #
                  DO j
@@ -2110,12 +2146,12 @@ import "mp2grad_uhf_vars.sialx"
                     ENDDO i
 #
                     Txxxx[mu,lambda,nu,sigma] = TBxxxj[mu,lambda,nu,j]*Lb[j,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
 #
                     Txxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j]*Lb[j,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO j
 #
 #                Get the separable part  
@@ -2192,7 +2228,7 @@ import "mp2grad_uhf_vars.sialx"
 #
 #                Add the the nonseparable part
 #                -----------------------------
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
 
                  Do Twelve
 
@@ -2218,7 +2254,7 @@ import "mp2grad_uhf_vars.sialx"
               WHERE mu == lambda  
               WHERE nu == sigma   
 
-                 D2[mu,lambda,nu,sigma] = 0.0 
+                 TD2[mu,lambda,nu,sigma] = 0.0 
 #
                  DO i1
                     TAxxxi[mu,lambda,nu,i1]  = 0.0
@@ -2228,7 +2264,7 @@ import "mp2grad_uhf_vars.sialx"
                        TAxxxi[mu,lambda,nu,i1] += T1xxxi[mu,lambda,nu,i1]  
                     ENDDO i
                     Txxxx[mu,lambda,nu,sigma] = TAxxxi[mu,lambda,nu,i1]*La[i1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO i1
 #
                  DO j1
@@ -2239,7 +2275,7 @@ import "mp2grad_uhf_vars.sialx"
                        TAxxxj[mu,lambda,nu,j1] += T1xxxj[mu,lambda,nu,j1]  
                     ENDDO j
                     Txxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j1]*Lb[j1,sigma] 
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO j1
 #
                  DO j
@@ -2250,8 +2286,8 @@ import "mp2grad_uhf_vars.sialx"
                        TAxxxj[mu,lambda,nu,j] += T1xxxj[mu,lambda,nu,j]  
                     ENDDO i
                     Txxxx[mu,lambda,nu,sigma] = TAxxxj[mu,lambda,nu,j]*Lb[j,sigma]
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
-                    D2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
+                    TD2[mu,lambda,nu,sigma]   += Txxxx[mu,lambda,nu,sigma]
                  ENDDO j
 #
 #                Get the separable part  
@@ -2327,7 +2363,7 @@ import "mp2grad_uhf_vars.sialx"
 #
 #                Add the the nonseparable part
 #                -----------------------------
-                 TSxxxx[mu,lambda,nu,sigma] += D2[mu,lambda,nu,sigma]  
+                 TSxxxx[mu,lambda,nu,sigma] += TD2[mu,lambda,nu,sigma]  
 
                  Do Twelve
 
@@ -2347,6 +2383,14 @@ import "mp2grad_uhf_vars.sialx"
 
       ENDPARDO mu, nu, lambda, sigma  
       sip_barrier 
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap+2-el gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
 #
       ENDPROC D2TRANS
 #     ---------------
@@ -2544,6 +2588,26 @@ import "mp2grad_uhf_vars.sialx"
 #
       ENDPARDO b, j, a, i
       sip_barrier 
+#bgn_debug
+#     etmp = 0.0
+#     do i
+#     do i1
+#        get Pij_aa[i,i1]
+#        etmp += Pij_aa[i,i1] * Pij_aa[i,i1]
+#     enddo i1
+#     enddo i
+#     print "checksum of Pij_aa"
+#     print etmp
+#     etmp = 0.0
+#     do j
+#     do j1
+#        get Pij_bb[j,j1]
+#        etmp +=   Pij_bb[j,j1]  *  Pij_bb[j,j1]
+#     enddo j1
+#     enddo j
+#     print "checksum of Pij_bb"
+#     print etmp
+#end_debug
 
      ENDPROC DENSOO
 #    --------------
@@ -2643,6 +2707,26 @@ import "mp2grad_uhf_vars.sialx"
 #
       ENDPARDO b, a, j, i
       sip_barrier 
+#bgn_debug
+#     etmp = 0.0
+#     do a
+#     do a1
+#        get Pab_aa[a,a1]
+#        etmp += Pab_aa[a,a1] * Pab_aa[a,a1]
+#     enddo a1
+#     enddo a
+#     print "checksum of Pab_aa"
+#     print etmp
+#     etmp = 0.0
+#     do b
+#     do b1
+#        get Pab_bb[b,b1]
+#        etmp += Pab_bb[b,b1] * Pab_bb[b,b1]
+#     enddo b1
+#     enddo b
+#     print "checksum of Pab_bb"
+#     print etmp
+#end_debug
 
      ENDPROC DENSVV
 #    --------------
@@ -2707,7 +2791,7 @@ import "mp2grad_uhf_vars.sialx"
             PUT Paiold_aa[a,i]      = Tai[a,i] 
 #
       ENDPARDO a, i 
-#
+
       PARDO b, j 
 #
             GET                        Lai_bb[b,j] 
@@ -2719,20 +2803,23 @@ import "mp2grad_uhf_vars.sialx"
             PUT Paiold_bb[b,j]       = Tbj[b,j] 
 #
       ENDPARDO b, j 
+      sip_barrier 
 
-     PARDO a, i
+      PARDO a, i
 
-            GET Paiold_aa[a,i]
-            Tai[a,i]      = Paiold_aa[a,i]
-            PUT D0ai[a,i] = Tai[a,i]
+#            GET Paiold_aa[a,i]
+#            Tai[a,i]      = Paiold_aa[a,i]
+            Tai[a,i]  = 0.0
+            PREPARE D0ai[a,i] = Tai[a,i]
 
       ENDPARDO a, i
 
-     PARDO b, j
+      PARDO b, j
 
-            GET Paiold_bb[b,j]
-            Tbj[b,j]      = Paiold_bb[b,j]
-            PUT D0bj[b,j] = Tbj[b,j]
+#            GET Paiold_bb[b,j]
+#            Tbj[b,j]      = Paiold_bb[b,j]
+            Tbj[b,j] = 0.0
+            PREPARE D0bj[b,j] = Tbj[b,j]
 
       ENDPARDO b, j
 #
@@ -2798,6 +2885,27 @@ import "mp2grad_uhf_vars.sialx"
          ENDPARDO b, b1, j, j1 
 #
          sip_barrier 
+#bgn_debug
+#     etmp = 0.0
+#     do a
+#     do i
+#        get Painew_aa[a,i]
+#        etmp += Painew_aa[a,i] * Painew_aa[a,i]
+#     enddo i
+#     enddo a
+#     print "checksum of painew_aa"
+#     print etmp
+#     etmp = 0.0
+#     do b
+#     do j
+#        get Painew_bb[b,j]
+#        etmp += Painew_bb[b,j] * Painew_bb[b,j]
+#     enddo j
+#     enddo b
+#     print "checksum of Painew_bb"
+#     print etmp
+#end_debug
+
 
      ENDPROC FORM_PAI_NEW
 #    -------------------
@@ -2843,6 +2951,7 @@ import "mp2grad_uhf_vars.sialx"
             ENDDO mu
 #
       ENDPARDO b, b1
+      sip_barrier 
 #
 # Compute the right-hand side of Eq. 10 --> Lai_aa  
 # ------------------------------------------------  
@@ -2876,7 +2985,7 @@ import "mp2grad_uhf_vars.sialx"
 #
             REQUEST                    Vpiqj[a,i1,b,j] 
             Tpiqj[a,i1,b,j]          = Vpiqj[a,i1,b,j]
-            execute energy_denominator Tpiqj[a,i1,b,j] fock_b fock_b BBBB
+            execute energy_denominator Tpiqj[a,i1,b,j] fock_a fock_b ABAB
 #
             DO i
 #
@@ -2979,6 +3088,27 @@ import "mp2grad_uhf_vars.sialx"
 
       sip_barrier 
 
+#bgn_debug
+#     etmp = 0.0
+#     do a
+#     do i
+#        get Lai_aa[a,i]
+#        etmp += Lai_aa[a,i] * Lai_aa[a,i]
+#     enddo i
+#     enddo a
+#     print "checksum of Laii_aa"
+#     print etmp
+#     etmp = 0.0
+#     do b
+#     do j
+#        get Lai_bb[b,j]
+#        etmp += Lai_bb[b,j] * Lai_bb[b,j]
+#     enddo j
+#     enddo b
+#     print "checksum of Laii_bb"
+#     print etmp
+#end_debug
+
      ENDPROC FORM_LAI
 #    ----------------
 
@@ -3023,7 +3153,7 @@ import "mp2grad_uhf_vars.sialx"
 #
              REQUEST                    Vpiqj[a1,i,b,j] 
              Tpiqj[a1,i,b,j]          = Vpiqj[a1,i,b,j]
-             execute energy_denominator Tpiqj[a1,i,b,j] fock_b fock_b BBBB
+             execute energy_denominator Tpiqj[a1,i,b,j] fock_a fock_b ABAB
 #
              DO a
 #
@@ -3446,6 +3576,63 @@ import "mp2grad_uhf_vars.sialx"
 #
        ENDPARDO a, b, i, j2
        sip_barrier 
+#bgn_debug
+#     etmp = 0.0
+#     do i
+#     do i1
+#        get Wij_aa[i,i1]
+#        etmp += Wij_aa[i,i1] * Wij_aa[i,i1]
+#     enddo i1
+#     enddo i
+#     print "checksum of Waij_aa"
+#     print etmp
+#     etmp = 0.0
+#     do j
+#     do j1
+#        get Wij_bb[j,j1]
+#        etmp += Wij_bb[j,j1] * Wij_bb[j,j1]
+#     enddo j1
+#     enddo j 
+#     print "checksum of Waij_bb"
+#     print etmp
+#     etmp=0.0
+#     do a
+#     do i
+#        get Wai_aa[a,i]
+#        etmp += Wai_aa[a,i] * Wai_aa[a,i]
+#     enddo i
+#     enddo a
+#     print "checksum of Waii_aa"
+#     print etmp
+#     etmp = 0.0
+#     do b
+#     do j
+#        get Wai_bb[b,j]
+#        etmp += Wai_bb[b,j] * Wai_bb[b,j]
+#     enddo j
+#     enddo b
+#     print "checksum of Waii_bb"
+#     print etmp
+#     etmp = 0.0
+#     do a
+#     do i
+#        get Paiold_aa[a,i]
+#        etmp += Paiold_aa[a,i] * Paiold_aa[a,i]
+#     enddo i
+#     enddo a
+#     print "checksum of paiold"
+#     print etmp
+#     etmp = 0.0
+#     do b
+#     do j
+#        get Paiold_bb[b,j]
+#        etmp += Paiold_bb[b,j] * Paiold_bb[b,j]
+#     enddo j
+#     enddo b
+#     print "checksum of Paiold_bb"
+#     print etmp
+#end_debug
+
 #
 # Done compute the second-order corrections to the energy
 # weighted density matrix.
@@ -3463,6 +3650,7 @@ import "mp2grad_uhf_vars.sialx"
 #
 #     Transform Pij_aa
 #     ----------------
+
       PARDO i, i1
 #
             GET Pij_aa[i,i1]
@@ -3477,8 +3665,8 @@ import "mp2grad_uhf_vars.sialx"
 #
                   Ixx[mu,nu]         = Ixi[mu,i1]*ca[nu,i1]
                   Jxx[mu,nu]         = Jxi[mu,i1]*ca[nu,i1]
-                  PUT P2A_ao[mu,nu] += Ixx[mu,nu]
-                  PUT W2_ao[mu,nu]  += Jxx[mu,nu]
+                  PUT P2A_ao[mu,nu] = Ixx[mu,nu]
+                  PUT W2_ao[mu,nu]  = Jxx[mu,nu]
 #
                ENDDO nu
 #
@@ -3502,7 +3690,7 @@ import "mp2grad_uhf_vars.sialx"
 #
                   Ixx[mu,nu]         = Ixj[mu,j1]*cb[nu,j1]
                   Jxx[mu,nu]         = Jxj[mu,j1]*cb[nu,j1]
-                  PUT P2B_ao[mu,nu] += Ixx[mu,nu]
+                  PUT P2B_ao[mu,nu]  = Ixx[mu,nu]
                   PUT W2_ao[mu,nu]  += Jxx[mu,nu]
 #
                ENDDO nu
@@ -3510,6 +3698,56 @@ import "mp2grad_uhf_vars.sialx"
             ENDDO mu
 #
       ENDPARDO j, j1
+#
+#     Transform Pab_aa
+#     ----------------
+      PARDO a, a1
+#
+            GET Pab_aa[a,a1]
+            GET Wab_aa[a,a1]
+#
+            DO mu
+#
+               Ixa[mu,a1] = Pab_aa[a,a1]*ca[mu,a]
+               Jxa[mu,a1] = Wab_aa[a,a1]*ca[mu,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu]         = Ixa[mu,a1]*ca[nu,a1]
+                  Jxx[mu,nu]         = Jxa[mu,a1]*ca[nu,a1]
+                  PUT P2A_ao[mu,nu] += Ixx[mu,nu]
+                  PUT W2_ao[mu,nu]  += Jxx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, a1
+#
+#     Transform Pab_bb
+#     ----------------
+      PARDO b, b1
+#
+            GET Pab_bb[b,b1]
+            GET Wab_bb[b,b1]
+#
+            DO mu
+#
+               Ixb[mu,b1] = Pab_bb[b,b1]*cb[mu,b]
+               Jxb[mu,b1] = Wab_bb[b,b1]*cb[mu,b]
+#
+               DO nu
+#
+                  Ixx[mu,nu]         = Ixb[mu,b1]*cb[nu,b1]
+                  Jxx[mu,nu]         = Jxb[mu,b1]*cb[nu,b1]
+                  PUT P2B_ao[mu,nu] += Ixx[mu,nu]
+                  PUT W2_ao[mu,nu]  += Jxx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO b, b1
 #
 #     Transform Pai_aa
 #     ----------------
@@ -3595,20 +3833,37 @@ import "mp2grad_uhf_vars.sialx"
       execute compute_int_scratchmem oed_ovl zmax imax
 
 #bgn_debug
-      print "reference, the zmax and imax"
-      print reference
+#     print "reference, the zmax and imax"
+#      print reference
 #end_debug
 
       sip_barrier
       Restore_persistent ca "ca"
+      Restore_persistent cb "cb"
       restore_persistent Fock_a "fock_a"
+      restore_persistent Fock_b "fock_b"
       restore_persistent scf_energy "scf_energy"
-      restore_persistent scf_energy "scf_energy"
-      restore_persistent totenerg "totenerg"
       sip_barrier
 
+     execute compute_nn_repulsion_grad Gradient
+
+     DO Ngrads
+        Put D_gradient[Ngrads] = Gradient[Ngrads]
+     Enddo Ngrads
+
+#bgn_debug
+#     etmp = 0.0
+#     sip_barrier
+#     DO Ngrads
+#         get D_gradient[Ngrads]
+#         etmp += D_Gradient[Ngrads] * D_Gradient[Ngrads]
+#     enddo Ngrads
+#     print "checksum of nuc-nuc gradient"
+#     print  etmp
+#end_debug
+
       AAAA = 1.0
-      BBBB = 1.0
+      BBBB = 2.0
       ABAB = 3.0
 
       CALL ZERO_ARRAYS
@@ -3641,7 +3896,7 @@ import "mp2grad_uhf_vars.sialx"
 #
       eold = 0.0 
       esum = 0.0 
-      ecrit = cc_conv 
+      ecrit = 0.0000000001
 
       CALL FORM_GUESS 
 #
@@ -3651,6 +3906,13 @@ import "mp2grad_uhf_vars.sialx"
 #     Start iterations 
 #     ---------------- 
 #
+      DO d1
+      DO d2
+         PUT DIST_BB[d1,d2] = 0.0
+         BB[d1,d2]          = 0.0
+      ENDDO d2
+      ENDDO d1
+
       DO kiter 
 #
          CALL FORM_PAI_NEW 
@@ -3694,13 +3956,9 @@ import "mp2grad_uhf_vars.sialx"
          assert_same enew
          assert_same eold
 
-#  Check on convergence
-#  --------------------
-
          etemp = (eold - enew)**(2.0)
          ediff = (etemp)**(0.5)
          assert_same ediff
-         print ediff
 
          IF ediff < ecrit
             exit
@@ -3710,11 +3968,32 @@ import "mp2grad_uhf_vars.sialx"
          print eold
          print enew
          print ediff
+         print ""
 #end_debug
 
          if kiter >= diis_start
             CALL DO_DIIS
          endif
+#bgn_debug
+#     etmp = 0.0
+#     do a
+#     do i
+#        get Paiold_aa[a,i]
+#        etmp += Paiold_aa[a,i] * Paiold_aa[a,i]
+#     enddo i
+#     enddo a
+#     print "checksum of paiold_aa"
+#     print etmp
+#     etmp = 0.0
+#     do b
+#     do j
+#        get Paiold_bb[b,j]
+#        etmp += Paiold_bb[b,j] * Paiold_bb[b,j]
+#     enddo j
+#     enddo b
+#     print "checksum of Paiold_bb"
+#     print etmp
+#end_debug
 
 #  Reset eold --> enew
 #  -------------------
@@ -3745,9 +4024,6 @@ import "mp2grad_uhf_vars.sialx"
 # -----------------------------------------
 #
       CALL D2TRANS
-#
-# Calculate the mp2 energy and write to JOBARC 
-# --------------------------------------------
 #
       deallocate La[*,*] 
       deallocate Lb[*,*] 

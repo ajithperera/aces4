@@ -20,7 +20,7 @@ C  in the file COPYRIGHT.
      *                             
      *                             coords, tcoords, 
      *
-     *                             der_flags, center)
+     *                             component)
 c---------------------------------------------------------------------------
 !>   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
 !>   following 'types' of integrals based on atomic labels.
@@ -49,7 +49,7 @@ c---------------------------------------------------------------------------
       integer nalpha_pack, npcoeff_pack
       integer ncsum, next, nfirst
       integer ncder, k, wder 
-      integer center 
+      integer component
 
       logical spherical
 
@@ -328,6 +328,12 @@ C----------------------------------------------------------------------
       enddo 
       enddo 
       enddo 
+    
+      Do a = 1, 12
+          der_flags(a) = 0
+      enddo 
+
+      der_flags(component) = 1
 
       do a = 1, 12
          der_save(a) = der_flags(a)

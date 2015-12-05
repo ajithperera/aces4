@@ -68,16 +68,15 @@ import "mp2grad_rhf_vars.sialx"
       ENDDO jdiis
 
 #bgn_debug
-     do jdiis
-     where jdiis <= iorder
-     do idiis
-     where idiis  <= iorder
-        print BB[idiis,jdiis]
-        etmp = BB[idiis,jdiis] * BB[idiis,jdiis]
-     enddo idiis
-     enddo jdiis
-     print "checksum of B matrix"
-     print etmp
+#     do jdiis
+#     where jdiis <= iorder
+#     do idiis
+#     where idiis  <= iorder
+#        etmp = BB[idiis,jdiis] * BB[idiis,jdiis]
+#     enddo idiis
+#     enddo jdiis
+#     print "checksum of B matrix"
+#     print etmp
 #end_debug
 
       execute compute_diis BB

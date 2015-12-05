@@ -589,7 +589,17 @@ set(SIAL_FILES
     src/sialx/qm/scf_grad_ru_hf.sialx;
     src/sialx/qm/scf_grad_ru_hf_defs.sialx;
     src/sialx/qm/mp2_uhf.sialx;
-    src/sialx/qm/mp2_uhf_defs.sialx)
+    src/sialx/qm/mp2_uhf_defs.sialx;
+    src/sialx/qm/diis_2index_rhf.sialx;
+    src/sialx/qm/diis_2index_uhf.sialx;
+    src/sialx/qm/diis_4index_rhf.sialx; 
+    src/sialx/qm/diis_4index_uhf.sialx;
+    src/sialx/qm/mp2grad_rhf_vars.sialx;
+    src/sialx/qm/mp2grad_rhf_defs.sialx;
+    src/sialx/qm/diis_2index_mp2grad_rhf.sialx; 
+    src/sialx/qm/mp2grad_rhf.sialx;
+    src/sialx/qm/mp2grad_uhf.sialx)
+
 #    src/sialx/qm/scf_hess_uhf.sialx;
 #    src/sialx/qm/scf_hess_uhf_defs.sialx)
     

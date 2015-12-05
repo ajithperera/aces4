@@ -115,6 +115,7 @@ import "mp2grad_rhf_defs.sialx"
       distributed Dai[a,i,idiis]
       distributed eai[a,i,idiis]
       distributed D_gradient[Ngrads]
+      Distributed DIST_BB[d1,d2]
 #
 # Temporary arrays
 #
@@ -250,6 +251,10 @@ import "mp2grad_rhf_defs.sialx"
       temp Xa[lambda,i,sigma,mu]
       temp GRAD_AO_INTS[mu,nu,lambda,sigma]
       temp TD2[mu,lambda,nu,sigma]
+      temp Tdd[d1,d2]
+      temp T3ai[a,i]
+      temp T2ai[a,i]
+      temp Tbb[idiis,jdiis]
 #
 # Staic and local arrays
 #
@@ -303,6 +308,7 @@ import "mp2grad_rhf_defs.sialx"
 #     contiguous local L_gradient[Ngrads]
       static L_gradient[Ngrads]
       static gradient[Ngrads]
+      static BB[d1,d2]
 #
 # scalars
 #
@@ -339,22 +345,14 @@ import "mp2grad_rhf_defs.sialx"
       scalar AAAA
       scalar ABAB
       scalar etmp
-
-      Distributed DIST_BB[d1,d2]
-      static BB[d1,d2]
-#
-      Temp Tbb[d1,d2]
-      Temp T3ai[a,i]
-      Temp T2ai[a,i]
-
-      Int worder
-      Int Iorder
-      Int niter
-
       Scalar n1
       Scalar n2
       Scalar kcount
       Scalar scale2
+
+      Int worder
+      Int Iorder
+      Int niter
 
 #
       ENDSIAL mp2grad_rhf_VARS 

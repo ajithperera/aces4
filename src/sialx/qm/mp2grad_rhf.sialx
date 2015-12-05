@@ -321,8 +321,11 @@ import "diis_2index_mp2grad_rhf.sialx"
            Tpq[mu,nu]  *= 2.0  
            Spq[mu,nu]   = Tpq[mu,nu] 
 
+           Txx[mu,nu]   = 0.0
+          
+
             flag = 1.0
-            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Spq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
@@ -333,7 +336,7 @@ import "diis_2index_mp2grad_rhf.sialx"
             Enddo Ngrads
 
             flag = 2.0
-            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+            execute return_1el_gradient Txx[mu,nu] Spq[mu,nu] L_Gradient flag
 
             Do Ngrads
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
@@ -374,6 +377,7 @@ import "diis_2index_mp2grad_rhf.sialx"
             Tpq[mu,nu]   = W2_ao[mu,nu]
             Tpq[mu,nu]  += WHFa[mu,nu]
             Tpq[mu,nu]  *= 2.0  
+
             execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
             Do Ngrads
@@ -1419,8 +1423,8 @@ import "diis_2index_mp2grad_rhf.sialx"
      totenerg  = ecorraa  
      totenerg += scf_energy
 #bgn_debug
-     print "" 
-     print totenerg 
+#     print "" 
+#     print totenerg 
 #enddebg 
 #
      ENDPROC ENERGY  
@@ -1629,15 +1633,15 @@ import "diis_2index_mp2grad_rhf.sialx"
       deallocate LLai_aa[*,*]
 
 #bgn_debug
-     etmp = 0.0
-     do a 
-     do i 
-        get Lai_aa[a,i]
-        etmp += Lai_aa[a,i] * Lai_aa[a,i]
-     enddo i
-     enddo a
-     print "checksum of Lai"
-     print etmp
+#     etmp = 0.0
+#     do a 
+#     do i 
+#        get Lai_aa[a,i]
+#        etmp += Lai_aa[a,i] * Lai_aa[a,i]
+#     enddo i
+#     enddo a
+#     print "checksum of Lai"
+#     print etmp
 #end_debug
      ENDPROC FORM_LAI
 #    ----------------
@@ -2072,24 +2076,24 @@ import "diis_2index_mp2grad_rhf.sialx"
       ENDPARDO a, i
       sip_barrier
 #bgn_debug
-     etmp = 0.0
-     do mu 
-     do nu
-        get P2A_ao[mu,nu]
-        etmp += P2A_ao[mu,nu] * P2A_ao[mu,nu]
-     enddo nu
-     enddo mu 
-     print "checksum of P2A_ao"
-     print etmp 
-     etmp = 0.0
-     do mu 
-     do nu
-        get W2_ao[mu,nu]
-        etmp += W2_ao[mu,nu] * W2_ao[mu,nu]
-     enddo nu
-     enddo mu 
-     print "checksum of W2A_ao"
-     print etmp 
+#     etmp = 0.0
+#     do mu 
+#     do nu
+#        get P2A_ao[mu,nu]
+#        etmp += P2A_ao[mu,nu] * P2A_ao[mu,nu]
+#     enddo nu
+#     enddo mu 
+#     print "checksum of P2A_ao"
+#     print etmp 
+#     etmp = 0.0
+#     do mu 
+#     do nu
+#        get W2_ao[mu,nu]
+#        etmp += W2_ao[mu,nu] * W2_ao[mu,nu]
+#     enddo nu
+#     enddo mu 
+#     print "checksum of W2A_ao"
+#     print etmp 
 #end_debug
 
 #
@@ -2117,12 +2121,12 @@ import "diis_2index_mp2grad_rhf.sialx"
      execute compute_int_scratchmem oed_ovl zmax imax
 
 #bgn_debug
-      print "reference, the zmax and imax"
-      print reference
-      print zmax 
-      print imax 
-      print diis_order 
-      print diis_start 
+#      print "reference, the zmax and imax"
+#      print reference
+#      print zmax 
+#      print imax 
+#      print diis_order 
+#      print diis_start 
 #end_debug
 
       sip_barrier
@@ -2151,7 +2155,7 @@ import "diis_2index_mp2grad_rhf.sialx"
 #end_debug
 
 #bgn_debug
-      print scf_energy
+#      print scf_energy
 #end_debug
 
       allocate La[*,*] 
@@ -2204,13 +2208,24 @@ import "diis_2index_mp2grad_rhf.sialx"
 #
       eold = 0.0 
       esum = 0.0 
-      ecrit = cc_conv 
+# 
+# At the momenet this can not be controlled by a key-word. I do not
+# think it is a necessary control to have. 
+#
+      ecrit = 0.0000000001
 
       CALL FORM_GUESS 
 
 # Done initial guess; start iterations 
 # ------------------------------------
 #
+      DO d1
+      DO d2
+         PUT DIST_BB[d1,d2] = 0.0
+         BB[d1,d1]          = 0.0
+      ENDDO d2
+      ENDDO d1
+
       DO kiter 
 
          CALL FORM_PAI_NEW

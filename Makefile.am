@@ -542,7 +542,18 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_uhf.siox\
 ./src/sialx/qm/scf_uhf_defs.siox\
 ./src/sialx/qm/scf_grad_ru_hf.siox\
-./src/sialx/qm/scf_grad_ru_hf_defs.siox
+./src/sialx/qm/scf_grad_ru_hf_defs.siox\
+./src/sialx/qm/mp2_uhf.siox\
+./src/sialx/qm/mp2_uhf_defs.siox\
+./src/sialx/qm/diis_2index_rhf.siox\
+./src/sialx/qm/diis_2index_uhf.siox\
+./src/sialx/qm/diis_4index_rhf.siox\
+./src/sialx/qm/diis_4index_uhf.siox\
+./src/sialx/qm/mp2grad_rhf_vars.siox\
+./src/sialx/qm/mp2grad_rhf_defs.siox\
+./src/sialx/qm/mp2grad_rhf.siox\
+./src/sialx/qm/mp2grad_uhf.siox\
+./src/sialx/qm/diis_2index_mp2grad_rhf.siox\
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -692,6 +703,15 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_hess_uhf_defs.sialx\
 ./src/sialx/qm/mp2_uhf.sialx\
 ./src/sialx/qm/mp2_uhf_defs.sialx\
+./src/sialx/qm/diis_2index_rhf.sialx\
+./src/sialx/qm/diis_2index_uhf.sialx\
+./src/sialx/qm/diis_4index_rhf.sialx\
+./src/sialx/qm/diis_4index_uhf.sialx\
+./src/sialx/qm/mp2grad_rhf_vars.sialx\
+./src/sialx/qm/mp2grad_rhf_defs.sialx\
+./src/sialx/qm/mp2grad_rhf.sialx\
+./src/sialx/qm/mp2grad_uhf.sialx\
+./src/sialx/qm/diis_2index_mp2grad_rhf.sialx\
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\

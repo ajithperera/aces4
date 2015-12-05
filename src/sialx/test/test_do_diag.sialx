@@ -1,0 +1,18 @@
+import "test_diag_defs.sialx"
+import "test_diag_vars.sialx"
+
+      sial test_do_diag.sialx
+#     -----------------------
+
+      proc test_diag
+#     --------------
+      print bb 
+
+      execure compute_diis BB
+
+      endproc test_diag
+#     --------------
+
+      endsial test_do_diag.sialx
+#     -----------------------
+

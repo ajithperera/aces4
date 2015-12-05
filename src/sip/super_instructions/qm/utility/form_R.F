@@ -21,11 +21,17 @@ c
 
       integer maxdim
       maxdim = rank 
-c      print *, 'maxdim = ', maxdim
-c      print *, 'i2 = ', i2
-c      print *, 'i1 = ', i1
-c      print *, 'rank = ', rank
-c      print *, 'rank2 = ', rank2
+C      print *, 'maxdim = ', maxdim
+C      print *, 'i2 = ', i2
+C      print *, 'i1 = ', i1
+C      print *, 'rank = ', rank
+C      print *, 'rank2 = ', rank2
+C
+C      do i = 1, 10     
+C      do j = 1, 10   
+C        write(6,*) ' BB:', i,j, b_array(i,j)
+C      enddo 
+C      enddo 
 
       do i = 1, maxdim
       do j = i, maxdim
@@ -67,12 +73,6 @@ c
          v(i) = 0.
       enddo
       v(ndim+1) = -1.d0
-
-c     do i = 1, 10     
-c     do j = 1, 10   
-c        write(6,*) ' BB:', i,j, b_array(i,j)
-c     enddo 
-c     enddo 
 
 c
 c Solve the eigenvalue problem R * C = v for the vector C.
