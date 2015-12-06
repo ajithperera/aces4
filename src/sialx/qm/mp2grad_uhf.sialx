@@ -2807,18 +2807,16 @@ import "diis_2index_mp2grad_uhf.sialx"
 
       PARDO a, i
 
-#            GET Paiold_aa[a,i]
-#            Tai[a,i]      = Paiold_aa[a,i]
-            Tai[a,i]  = 0.0
+            GET Paiold_aa[a,i]
+            Tai[a,i]      = Paiold_aa[a,i]
             PREPARE D0ai[a,i] = Tai[a,i]
 
       ENDPARDO a, i
 
       PARDO b, j
 
-#            GET Paiold_bb[b,j]
-#            Tbj[b,j]      = Paiold_bb[b,j]
-            Tbj[b,j] = 0.0
+            GET Paiold_bb[b,j]
+            Tbj[b,j]      = Paiold_bb[b,j]
             PREPARE D0bj[b,j] = Tbj[b,j]
 
       ENDPARDO b, j
