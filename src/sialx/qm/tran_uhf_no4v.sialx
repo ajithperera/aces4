@@ -1,4 +1,4 @@
-import "tran_rhf_no4v_defs.sialx" 
+import "tran_uhf_no4v_defs.sialx" 
 #
 SIAL tran_uhf_no4v
 #
@@ -6,7 +6,7 @@ SIAL tran_uhf_no4v
 #
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Declare indeces
+# Declare indices
 #
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
@@ -25,25 +25,25 @@ moaindex a1= bavirt: eavirt
 moaindex a2= bavirt: eavirt
 moaindex a3= bavirt: eavirt
 #
-moaindex j = baocc: eaocc
-moaindex j1= baocc: eaocc
-moaindex j2= baocc: eaocc
-moaindex j3= baocc: eaocc
+mobindex j = bbocc: ebocc
+mobindex j1= bbocc: ebocc
+mobindex j2= bbocc: ebocc
+mobindex j3= bbocc: ebocc
 #
-moaindex b = bavirt: eavirt
-moaindex b1= bavirt: eavirt
-moaindex b2= bavirt: eavirt
-moaindex b3= bavirt: eavirt
+mobindex b = bbvirt: ebvirt
+mobindex b1= bbvirt: ebvirt
+mobindex b2= bbvirt: ebvirt
+mobindex b3= bbvirt: ebvirt
 #
 moaindex p = baocc: eavirt
 moaindex p1= baocc: eavirt
 moaindex p2= baocc: eavirt
 moaindex p3= baocc: eavirt
 #
-moaindex q = baocc: eavirt
-moaindex q1= baocc: eavirt
-moaindex q2= baocc: eavirt
-moaindex q3= baocc: eavirt
+mobindex q = bbocc: ebvirt
+mobindex q1= bbocc: ebvirt
+mobindex q2= bbocc: ebvirt
+mobindex q3= bbocc: ebvirt
 
 #
 scalar srank
@@ -283,6 +283,7 @@ SCALAR  esum
 #
 served VSpipi[p1,i,p,i1]
 served VSaaai[a2,a,a1,i]
+served VSbbbj[b,b1,b2,j]
 #
 served VSqjqj[q1,j,q,j1]
 served Vjbbj[j,b1,b,j1]
@@ -750,7 +751,7 @@ pardo mu, nu, lambda
 #
 	do j   
 #
-	    T1xxxj[mu,nu,lambda,j]  = aoint[mu,nu,lambda,sigma]*ca[sigma,j]
+	    T1xxxj[mu,nu,lambda,j]  = aoint[mu,nu,lambda,sigma]*cb[sigma,j]
 	    Txxxj[mu,nu,lambda,j]  += T1xxxj[mu,nu,lambda,j]  
 #
 	enddo j   
@@ -879,7 +880,7 @@ pardo mu, nu, j
 #
 	do lambda
 #
-	T1xxjj[mu,nu,j1,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,j1]
+	T1xxjj[mu,nu,j1,j] = L1xxxj[mu,nu,lambda,j]*cb[lambda,j1]
 	Txxjj[mu,nu,j1,j] += T1xxjj[mu,nu,j1,j]
 #
 	enddo lambda
@@ -894,7 +895,7 @@ pardo mu, nu, j
 #
 	do lambda
 #
-	T1xxbj[mu,nu,b,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,b]
+	T1xxbj[mu,nu,b,j] = L1xxxj[mu,nu,lambda,j]*cb[lambda,b]
 	Txxbj[mu,nu,b,j] += T1xxbj[mu,nu,b,j]
 #
 	enddo lambda
@@ -930,7 +931,7 @@ pardo mu, nu, j
 	Txjxj[mu,j1,nu,j] = 0.0
 
 	do lambda
-	T1xjxj[mu,j1,nu,j] = L2xxxj[mu,lambda,nu,j]*ca[lambda,j1]
+	T1xjxj[mu,j1,nu,j] = L2xxxj[mu,lambda,nu,j]*cb[lambda,j1]
 	Txjxj[mu,j1,nu,j] += T1xjxj[mu,j1,nu,j]
 	enddo lambda
 
@@ -960,7 +961,7 @@ pardo mu, nu, j
 	Tjxxj[j1,mu,nu,j] = 0.0
 
 	do lambda
-	T1jxxj[j1,mu,nu,j] = L3xxxj[lambda,mu,nu,j]*ca[lambda,j1]
+	T1jxxj[j1,mu,nu,j] = L3xxxj[lambda,mu,nu,j]*cb[lambda,j1]
 	Tjxxj[j1,mu,nu,j] += T1jxxj[j1,mu,nu,j]
 	enddo lambda
 
@@ -1058,7 +1059,7 @@ pardo mu, i, i1
 #
 	do nu  
 #
-	T1xbii[mu,b,i,i1] = Lxxii[mu,nu,i,i1]*ca[nu,b]
+	T1xbii[mu,b,i,i1] = Lxxii[mu,nu,i,i1]*cb[nu,b]
 	Txbii[mu,b,i,i1] += T1xbii[mu,b,i,i1]  
 #
 	enddo nu  
@@ -1108,7 +1109,7 @@ pardo mu, a, i
 #
 	do nu  
 #
-	T1xbai[mu,b,a,i] = Lxxai[mu,nu,a,i]*ca[nu,b]
+	T1xbai[mu,b,a,i] = Lxxai[mu,nu,a,i]*cb[nu,b]
 	Txbai[mu,b,a,i] += T1xbai[mu,b,a,i]   
 #
 	enddo nu  
@@ -1148,7 +1149,7 @@ pardo mu, j, j1
 #
 	do nu  
 #
-	T1xjqj[mu,j,q,j1] = Lxjxj[mu,j,nu,j1]*ca[nu,q]
+	T1xjqj[mu,j,q,j1] = Lxjxj[mu,j,nu,j1]*cb[nu,q]
 	Txjqj[mu,j,q,j1] += T1xjqj[mu,j,q,j1]  
 #
 	enddo nu  
@@ -1164,10 +1165,10 @@ pardo mu, j, j1
 #
 	do nu 
 #
-	T1xbjj[mu,b,j,j1] = Lxxjj[mu,nu,j,j1]*ca[nu,b]
+	T1xbjj[mu,b,j,j1] = Lxxjj[mu,nu,j,j1]*cb[nu,b]
 	Txbjj[mu,b,j,j1] += T1xbjj[mu,b,j,j1]  
 #
-	T1jxbj[j,mu,b,j1] = Ljxxj[j,mu,nu,j1]*ca[nu,b]
+	T1jxbj[j,mu,b,j1] = Ljxxj[j,mu,nu,j1]*cb[nu,b]
 	Tjxbj[j,mu,b,j1] += T1jxbj[j,mu,b,j1]  
 
 	enddo nu 
@@ -1218,7 +1219,7 @@ pardo mu, b, j
 #
 	do nu  
 #
-	T1xbbj[mu,b1,b,j] = Lxxbj[mu,nu,b,j]*ca[nu,b1]
+	T1xbbj[mu,b1,b,j] = Lxxbj[mu,nu,b,j]*cb[nu,b1]
 	Txbbj[mu,b1,b,j] += T1xbbj[mu,b1,b,j]  
 #
 	enddo nu  
@@ -1270,7 +1271,7 @@ pardo mu, i, j
 #
 	do nu  
 #
-	T1xiqj[mu,i,q,j] = Lxixj[mu,i,nu,j]*ca[nu,q]
+	T1xiqj[mu,i,q,j] = Lxixj[mu,i,nu,j]*cb[nu,q]
 	Txiqj[mu,i,q,j] += T1xiqj[mu,i,q,j]  
 #
 	enddo nu  
@@ -1285,7 +1286,7 @@ pardo mu, i, j
 #
 	do nu  
 #
-	T1ixbj[i,mu,b,j] = Lixxj[i,mu,nu,j]*ca[nu,b]
+	T1ixbj[i,mu,b,j] = Lixxj[i,mu,nu,j]*cb[nu,b]
 	Tixbj[i,mu,b,j] += T1ixbj[i,mu,b,j]  
 #
 	enddo nu  
@@ -1456,7 +1457,7 @@ pardo q, j, j1
 #
 	do mu  
 #
-	T1qjqj[q1,j,q,j1]      = Lxjqj[mu,j,q,j1]*ca[mu,q1]
+	T1qjqj[q1,j,q,j1]      = Lxjqj[mu,j,q,j1]*cb[mu,q1]
 	Tqjqj[q1,j,q,j1]      += T1qjqj[q1,j,q,j1] 
 #
 	enddo mu  
@@ -1491,7 +1492,7 @@ pardo b, j, j1
 #
 	do mu 
 #
-	T1bbjj[b1,b,j,j1] = Lxbjj[mu,b,j,j1]*ca[mu,b1]
+	T1bbjj[b1,b,j,j1] = Lxbjj[mu,b,j,j1]*cb[mu,b1]
 	Tbbjj[b1,b,j,j1] += T1bbjj[b1,b,j,j1]  
 #
 	enddo mu  
@@ -1508,7 +1509,7 @@ pardo b, j, j1
 #
 	do mu  
 #
-	T1jbbj[j,b1,b,j1] = Ljxbj[j,mu,b,j1]*ca[mu,b1]
+	T1jbbj[j,b1,b,j1] = Ljxbj[j,mu,b,j1]*cb[mu,b1]
 	Tjbbj[j,b1,b,j1] += T1jbbj[j,b1,b,j1]  
 #
 	enddo mu  
@@ -1520,6 +1521,42 @@ pardo b, j, j1
     deallocate Ljxbj[j,*,b,j1] 
 #
 endpardo b, j, j1
+
+print "Starting tran 4:VSbbbj"
+
+     PARDO b, b1, j
+#
+           allocate L1xbbj[*,b,b1,j]
+#
+           DO mu
+#
+              REQUEST Vxbbj[mu,b,b1,j]
+#
+              L1xbbj[mu,b,b1,j]  = Vxbbj[mu,b,b1,j]
+#
+           ENDDO mu
+#
+           DO b2
+#
+              Tbbbj[b2,b,b1,j] = 0.0
+#
+              DO mu
+#
+                 T1bbbj[b2,b,b1,j] = L1xbbj[mu,b,b1,j]*cb[mu,b2]
+                 Tbbbj[b2,b,b1,j] += T1bbbj[b2,b,b1,j]
+#
+              ENDDO mu
+#
+              T1bbbj[b1,b,b2,j]           = Tbbbj[b2,b,b1,j]
+              T1bbbj[b1,b,b2,j]          *= -1.0
+              PREPARE VSbbbj[b2,b,b1,j]  += Tbbbj[b2,b,b1,j]
+              PREPARE VSbbbj[b1,b,b2,j]  += T1bbbj[b1,b,b2,j]
+#
+           ENDDO b2
+#
+           deallocate L1xbbj[*,b,b1,j]
+#
+     ENDPARDO b, b1, j
 #
 print "Starting tran 4:Vbbii"
 pardo b, i, i1
@@ -1539,7 +1576,7 @@ pardo b, i, i1
 #
 	do mu  
 #
-	T1bbii[b1,b,i,i1] = Lxbii[mu,b,i,i1]*ca[mu,b1]
+	T1bbii[b1,b,i,i1] = Lxbii[mu,b,i,i1]*cb[mu,b1]
 	Tbbii[b1,b,i,i1] += T1bbii[b1,b,i,i1]  
 #
 	enddo mu  
@@ -1570,7 +1607,7 @@ pardo b, i, i1
 #
 	do mu 
 #
-	T1jbii[j,b,i,i1] = Lxbii[mu,b,i,i1]*ca[mu,j]
+	T1jbii[j,b,i,i1] = Lxbii[mu,b,i,i1]*cb[mu,j]
 	Tjbii[j,b,i,i1] += T1jbii[j,b,i,i1]  
 #
 	enddo mu  
@@ -1601,7 +1638,7 @@ pardo b, a, i
 #
 	do mu  
 #
-	T1bbai[b1,b,a,i] = Lxbai[mu,b,a,i]*ca[mu,b1]
+	T1bbai[b1,b,a,i] = Lxbai[mu,b,a,i]*cb[mu,b1]
 	Tbbai[b1,b,a,i] += T1bbai[b1,b,a,i]  
 #
 	enddo mu  
@@ -1765,6 +1802,8 @@ ENDPROC TRAN_UHF
 server_barrier
 restore_persistent ca "ca"
 set_persistent ca "ca"  
+restore_persistent cb "cb"
+set_persistent cb "cb"  
 server_barrier
 
 CALL TRAN_UHF 
@@ -1775,6 +1814,7 @@ set_persistent Vaaii "Vaaii"
 set_persistent Viaai "Viaai"
 set_persistent Vaaai "Vaaai"
 set_persistent VSaaai "VSaaai"
+set_persistent VSbbbj "VSbbbj"
 set_persistent VSqjqj "VSqjqj"
 set_persistent Vbbjj "Vbbjj"
 set_persistent Vjbbj "Vjbbj"

@@ -554,6 +554,9 @@ SIOX_FILES=\
 ./src/sialx/qm/mp2grad_rhf.siox\
 ./src/sialx/qm/mp2grad_uhf.siox\
 ./src/sialx/qm/diis_2index_mp2grad_rhf.siox\
+./src/sialx/qm/ccsd_uhf_vars.siox\
+./src/sialx/qm/ccsd_uhf_defs.siox\
+.src/sialx/qm/ccsd_uhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -712,6 +715,9 @@ EXTRA_DIST += \
 ./src/sialx/qm/mp2grad_rhf.sialx\
 ./src/sialx/qm/mp2grad_uhf.sialx\
 ./src/sialx/qm/diis_2index_mp2grad_rhf.sialx\
+./src/sialx/qm/ccsd_uhf_vars.sialx\
+./src/sialx/qm/ccsd_uhf_defs.sialx\
+.src/sialx/qm/ccsd_uhf.sialx
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\
