@@ -50,6 +50,10 @@ import "diis_4index_ccsd_uhf.sialx"
      PROC WRITE_2EL   
 #    --------------
 #
+     set_persistent ca     "ca"
+     set_persistent cb     "cb"
+     set_persistent Fock_a "fock_a"
+     set_persistent Fock_b "fock_b"
      set_persistent VSpipi "VSpipi"
      set_persistent Vaaii "Vaaii"
      set_persistent Viaai "Viaai"
@@ -71,6 +75,8 @@ import "diis_4index_ccsd_uhf.sialx"
      set_persistent T2old_aa "T2old_aa"
      set_persistent T2old_ab "T2old_ab"
      set_persistent T2old_bb "T2old_bb"
+     set_persistent scf_energy "scf_energy"
+     set_persistent ccsd_energy "ccsd_energy"
      server_barrier 
 #
      ENDPROC WRITE_2EL   
@@ -4631,6 +4637,8 @@ import "diis_4index_ccsd_uhf.sialx"
       print scf_energy
       print ccsd_correlation
       print ccsd_energy
+
+      CALL WRITE_2EL
 #
                     ENDSIAL CCSD_UHF
 #                   ----------------

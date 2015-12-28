@@ -56,6 +56,10 @@ import "diis_4index_lambda_uhf.sialx"
      PROC WRITE_2EL
 #    -------------
 
+     set_persistent ca "ca"
+     set_persistent cb "cb"
+     set_persistent Fock_a "fock_a"
+     set_persistent Fock_b "fock_b"
      set_persistent VSpipi "VSpipi"
      set_persistent Vaaii "Vaaii"
      set_persistent Viaai "Viaai"
@@ -77,12 +81,11 @@ import "diis_4index_lambda_uhf.sialx"
      set_persistent T2old_aa "T2old_aa"
      set_persistent T2old_ab "T2old_ab"
      set_persistent T2old_bb "T2old_bb"
-     set_persistent l1a_old  "t1a_old"
-     set_persistent l1b_old  "t1b_old"
-     set_persistent L2old_aa "T2old_aa"
-     set_persistent L2old_ab "T2old_ab"
-     set_persistent L2old_bb "T2old_bb"
-     server_barrier
+     set_persistent l1a_old  "l1a_old"
+     set_persistent l1b_old  "l1b_old"
+     set_persistent L2old_aa "L2old_aa"
+     set_persistent L2old_ab "L2old_ab"
+     set_persistent L2old_bb "L2old_bb"
      server_barrier
 
      ENDPROC WRITE_2EL
@@ -293,6 +296,31 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate L1aibj[*,i,b,j] 
 #
       ENDPARDO i, j, b  
+#bgn_debug
+      server_barrier 
+      suma=0.0
+      sumaa=0.0
+      pardo a1,a,b,j
+      request W1eafm_ab[a1,a,b,j]
+      tmp = W1eafm_ab[a1,a,b,j] * W1eafm_ab[a1,a,b,j]
+      suma += tmp
+      endpardo a1,a,b,j
+      sip_barrier
+      collective sumaa+=suma
+      print "checksum of W1eafm_ab1"
+      print sumaa
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      pardo a, a1
+#      get F1ae_a[a,a1] 
+#      tmp = F1ae_a[a,a1]  * F1ae_a[a,a1] 
+#      suma += tmp
+#      endpardo a, a1
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
 #
       ENDPROC F1AEA
 #     -------------
@@ -312,17 +340,17 @@ import "diis_4index_lambda_uhf.sialx"
                GET t1b_old[b,j] 
                GET Fme_b[j,b1] 
 #
-               T1bb[b,b1]    = t1b_old[b,j]*Fme_b[j,b1]  
-               T1bb[b,b1]   *= 0.5  
-               Tae_b[b,b1] -=  T1bb[b,b1]  
+               TTbb[b,b1]    = t1b_old[b,j]*Fme_b[j,b1]  
+               TTbb[b,b1]   *= 0.5  
+               Tae_b[b,b1] -=  TTbb[b,b1]  
 #
                DO b2 
 #
                   REQUEST VSbbbj[b1,b,b2,j] 
                   GET t1b_old[b2,j] 
 #
-                  T1bb[b,b1]    = VSbbbj[b1,b,b2,j]*t1b_old[b2,j] 
-                  Tae_b[b,b1] +=  T1bb[b,b1]  
+                  TTbb[b,b1]    = VSbbbj[b1,b,b2,j]*t1b_old[b2,j] 
+                  Tae_b[b,b1] +=  TTbb[b,b1]  
 #
 #                 Initialize W1eafm_bb Intermediate. 
 #                 ---------------------------------- 
@@ -338,8 +366,8 @@ import "diis_4index_lambda_uhf.sialx"
                REQUEST Vbbai[b1,b,a,i] 
                GET t1a_old[a,i] 
 #
-               T1bb[b,b1]    = Vbbai[b1,b,a,i]*t1a_old[a,i] 
-               Tae_b[b,b1] +=  T1bb[b,b1]  
+               TTbb[b,b1]    = Vbbai[b1,b,a,i]*t1a_old[a,i] 
+               Tae_b[b,b1] +=  TTbb[b,b1]  
 #
 #              Initialize the W1eafm_ba intermediate. 
 #              -------------------------------------- 
@@ -369,9 +397,9 @@ import "diis_4index_lambda_uhf.sialx"
 #
                DO b1 
 #
-                  T1bb[b,b1]         = Taup_bb[b,j,b2,j1]*L1bjbj[b1,j1,b2,j] 
-                  T1bb[b,b1]        *= 0.5 
-                  PUT F1ae_b[b,b1] +=  T1bb[b,b1]  
+                  TTbb[b,b1]         = Taup_bb[b,j,b2,j1]*L1bjbj[b1,j1,b2,j] 
+                  TTbb[b,b1]        *= 0.5 
+                  PUT F1ae_b[b,b1] +=  TTbb[b,b1]  
 #
                ENDDO b1 
 #
@@ -398,9 +426,9 @@ import "diis_4index_lambda_uhf.sialx"
 #
                DO b1  
 #
-                  T1bb[b,b1]         = Taup_ab[a,i,b,j]*L2aibj[a,i,b1,j] 
-                  T1bb[b,b1]        *= -1.0  
-                  PUT F1ae_b[b,b1] += T1bb[b,b1] 
+                  TTbb[b,b1]         = Taup_ab[a,i,b,j]*L2aibj[a,i,b1,j] 
+                  TTbb[b,b1]        *= -1.0  
+                  PUT F1ae_b[b,b1] += TTbb[b,b1] 
 #
                ENDDO b1  
 #
@@ -409,6 +437,30 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate L2aibj[a,i,*,j] 
 #
       ENDPARDO i, j, a  
+#bgn_debug
+      server_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo b1,b,a,i
+      request W1eafm_ba[b1,b,a,i]
+      tmp = W1eafm_ba[b1,b,a,i] * W1eafm_ba[b1,b,a,i]
+      suma += tmp
+      endpardo b1,b,a,i
+      sip_barrier
+      collective sumaa+=suma
+      print "checksum of W1eafm_ba1"
+      print sumaa
+#      sip_barrier
+#      sumb=0.0
+#      pardo b, b1
+#      get F1ae_b[b,b1] 
+#      tmp = F1ae_b[b,b1]  * F1ae_b[b,b1]
+#      sumb += tmp
+#      endpardo b, b1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
 #
       ENDPROC F1AEB
 #     -------------
@@ -442,6 +494,18 @@ import "diis_4index_lambda_uhf.sialx"
             PUT Fme_a[i,a] += Tia[i,a] 
 #
       ENDPARDO i, a, j, b  
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      pardo a, i
+#      get Fme_a[i,a]
+#      tmp = Fme_a[i,a] * Fme_a[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
 # 
       ENDPROC FMEA
 #     -------------
@@ -468,6 +532,18 @@ import "diis_4index_lambda_uhf.sialx"
             PUT Fme_b[j,b] += Tjb[j,b] 
 #
       ENDPARDO j, b, i, a  
+#bgn_debug
+#      sip_barrier 
+#      sumb=0.0
+#      pardo b, j
+#      get   Fme_b[j,b] 
+#      tmp =  Fme_b[j,b] *  Fme_b[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
 # 
       ENDPROC FMEB
 #     -------------
@@ -647,7 +723,7 @@ import "diis_4index_lambda_uhf.sialx"
 #
             DO j1 
 #
-               REQUEST            Viqj[a,i,b,j1] 
+               REQUEST            Vpiqj[a,i,b,j1] 
                L4aibj[a,i,b,j1] = Vpiqj[a,i,b,j1] 
 #
             ENDDO j1 
@@ -684,6 +760,11 @@ import "diis_4index_lambda_uhf.sialx"
 #
 #     local arrays used:
 #     ------------------ 
+
+      PARDO a, a1
+             PUT Gae_a[a,a1] =0.0
+      ENDPARDO a, a1
+      sip_barrier 
 
       PARDO i, i1, a2 
 #
@@ -742,6 +823,20 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate L5aibj[*,i,b,j]  
 #
       ENDPARDO i, j, b    
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo a, a1
+      get Gae_a[a,a1]
+      tmp = Gae_a[a,a1] * Gae_a[a,a1]
+      suma += tmp
+      endpardo a, a1
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
+
 #
       ENDPROC GAEA
 #     ------------ 
@@ -752,6 +847,11 @@ import "diis_4index_lambda_uhf.sialx"
 #     local arrays used:
 #     ------------------ 
 #
+      PARDO b, b1
+             PUT Gae_b[b,b1] = 0.0
+      ENDPARDO b, b1
+      sip_barrier 
+
       PARDO j, j1, b2 
 #
             allocate L3bjbj[*,j1,b2,j]  
@@ -798,9 +898,9 @@ import "diis_4index_lambda_uhf.sialx"
 #
                DO b1  
 #
-                  T1bb[b,b1]        = L2old_ab[i,a,j,b]*L6aibj[a,i,b1,j]  
-                  T1bb[b,b1]       *= -1.0  
-                  PUT Gae_b[b,b1] += T1bb[b,b1] 
+                  TTbb[b,b1]        = L2old_ab[i,a,j,b]*L6aibj[a,i,b1,j]  
+                  TTbb[b,b1]       *= -1.0  
+                  PUT Gae_b[b,b1] += TTbb[b,b1] 
 #
                ENDDO b1  
 #
@@ -809,6 +909,19 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate L6aibj[a,i,*,j]  
 #
       ENDPARDO j, i, a    
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo b, b1
+      get   Gae_b[b,b1]
+      tmp =  Gae_b[b,b1] * Gae_b[b,b1]
+      sumb += tmp
+      endpardo b,b1
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
 #
       ENDPROC GAEB
 #     ------------ 
@@ -827,9 +940,7 @@ import "diis_4index_lambda_uhf.sialx"
 #     ------------------ 
 #
       PARDO i1, i 
-#
-            Gmi_a[i1,i] = 0.0 
-#
+            PUT Gmi_a[i1,i] = 0.0 
       ENDPARDO i1, i 
       sip_barrier 
 #
@@ -889,6 +1000,19 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate L7aibj[a,*,b,j] 
 #
       ENDPARDO a, b, j  
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo i, i1
+      get   Gmi_a[i,i1]
+      tmp =  Gmi_a[i,i1] * Gmi_a[i,i1]
+      suma += tmp
+      endpardo i, i1
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
 #
       ENDPROC GMIA 
 #     ------------ 
@@ -900,9 +1024,7 @@ import "diis_4index_lambda_uhf.sialx"
 #     ------------------ 
 #
       PARDO j1, j 
-#
-            Gmi_b[j1,j] = 0.0 
-#
+          PUT Gmi_b[j1,j] = 0.0 
       ENDPARDO j1, j 
       sip_barrier 
 #
@@ -962,6 +1084,19 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate L5aiai[a,i,b,*] 
 #
       ENDPARDO b, a, i  
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo j, j1
+      get   Gmi_b[j,j1]
+      tmp =  Gmi_b[j,j1] * Gmi_b[j,j1]
+      sumb += tmp
+      endpardo j, j1
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
 #
       ENDPROC GMIB 
 #     ------------ 
@@ -2581,7 +2716,16 @@ import "diis_4index_lambda_uhf.sialx"
                GET                            D1eafm_ab[a1,a,b,j] 
                PREPARE W1eafm_ab[a1,a,b,j] += D1eafm_ab[a1,a,b,j]  
          ENDPARDO b, j 
-         sip_barrier 
+
+         server_barrier 
+         pardo a2,i
+             put D1eafm_aa[a1,a,a2,i] = 0.0
+             put D2eafm_aa[a1,a,a2,i] = 0.0
+         endpardo a2,i
+         PARDO b, j
+               PUT D1eafm_ab[a1,a,b,j] = 0.0
+         ENDPARDO b, j
+         server_barrier
 #
       ENDDO a1 
       ENDDO a 
@@ -2627,6 +2771,14 @@ import "diis_4index_lambda_uhf.sialx"
                GET                              D1eafm_ab[a1,a,b1,j1] 
                PREPARE W1eafm_ab[a1,a,b1,j1] += D1eafm_ab[a1,a,b1,j1]  
          ENDPARDO b1, j1  
+         server_barrier 
+
+         PARDO a2, i
+               PUT D1eafm_aa[a1,a,a2,i] = 0.0
+         ENDPARDO a2, i
+         PARDO b1, j1
+               PUT D1eafm_ab[a1,a,b1,j1] = 0.0
+         ENDPARDO b1, j1
          sip_barrier 
 #
       ENDDO a  
@@ -2635,8 +2787,13 @@ import "diis_4index_lambda_uhf.sialx"
                GET                             D1eafm_ba[b1,b,a1,i] 
                PREPARE W1eafm_ba[b1,b,a1,i] += D1eafm_ba[b1,b,a1,i]  
          ENDPARDO b, b1, i 
+         server_barrier 
+
+         PARDO b, b1, i
+               PUT D1eafm_ba[b1,b,a1,i] = 0.0
+         ENDPARDO b, b1, i 
          sip_barrier 
-#
+
       ENDDO a1  
 #
       ENDPROC W1EAFMAA_S  
@@ -2744,6 +2901,7 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO a 
 #
       ENDPARDO a1, b, j1, i 
+      server_barrier 
 #
       ENDPROC W1EAFMAB_S 
 #     ------------------ 
@@ -2754,6 +2912,21 @@ import "diis_4index_lambda_uhf.sialx"
 # Compute contribution to l1a_new
 # -------------------------------
 #
+#bgn_debug
+      suma=0.0
+      sumaa=0.0
+      pardo a1,a,b,j
+      request W1eafm_ab[a1,a,b,j]
+      tmp = W1eafm_ab[a1,a,b,j] * W1eafm_ab[a1,a,b,j]
+      suma += tmp
+      endpardo a1,a,b,j
+      sip_barrier 
+      collective sumaa+=suma
+      print "checksum of W1eafm_ab"
+      print sumaa
+#bgn_debug
+     
+      
       PARDO a1, j, b  
 #
             allocate LLab[*,a1,j,b] 
@@ -2845,6 +3018,7 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO a 
 #
       ENDPARDO i, i1, b, b1 
+      server_barrier 
 #
       ENDPROC W1EAFMBA_S  
 #     ------------------ 
@@ -2855,6 +3029,20 @@ import "diis_4index_lambda_uhf.sialx"
       PROC W1EAFMBA 
 #     ------------- 
 #
+#bgn_debug
+      suma=0.0
+      sumaa=0.0
+      pardo b1,b,a,i
+      request W1eafm_ba[b1,b,a,i]
+      tmp = W1eafm_ba[b1,b,a,i] * W1eafm_ba[b1,b,a,i]
+      suma += tmp
+      endpardo b1,b,a,i
+      sip_barrier
+      collective sumaa+=suma
+      print "checksum of W1eafm_ba"
+      print sumaa
+#bgn_debug
+
       PARDO b1, i, a   
 #
             allocate LLba[i,a,*,b1] 
@@ -2982,8 +3170,17 @@ import "diis_4index_lambda_uhf.sialx"
                GET                            D2eafm_ba[b1,b,a,i]
                PREPARE W1eafm_ba[b1,b,a,i] += D2eafm_ba[b1,b,a,i]
          ENDPARDO a, i
-         sip_barrier
+         server_barrier
 
+         PARDO b2, j
+               PUT D1eafm_bb[b2,b,b1,j] = 0.0
+               PUT D2eafm_bb[b2,b,b1,j] = 0.0
+         ENDPARDO b2, j
+         PARDO  a, i
+               PUT D2eafm_ba[b1,b,a,i] = 0.0
+         ENDPARDO  a, i 
+         sip_barrier 
+              
       ENDDO b1
       ENDDO b
 #
@@ -3036,6 +3233,14 @@ import "diis_4index_lambda_uhf.sialx"
                PREPARE W1eafm_ba[b1,b,a1,i1] += D1eafm_ba[b1,b,a1,i1]
          ENDPARDO a1, i1
          server_barrier
+
+         PARDO b2, j
+               PUT D1eafm_bb[b1,b,b2,j] = 0.0
+         ENDPARDO b2, j
+         PARDO  a, i
+               PUT D1eafm_ba[b1,b,a,i] = 0.0
+         ENDPARDO  a, i
+         sip_barrier
 #
       ENDDO b
 #
@@ -3044,7 +3249,12 @@ import "diis_4index_lambda_uhf.sialx"
                PREPARE W1eafm_ab[a1,a,b1,j] += D3eafm_ab[a1,a,b1,j]
          ENDPARDO a, a1, j
          server_barrier
-#
+        
+         PARDO a, a1, j
+               PUT D3eafm_ab[a1,a,b1,j] = 0.0
+         ENDPARDO a, a1, j
+         sip_barrier 
+         
       ENDDO b1
 #
       ENDPROC W1EAFMBB_S  
@@ -3102,8 +3312,8 @@ import "diis_4index_lambda_uhf.sialx"
 #     -----------  
 # 
          CALL W1EAFMAA
-         CALL W1EAFMAB
          CALL W1EAFMBB
+         CALL W1EAFMAB
          CALL W1EAFMBA
 #
       ENDPROC W1EAFM 
@@ -3181,6 +3391,20 @@ import "diis_4index_lambda_uhf.sialx"
             PUT l1a_new[i,a] += Tia[i,a]
 #
       ENDPARDO a, i, b, b1 
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo a, i
+      get l1a_new[i,a]
+      tmp = l1a_new[i,a] * l1a_new[i,a]
+      suma += tmp
+      endpardo a, i
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
+
 #
       PARDO i1, a1, i2  
 #
@@ -3210,6 +3434,20 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate Liaia[i1,*,i2,a1] 
 #
       ENDPARDO i1, a1, i2  
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo a, i
+      get l1a_new[i,a]
+      tmp = l1a_new[i,a] * l1a_new[i,a]
+      suma += tmp
+      endpardo a, i
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
+
 #
       PARDO j, b, i1  
 #
@@ -3239,6 +3477,20 @@ import "diis_4index_lambda_uhf.sialx"
             deallocate Liajb[i1,*,j,b] 
 #
       ENDPARDO j, b, i1  
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo a, i
+      get l1a_new[i,a]
+      tmp = l1a_new[i,a] * l1a_new[i,a]
+      suma += tmp
+      endpardo a, i
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
+
 #
       PARDO a, i, a1, i1
 #
@@ -3271,6 +3523,20 @@ import "diis_4index_lambda_uhf.sialx"
             PUT l1a_new[i,a] += Tia[i,a]
 #
       ENDPARDO a, i, a1, i1
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo a, i
+      get l1a_new[i,a]
+      tmp = l1a_new[i,a] * l1a_new[i,a]
+      suma += tmp
+      endpardo a, i
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
+
 #
       PARDO a, b, i, j
 #
@@ -3302,7 +3568,21 @@ import "diis_4index_lambda_uhf.sialx"
             PUT l1a_new[i,a] += Tia[i,a]
 #
       ENDPARDO a, b, i, j
-#
+#bgn_debug
+      sip_barrier
+      suma=0.0
+      sumaa=0.0
+      pardo a, i
+      get l1a_new[i,a]
+      tmp = l1a_new[i,a] * l1a_new[i,a]
+      suma += tmp
+      endpardo a, i
+      sip_barrier
+      collective sumaa += suma
+      print sumaa
+#end_debug
+
+
       ENDPROC L1ANEW 
 #     -------------- 
 #
@@ -3336,6 +3616,59 @@ import "diis_4index_lambda_uhf.sialx"
             PUT l1b_new[j,b] += Tjb[j,b]
 #
       ENDPARDO b, j, j1, j2   
+
+     PARDO j, b, b1
+#
+            GET                 l1b_old[j,b1]
+            GET                 F1ae_b[b1,b]
+            Tjb[j,b]          = l1b_old[j,b1]*F1ae_b[b1,b]
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO j, b, b1
+#
+      PARDO b, j, b1, b2
+#
+            REQUEST             VSbbbj[b2,b1,b,j]
+            GET                 Gae_b[b1,b2]
+            Tjb[j,b]          = VSbbbj[b2,b1,b,j]*Gae_b[b1,b2]
+            Tjb[j,b]         *= -1.0
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, b1, b2
+#
+      PARDO b, j, i, i1
+#
+            REQUEST             Vpiqj[i,i1,b,j]
+            GET                 Gmi_a[i1,i]
+            Tjb[j,b]          = Vpiqj[i,i1,b,j]*Gmi_a[i1,i]
+            Tjb[j,b]         *= -1.0
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, i, i1
+
+     PARDO b, j, a, a1
+#
+            REQUEST             Vaabj[a1,a,b,j]
+            GET                 Gae_a[a,a1]
+            Tjb[j,b]          = Vaabj[a1,a,b,j]*Gae_a[a,a1]
+            Tjb[j,b]         *= -1.0
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, a, a1
+
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo b, j
+      get l1b_new[j,b]
+      tmp = l1b_new[j,b] * l1b_new[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
 #
       PARDO b, b1, j1, j2 
 #
@@ -3351,35 +3684,20 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO j
 #
       ENDPARDO b, b1, j1, j2  
-#
-      PARDO j, b, b1   
-#
-            GET                 l1b_old[j,b1]
-            GET                 F1ae_b[b1,b]
-            Tjb[j,b]          = l1b_old[j,b1]*F1ae_b[b1,b]
-            PUT l1b_new[j,b] += Tjb[j,b]
-#
-      ENDPARDO j, b, b1  
-#
-      PARDO b, j, b1, b2 
-#
-            REQUEST             VSbbbj[b2,b1,b,j] 
-            GET                 Gae_b[b1,b2]
-            Tjb[j,b]          = VSbbbj[b2,b1,b,j]*Gae_b[b1,b2]
-            Tjb[j,b]         *= -1.0  
-            PUT l1b_new[j,b] += Tjb[j,b]
-#
-      ENDPARDO b, j, b1, b2  
-#
-      PARDO b, j, i, i1   
-#
-            REQUEST             Vpiqj[i,i1,b,j] 
-            GET                 Gmi_a[i1,i]
-            Tjb[j,b]          = Vpiqj[i,i1,b,j]*Gmi_a[i1,i]
-            Tjb[j,b]         *= -1.0  
-            PUT l1b_new[j,b] += Tjb[j,b]
-#
-      ENDPARDO b, j, i, i1   
+
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo b, j
+      get l1b_new[j,b]
+      tmp = l1b_new[j,b] * l1b_new[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
 #
       PARDO b, j1, a, i  
 #
@@ -3395,16 +3713,20 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO j
 #
       ENDPARDO b, j1, a, i  
-#
-      PARDO b, j, a, a1 
-#
-            REQUEST             Vaabj[a1,a,b,j] 
-            GET                 Gae_a[a,a1]
-            Tjb[j,b]          = Vaabj[a1,a,b,j]*Gae_a[a,a1]
-            Tjb[j,b]         *= -1.0  
-            PUT l1b_new[j,b] += Tjb[j,b]
-#
-      ENDPARDO b, j, a, a1 
+
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo b, j
+      get l1b_new[j,b]
+      tmp = l1b_new[j,b] * l1b_new[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
 #
       PARDO b, b1, j, j1
 #
@@ -3438,6 +3760,19 @@ import "diis_4index_lambda_uhf.sialx"
             PUT l1b_new[j,b] += Tjb[j,b]
 #
       ENDPARDO b, b1, j, j1
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo b, j
+      get l1b_new[j,b]
+      tmp = l1b_new[j,b] * l1b_new[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
 #
       PARDO b, a, j, i
 #
@@ -3469,7 +3804,21 @@ import "diis_4index_lambda_uhf.sialx"
             PUT l1b_new[j,b] += Tjb[j,b]
 #
       ENDPARDO b, a, j, i
-#
+
+#bgn_debug
+      sip_barrier
+      sumb=0.0
+      sumbb=0.0
+      pardo b, j
+      get l1b_new[j,b]
+      tmp = l1b_new[j,b] * l1b_new[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
+
       ENDPROC L1BNEW 
 #     -------------- 
 #
@@ -3493,6 +3842,20 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO i
 #
       ENDPARDO a, a1, a2, i1
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa =0.0
+#      PARDO a, i, a1, i1
+#      request l2new_aa[i,a,i1,a1]
+#      tmp =  l2new_aa[i,a,i1,a1] *  l2new_aa[i,a,i1,a1]
+#      suma += tmp
+#      endpardo a, i, a1, i1
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end-debug
+
 #
       PARDO i, a1, a, i1 
 #
@@ -3556,6 +3919,20 @@ import "diis_4index_lambda_uhf.sialx"
             PREPARE L2new_aa[i1,a1,i,a] += T4iaia[i1,a1,i,a]
 #
       ENDPARDO i, a1, a, i1
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa =0.0
+#      PARDO a, i, a1, i1
+#      request l2new_aa[i,a,i1,a1]
+#      tmp =  l2new_aa[i,a,i1,a1] *  l2new_aa[i,a,i1,a1]
+#      suma += tmp
+#      endpardo a, i, a1, i1   
+#      sip_barrier 
+#      collective sumaa += suma
+#      print sumaa 
+#end-debug
+
 #
       PARDO i1, i, a, a1
 #
@@ -3686,7 +4063,7 @@ import "diis_4index_lambda_uhf.sialx"
                GET               F1ae_b[b1,b]
                GET               l1b_old[j,b1]
 #
-               T1bb[b1,b]       = Gae_b[b,b1]
+               TTbb[b1,b]       = Gae_b[b,b1]
                T1iajb[i,a,j,b] = L2old_ab[i,a,j,b1]*F1ae_b[b1,b]
                Tiajb[i,a,j,b] += T1iajb[i,a,j,b]
 #
@@ -3696,11 +4073,11 @@ import "diis_4index_lambda_uhf.sialx"
                   GET          t1b_old[b1,j1]
 #
                   T1bb[b1,b] = t1b_old[b1,j1]*l1b_old[j1,b]
-                  T1bb[b1,b] -= T1bb[b1,b]
+                  TTbb[b1,b] -= T1bb[b1,b]
 #
                ENDDO j1
 #
-               T1iajb[i,a,j,b] = Vpiqj[a,i,b1,j]*T1bb[b1,b]
+               T1iajb[i,a,j,b] = Vpiqj[a,i,b1,j]*TTbb[b1,b]
                Tiajb[i,a,j,b] += T1iajb[i,a,j,b]
 #
             ENDDO b1
@@ -3857,6 +4234,20 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO j
 #
       ENDPARDO b, b1, b2, j1
+#bgn_debug
+#      server_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      PARDO b, j, b1, j1
+#      request l2new_bb[j,b,j1,b1]
+#      tmp =  l2new_bb[j,b,j1,b1] *  l2new_bb[j,b,j1,b1]
+#      sumb += tmp
+#      endpardo b,j,b1,j1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+
 #
       PARDO b, j, j1, b1  
 #
@@ -3880,7 +4271,7 @@ import "diis_4index_lambda_uhf.sialx"
                T1jbjb[j1,b1,j,b]  = L2old_bb[j1,b1,j,b2]*F1ae_b[b2,b]
                Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
 #
-               T1bb[b2,b]          = Gae_b[b,b2]
+               TTbb[b2,b]          = Gae_b[b,b2]
                TXjbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
                T3jbjb[j1,b,j,b1] -= TXjbjb[j1,b,j,b1]
 #
@@ -3890,11 +4281,11 @@ import "diis_4index_lambda_uhf.sialx"
                   GET          t1b_old[b2,j2]
 #
                   T1bb[b2,b] = t1b_old[b2,j2]*l1b_old[j2,b]
-                  T1bb[b2,b] -= T1bb[b2,b]
+                  TTbb[b2,b] -= T1bb[b2,b]
 #
                ENDDO j2
 #
-               T1jbjb[j1,b1,j,b]  = VSqjqj[b1,j1,b2,j]*T1bb[b2,b]
+               T1jbjb[j1,b1,j,b]  = VSqjqj[b1,j1,b2,j]*TTbb[b2,b]
                Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
 #
                TXjbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
@@ -3920,6 +4311,20 @@ import "diis_4index_lambda_uhf.sialx"
             PREPARE L2NEW_bb[j,b,j1,b1] += T4jbjb[j,b,j1,b1]
 #
       ENDPARDO b, j, j1, b1 
+#bgn_debug
+#      server_barrier 
+#      sumb=0.0
+#      sumbb=0.0
+#      PARDO b, j, b1, j1
+#      request l2new_bb[j,b,j1,b1]
+#      tmp =  l2new_bb[j,b,j1,b1] *  l2new_bb[j,b,j1,b1]
+#      sumb += tmp
+#      endpardo b,j,b1,j1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb  
+#end_debug
+
 # 
       PARDO j, b1, b, j1  
 #
@@ -4005,7 +4410,7 @@ import "diis_4index_lambda_uhf.sialx"
             t1iaia[i,a,i1,a1] *= -1.0
 #
             if kiter < diis_order
-               PREPARE eiaia[i,a,i1,a1,kiter] = T1aiai[i,a,i1,a1]
+               PREPARE eiaia[i,a,i1,a1,kiter] = T1iaia[i,a,i1,a1]
             endif
 
             if kiter >= diis_order
@@ -4018,7 +4423,7 @@ import "diis_4index_lambda_uhf.sialx"
 
 #
       ENDPARDO a, a1, i, i1
-#
+
       PARDO b, b1, j, j1
 #
             REQUEST                    L2old_bb[j,b,j1,b1]  
@@ -4040,7 +4445,6 @@ import "diis_4index_lambda_uhf.sialx"
                   endif
                ENDDO jdiis
             endif
-
 #
       ENDPARDO b, b1, j, j1
 #
@@ -4066,32 +4470,36 @@ import "diis_4index_lambda_uhf.sialx"
                ENDDO jdiis
             endif
       ENDPARDO b, a, j, i
-      server_barrier 
+
+      Server_barrier 
 
       PARDO a, a1, i, i1
 #
             REQUEST                     L2new_aa[i,a,i1,a1]
-            L2new_aa[i,a,i1,a1]     *= -1.0
-            execute energy_denominator L2new_aa[i,a,i1,a1] fock_a fock_a AAAA
-            PREPARE L2old_aa[i,a,i1,a1]  = L2new_aa[i,a,i1,a1]
+            Tiaia[i,a,i1,a1]   = L2new_aa[i,a,i1,a1] 
+            Tiaia[i,a,i1,a1]  *= -1.0
+            execute energy_denominator Tiaia[i,a,i1,a1]  fock_a fock_a AAAA
+            PREPARE L2old_aa[i,a,i1,a1]  = Tiaia[i,a,i1,a1]
 #
       ENDPARDO a, a1, i, i1
 
       PARDO b, b1, j, j1
 #
             REQUEST                     L2new_bb[j,b,j1,b1] 
-            L2new_bb[j,b,j1,b1]     *= -1.0
-            execute energy_denominator L2new_bb[j,b,j1,b1] fock_b fock_b BBBB
-            PREPARE L2old_bb[j,b,j1,b1]  = L2new_bb[j,b,j1,b1]
+            Tjbjb[j,b,j1,b1]   = L2new_bb[j,b,j1,b1]
+            Tjbjb[j,b,j1,b1]  *= -1.0
+            execute energy_denominator Tjbjb[j,b,j1,b1] fock_b fock_b BBBB
+            PREPARE L2old_bb[j,b,j1,b1]  = Tjbjb[j,b,j1,b1]
 #
       ENDPARDO b, b1, j, j1
 
       PARDO b, a, j, i
 #
             REQUEST                    L2new_ab[i,a,j,b]  
-            L2new_ab[i,a,j,b]      *= -1.0 
-            execute energy_denominator L2new_ab[i,a,j,b] fock_a fock_b ABAB
-            PREPARE L2old_ab[i,a,j,b]= L2new_ab[i,a,j,b]  
+            Tiajb[i,a,j,b]       = L2new_ab[i,a,j,b]
+            Tiajb[i,a,j,b]      *= -1.0 
+            execute energy_denominator Tiajb[i,a,j,b] fock_a fock_b ABAB
+            PREPARE L2old_ab[i,a,j,b]= Tiajb[i,a,j,b] 
 #
       ENDPARDO b, a, j, i
 #
@@ -4110,6 +4518,19 @@ import "diis_4index_lambda_uhf.sialx"
             execute energy_denominator tia[i,a] fock_a fock_a AAAA
             t1ia[i,a]               += tia[i,a] 
             t1ia[i,a]               *= -1.0
+
+            if kiter < diis_order
+               PUT eia[i,a,kiter] =  T1ia[i,a]
+            Endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PUT eia[i,a,jdiis] = T1ia[i,a]
+                     exit
+                   endif
+                ENDDO jdiis
+            endif
 #
       ENDPARDO a, i 
 #
@@ -4122,6 +4543,19 @@ import "diis_4index_lambda_uhf.sialx"
             execute energy_denominator tjb[j,b] fock_b fock_b BBBB
             t1jb[j,b]               += tjb[j,b] 
             t1jb[j,b]               *= -1.0
+
+            if kiter < diis_order
+               PUT ejb[j,b,kiter] =  T1jb[j,b]
+            Endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PUT ejb[j,b,jdiis] = T1jb[j,b]
+                     exit
+                   endif
+                ENDDO jdiis
+            endif
 #
       ENDPARDO b, j 
 #
@@ -4129,21 +4563,45 @@ import "diis_4index_lambda_uhf.sialx"
 
       PARDO a, i
 #
-            GET                        l1a_new[i,a]
-            tia[i,a]           = -1.0 * l1a_new[i,a]
-            execute energy_denominator tia[i,a] fock_a fock_a AAaa
+            GET                   l1a_new[i,a]
+            tia[i,a]           =  l1a_new[i,a]
+            tia[i,a]          *= -1.0
+            execute energy_denominator tia[i,a] fock_a fock_a AAAA
             PUT l1a_old[i,a]         = tia[i,a]
 #
       ENDPARDO a, i
 #
       PARDO b, j
 #
-            GET                        l1b_new[j,b]
-            tjb[j,b]            = -1.0 * l1b_new[j,b]
+            GET                    l1b_new[j,b]
+            tjb[j,b]            =  l1b_new[j,b]
+            tjb[j,b]           *= -1.0
             execute energy_denominator tjb[j,b] fock_b fock_b BBBB
             PUT l1b_old[j,b]         = tjb[j,b]
 #
       ENDPARDO b, j 
+#bgn_debug
+      server_barrier
+      suma=0.0
+      sumaa=0.0
+      sumbb=0.0
+      pardo a, i
+      get l1a_old[i,a]
+      tmp = l1a_old[i,a] * l1a_old[i,a]
+      suma += tmp
+      endpardo a, i
+      sumb=0.0
+      pardo b, j
+      get l1b_old[j,b]
+      tmp = l1b_old[j,b] * l1b_old[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumaa += suma
+      collective sumbb += sumb
+      print sumaa
+      print sumbb
+#end_debug
 #
       ENDPROC UPDATEL1
 #     ----------------
@@ -4201,7 +4659,7 @@ import "diis_4index_lambda_uhf.sialx"
             if kiter >= diis_order
                DO kdiis
                   if kdiis == (diis_order - 1)
-                     PREPARE diajb[a,i,b,j,kdiis] = Tiajb[a,i,b,j]
+                     PREPARE diajb[i,a,j,b,kdiis] = Tiajb[i,a,j,b]
                   endif
                 ENDDO kdiis
             endif
@@ -4353,14 +4811,15 @@ import "diis_4index_lambda_uhf.sialx"
      collective ecorrab += esumab
      ecorrT  = ecorraa + ecorrbb
      ecorrT += ecorrab
+     sip_barrier 
 
 #bgn_debug
-#     Print "AAAA, BBBB, ABAB correlation energy contributions"
-#     print ecorraa
-#     print ecorrbb
-#     print ecorrab
-#     Print "The pseudo correlation energy"
-#     print ecorrT
+     Print "AAAA, BBBB, ABAB correlation energy contributions"
+     print ecorraa
+     print ecorrbb
+     print ecorrab
+     Print "The pseudo correlation energy"
+     print ecorrT
 #end_debug
 #
 #
@@ -4674,7 +5133,7 @@ import "diis_4index_lambda_uhf.sialx"
 #
 #     AA spin combination 
 #     ------------------- 
-#
+
       PARDO i, i1, a, a1 
 # 
             REQUEST L2old_aa[i,a,i1,a1] 
@@ -4745,6 +5204,11 @@ import "diis_4index_lambda_uhf.sialx"
 #     BB spin combination 
 #     ------------------- 
 #
+      pardo j,j1,j2,j3
+             put Xjjjj[j,j1,j2,j3] = 0.0
+      endpardo j,j1,j2,j3
+
+
       PARDO j, j1, b, b1 
 # 
             REQUEST L2old_bb[j,b,j1,b1] 
@@ -4908,6 +5372,11 @@ import "diis_4index_lambda_uhf.sialx"
 #     First piece
 #     -----------
 #
+      pardo i,i1,i2,a
+            put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      sip_barrier 
+
       PARDO i, i2, a1, a2
 #
             REQUEST                  L2old_aa[i,a1,i2,a2] 
@@ -4951,6 +5420,14 @@ import "diis_4index_lambda_uhf.sialx"
 # 'Fix' on 9/29/08 
 # ---------------- 
 #
+      pardo i,i1,i2,i3
+            put Xiiii[i,i1,i2,i3] = 0.0
+      endpardo i,i1,i2,i3
+      pardo i,i1,i2,a
+            put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      sip_barrier
+
       PARDO i, i2, a1, a2  
 #
             REQUEST L2old_aa[i,a1,i2,a2] 
@@ -5000,6 +5477,20 @@ import "diis_4index_lambda_uhf.sialx"
 #     Second piece
 #     ------------
 #
+      pardo i,a,j,j1
+            put Xiajj[i,a,j,j1] = 0.0
+      endpardo i,a,j,j1
+      pardo i,i1,b,j
+            put Xiibj[i,i1,b,j] = 0.0
+      endpardo i,i1,b,j
+      pardo i,i1,i2,a
+            put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      pardo i,i1,i2,i3
+            put Xiiii[i,i1,i2,i3] = 0.0
+      endpardo i,i1,i2,i3
+      sip_barrier 
+
       PARDO i, j2, a1, b1
 #
             REQUEST L2old_ab[i,a1,j2,b1] 
@@ -5083,8 +5574,17 @@ import "diis_4index_lambda_uhf.sialx"
       ENDPARDO a, b, b1, i1  
 #
       sip_barrier
+
+      pardo i,i1,j,j1
+            put Xiijj[i,i1,j,j1] = 0.0
+      endpardo i,i1,j,j1
+      pardo i,a,j,j1
+            put Xiajj[i,a,j,j1] = 0.0
+      endpardo i,a,j,j1  
+      sip_barrier
 #
       PARDO i1, j1, a1, b1  
+
 #
             REQUEST Tau_ab[a1,i1,b1,j1] 
 #
@@ -5140,6 +5640,11 @@ import "diis_4index_lambda_uhf.sialx"
 #     First piece
 #     -----------
 #
+      pardo j,j1,b,b1
+            put Xjjbb[j,j1,b,b1] = 0.0
+      endpardo j,j1,b,b1  
+      sip_barrier
+
       PARDO j, j2, b1, b2
 #
             REQUEST                  L2old_bb[j,b1,j2,b2] 
@@ -5179,6 +5684,14 @@ import "diis_4index_lambda_uhf.sialx"
 #
       ENDPARDO b, b3, b2, j3
       sip_barrier
+
+      pardo j,j1,j2,j3
+            put Xjjjj[j,j1,j2,j3] = 0.0
+      endpardo j,j1,j2,j3
+      pardo j,j1,j2,b1
+            put Xjjjb[j,j1,j2,b1] = 0.0
+      endpardo j,j1,j2,b1
+      sip_barrier 
 
       PARDO j3, j4, b1, b2  
 #
@@ -5229,6 +5742,20 @@ import "diis_4index_lambda_uhf.sialx"
 #     Second piece
 #     ------------
 #
+      pardo j,b,i,i1
+            put Xjbii[j,b,i,i1] = 0.0
+      endpardo j,b,i,i1
+      pardo j,j1,a,i
+            put Xjjai[j,j1,a,i] = 0.0
+      endpardo j,j1,a,i
+      pardo j,j1,j2,j3
+            put Xjjjj[j,j1,j2,j3] = 0.0
+      endpardo j,j1,j2,j3
+      pardo j,j1,j2,b1
+            put Xjjjb[j,j1,j2,b1] = 0.0
+      endpardo j,j1,j2,b1
+      sip_barrier
+
       PARDO j, i2, b1, a1
 #
             REQUEST L2old_ab[i2,a1,j,b1] 
@@ -5313,6 +5840,14 @@ import "diis_4index_lambda_uhf.sialx"
       ENDPARDO a, b, j1, a1  
 #
       sip_barrier
+
+      pardo i,i1,j,j1
+            put Xjjii[j,j1,i,i1] = 0.0
+      endpardo i,i1,j,j1
+      pardo j,b,i,i1
+            put Xjbii[j,b,i,i1] = 0.0
+      endpardo j,b,i,i1
+      sip_barrier 
 #
       PARDO j1, i1, b1, a1  
 #
@@ -5369,9 +5904,21 @@ import "diis_4index_lambda_uhf.sialx"
            PARDO i,i1,i2,i3
                PUT Iiiii[i,i1,i2,i3] = 0.0
            ENDPARDO i,i1,i2,i3
-           PARDO i,i1,i2,i3
-               PUT Iiiii[i,i1,i2,i3] = 0.0
-           ENDPARDO i,i1,i2,i3
+           PARDO i,i1,i2,a
+               PUT Iiiia[i,i1,i2,a] = 0.0
+           ENDPARDO i,i1,i2,a
+           PARDO j,j1,j2,j3
+               PUT Ijjjj[j,j1,j2,j3] = 0.0
+           ENDPARDO j,j1,j2,j3
+           PARDO j,j1,j2,b
+               PUT Ijjjb[j,j1,j2,b] = 0.0
+           ENDPARDO j,j1,j2,b
+           PARDO i,i1,j,b
+               PUT Iiijb[i,i1,j,b] = 0.0
+           ENDPARDO i,i1,j,b
+           PARDO i,a,j,j1
+               PUT Iiajj[i,a,j,j1] = 0.0
+           ENDPARDO i,a,j,j1
            PARDO i, i1, j, j1
                  PUT Iiijj[i,i1,j,j1] = 0.0
            ENDPARDO  i, i1, j, j1
@@ -5381,35 +5928,6 @@ import "diis_4index_lambda_uhf.sialx"
            CALL L2WABCDaa
            CALL L2WABCDbb
            CALL L2WABCDab
-
-           pardo i,i1,i2,i3
-              put Xiiii[i,i1,i2,i3] = 0.0
-           endpardo i,i1,i2,i3
-           pardo i,i1,i2,a
-              put Xiiia[i,i1,i2,a] = 0.0
-           endpardo i,i1,i2,a
-           pardo i,a,j,j1
-                 put Xiajj[i,a,j,j1] = 0.0
-           endpardo i,a,j,j1
-           pardo i,i1,b,j
-                 put Xiibj[i,i1,b,j] = 0.0
-           endpardo i,i1,b,j
-           pardo i,i1,j,j1
-                 put Xjjii[j,j1,i,i1] = 0.0
-           endpardo i,i1,j,j1
-           pardo j,j1,j2,b1
-                 put Xjjjb[j,j1,j2,b1] = 0.0
-           endpardo j,j1,j2,b1
-           pardo j,j1,j2,j3
-                 put Xjjjj[j,j1,j2,j3] = 0.0
-           endpardo j,j1,j2,j3
-           pardo j,j1,a,i
-                 put Xjjai[j,j1,a,i] = 0.0
-           endpardo j,j1,a,i
-           pardo j,b,i,i1
-                 put Xjbii[j,b,i,i1] = 0.0
-           endpardo j,b,i,i1
-           sip_barrier 
 
            CALL L1WABCDa
            CALL L1WABCDb
@@ -5423,12 +5941,10 @@ import "diis_4index_lambda_uhf.sialx"
           pardo i,a
              put l1a_new[i,a] = 0.0
           endpardo i,a
-          pardo a,a1
-             put Gae_a[a,a1] = 0.0
-          endpardo a,a1
-          pardo i,i1
-             put Gmi_a[i,i1] = 0.0
-          endpardo i,i1
+
+          pardo j, b
+             put l1b_new[j,b] = 0.0
+          endpardo j, b
 
           PARDO a, a1, i, i1
                 Tiaia[i,a,i1,a1] = 0.0
@@ -5472,7 +5988,7 @@ import "diis_4index_lambda_uhf.sialx"
       CALL W1IMEN 
       CALL W1MEBJ_S  
       CALL W1EAFM_S  
-#
+
 # Done computing permanent Intermediates 
 # -------------------------------------- 
 #
@@ -5492,9 +6008,10 @@ import "diis_4index_lambda_uhf.sialx"
 #
 # Zero-out new amplitudes 
 # ----------------------- 
-#
+         
          CALL L2ZERO 
          server_barrier 
+         print kiter 
 # 
 # Compute temporary intermediates 
 # ------------------------------- 
@@ -5511,10 +6028,54 @@ import "diis_4index_lambda_uhf.sialx"
          CALL L2NEWAA 
          CALL L2NEWBB 
          CALL L2NEWAB 
+
          CALL VABCD
          CALL W1EAFM
-         CALL W1MEBJ  
+         CALL W1MEBJ 
          server_barrier 
+#bgn_debug
+      server_barrier
+      suma=0.0
+      sumaa=0.0
+      sumbb=0.0
+      pardo a, i
+      get l1a_new[i,a]
+      tmp = l1a_new[i,a] * l1a_new[i,a]
+      suma += tmp
+      endpardo a, i
+      sumb=0.0
+      pardo b, j
+      get l1b_new[j,b]
+      tmp = l1b_new[j,b] * l1b_new[j,b]
+      sumb += tmp
+      endpardo b,j
+      sip_barrier
+      collective sumaa += suma
+      collective sumbb += sumb
+      print sumaa
+      print sumbb
+      server_barrier
+      suma=0.0
+      sumaa=0.0
+      PARDO a, i, a1, i1
+      request l2new_aa[i,a,i1,a1]
+      tmp =  l2new_aa[i,a,i1,a1] *  l2new_aa[i,a,i1,a1]
+      suma += tmp
+      endpardo a, i, a1, i1
+      sumb=0.0
+      sumbb=0.0
+      PARDO b, j, b1, j1
+      request l2new_bb[j,b,j1,b1]
+      tmp =  l2new_bb[j,b,j1,b1] *  l2new_bb[j,b,j1,b1]
+      sumb += tmp
+      endpardo b,j,b1,j1
+      sip_barrier
+      collective sumaa += suma
+      collective sumbb += sumb
+      print sumaa
+      print sumbb
+#end_debug
+
 #
 # Update arrays 
 # ------------- 
@@ -5531,6 +6092,7 @@ import "diis_4index_lambda_uhf.sialx"
 
          CALL MOVEL1
          CALL MOVEL2
+         Print "After movel1&l2"
 #
 #        Check on convergence
 #        --------------------
@@ -5542,8 +6104,8 @@ import "diis_4index_lambda_uhf.sialx"
          ediff = (etemp)**(0.5)
          assert_same ediff
 #bgn_debug
-         print kiter
          print ecorrT
+         print ediff 
 #end_debug
 
          IF ediff < ecrit
@@ -5577,33 +6139,34 @@ import "diis_4index_lambda_uhf.sialx"
       execute compute_int_scratchmem oed_ovl zmax imax
 
 #bgn_debug
-#      print "reference,diis_start,diis_order,ecrit"
-#      print reference
-#      print diis_start
-#      print diis_order
-#      print ecrit
-#      print " "
+      print "reference,diis_start,diis_order,ecrit"
+      print reference
+      print diis_start
+      print diis_order
+      print ecrit
+      print " "
 #end_debug
 # Read transformed integrals from lists
 # -------------------------------------
 #
-      CALL READ_2EL
-
+ 
+      CALL READ_2EL 
       CALL LMAIN
 
-      CALL WRITE_2EL
-
-      server_barrier
       restore_persistent scf_energy "scf_energy"
       server_barrier
       lambda_correlation = ecorrT
       totenerg  = ecorrT
       totenerg += scf_energy
-      lambda_energy = totenerg
+      lambda_pseudo_energy = totenerg
+#
       print " "
       print scf_energy
       print lambda_correlation
-      print lambda_energy
+      print lambda_pseudo_energy
+      print "done4"
+
+      CALL WRITE_2EL
 #
                            ENDSIAL LAMBDA_UHF
 #                          ------------------

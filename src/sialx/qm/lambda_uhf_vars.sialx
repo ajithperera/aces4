@@ -65,7 +65,7 @@ import "lambda_uhf_defs.sialx"
       distributed t1b_old[b,j]
       distributed t1b_new[b,j]
       distributed l1a_old[i,a]
-      distributed l1a_new[i,i]
+      distributed l1a_new[i,a]
       distributed l1b_old[j,b]
       distributed l1b_new[j,b]
       distributed Iiiia[i,i1,i2,a2]
@@ -80,6 +80,7 @@ import "lambda_uhf_defs.sialx"
       distributed Xiiii[i,i3,i2,i4]
       distributed Xiajj[i,a1,j2,j1]
       distributed Xiibj[i,i1,b,j]
+      distributed Xjjbb[j,j1,b,b1]
       distributed Xjjjb[j,j1,j2,b]
       distributed Xjjjj[j,j1,j2,j3]
       distributed Xjbii[j,b,i,i1]
@@ -178,7 +179,7 @@ import "lambda_uhf_defs.sialx"
       served T2AO_bb[lambda,j,sigma,j1]
       served T2AO_ab[lambda,i,sigma,j]
       served D0iaia[i,a,i1,a1]
-      served D0jbjb[b,j,b1,j1]
+      served D0jbjb[j,b,j1,b1]
       served D0iajb[i,a,j,b]
       served Diaia[i,a,i1,a1,idiis]
       served Djbjb[j,b,j1,b1,idiis]
@@ -468,6 +469,7 @@ import "lambda_uhf_defs.sialx"
       temp Taa[a,a1]
       temp T1aa[a,a1]
       temp T1bb[b,b1]
+      temp TTbb[b,b1]
       temp Tae_a[a,a1]
       temp Tae_b[b,b1]
       temp Tia[i,a]
@@ -617,11 +619,16 @@ import "lambda_uhf_defs.sialx"
       scalar zmax
       scalar imax 
       scalar lambda_correlation
-      scalar lambda_energy
+      scalar lambda_pseudo_energy
       scalar ecorrb
       scalar eight
       scalar nine 
       scalar ten
+      scalar tmp
+      scalar suma
+      scalar sumaa
+      scalar sumb
+      scalar sumbb
       Int worder
       Int Iorder
       Int niter

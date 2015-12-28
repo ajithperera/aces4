@@ -236,7 +236,7 @@ import "lambda_uhf_vars.sialx"
                if d2 == 1
                   REQUEST           D0jbjb[j,b,j1,b1]
                   t2jbjb[j,b,j1,b1] = D0jbjb[j,b,j1,b1]
-                  REQUEST           Ejbjb[j,j,b1,b1,d2]
+                  REQUEST           Ejbjb[j,b,j1,b1,d2]
                   t3jbjb[j,b,j1,b1] = Ejbjb[j,b,j1,b1,d2]
                   etemp =  BB[d2,d2]
                   t3jbjb[j,b,j1,b1] += t2jbjb[j,b,j1,b1]
@@ -247,7 +247,6 @@ import "lambda_uhf_vars.sialx"
 
             PREPARE l2old_bb[j,b,j1,b1] = tjbjb[j,b,j1,b1]
       ENDPARDO b, j, b1, j1
-
 
       PARDO a, i, b, j
             tiajb[i,a,j,b] = 0.0
