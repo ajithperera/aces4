@@ -561,7 +561,11 @@ SIOX_FILES=\
 ./src/sialx/qm/lambda_uhf_vars.siox\
 ./src/sialx/qm/lambda_uhf_defs.siox\
 ./src/sialx/qm/diis_4index_lambda_uhf.siox\
-.src/sialx/qm/lambda_uhf.siox
+.src/sialx/qm/lambda_uhf.siox\
+.src/sialx/qm/ccsd_1grad_rhf_defs.siox\
+.src/sialx/qm/ccsd_1grad_rhf_vars.siox\
+.src/sialx/qm/diis_2index_ccsdgrad_rhf.siox\
+.src/sialx/qm/ccsd_1grad_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -728,6 +732,11 @@ EXTRA_DIST += \
 ./src/sialx/qm/lambsa_uhf_defs.sialx\
 ./src/sialx/qm/diis_4index_uhf_lambda.sialx\
 .src/sialx/qm/lambda_uhf.sialx
+.src/sialx/qm/ccsd_1grad_rhf_defs.sialx\
+.src/sialx/qm/ccsd_1grad_rhf_vars.sialx\
+.src/sialx/qm/diis_2index_ccsdgrad_rhf.sialx\
+.src/sialx/qm/ccsd_1grad_rhf.sialx
+
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\
 #./src/sialx/qm/rlambda_rhf.sialx

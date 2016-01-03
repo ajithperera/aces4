@@ -31,8 +31,8 @@ import "mp2grad_uhf_vars.sialx"
 #      Distributed PAIold_aa[a,i]  :  Extrapolated vectors returns
 #      Distributed PAIold_bb[b,j]  :  Extrapolated vectors returns
 #
-      SIAL DIIS_2INDEX_UHF 
-#     --------------------
+      SIAL DIIS_2INDEX_UHF_MP2GRAD
+#     ----------------------------
 # 
       PROC DO_DIIS
 #     ------------
@@ -282,5 +282,5 @@ import "mp2grad_uhf_vars.sialx"
       ENDPROC DO_DIIS
 #     ---------------
 
-      ENDSIAL DIIS_2INDEX_UHF 
-#     ----------------------
+      ENDSIAL DIIS_2INDEX_UHF_MP2GRAD
+#     -------------------------------

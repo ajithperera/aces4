@@ -1,5 +1,5 @@
-import "mp2grad_rhf_defs.sialx"
-import "mp2grad_rhf_vars.sialx"
+import "ccsdgrad_rhf_defs.sialx"
+import "ccsdgrad_rhf_vars.sialx"
 #
 # This is a standalone sial procedure to DIIS only two index array
 # vectors are involved. This is a closed shell only version. 
@@ -23,8 +23,8 @@ import "mp2grad_rhf_vars.sialx"
 #                                    name being used in the calling
 #                                    program to proceed.
 #
-       SIAL DIIS_2INDEX_RHF_MP2GRAD
-#      ----------------------------
+       SIAL DIIS_2INDEX_RHF_CCSDGRAD
+#      ------------------------------
 #
       PROC DO_DIIS
 #     ------------
@@ -168,5 +168,5 @@ import "mp2grad_rhf_vars.sialx"
       ENDPROC DO_DIIS
 #     ---------------
 
-      ENDSIAL DIIS_2INDEX_RHF_MP2GRAD
-#     -------------------------------
+      ENDSIAL DIIS_2INDEX_RHF_CCSDGRAD
+#     --------------------------------
