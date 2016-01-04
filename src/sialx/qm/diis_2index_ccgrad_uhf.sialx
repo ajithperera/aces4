@@ -1,5 +1,5 @@
 import "ccsdgrad_uhf_defs.sialx"
-import "ccsdgrad_uhf_vars.sialx"
+import "ccsd_1grad_uhf_vars.sialx"
 #
 # This is a standalone sial procedure to DIIS only two index array
 # vectors are involved. This is open shell version. 
@@ -17,19 +17,13 @@ import "ccsdgrad_uhf_vars.sialx"
 #                                    n and n-1 vectors, n= no. iteration)
 #      Served D0ai[a,i]            : The vector at zero iteration.
 #
-#      Distributed XX_old_a[a,i]   : The extrapolated vector returns
-#                                    in this generic distributed array. 
-#                                    Copy this to the name of the variable 
-#                                    name being used in the calling
-#                                    program to proceed.
-#
 #      Distributed Dbj[b,j,kdiis]  : SAME as above for beta spin
 #      Distributed Ebj[b,j,jdiis]  : 
 #                                    
 #      Served D0bj[b,j]            :  SAME AS ABOVE now for beta spin.
 #
-#      Distributed PAIold_aa[a,i]  :  Extrapolated vectors returns
-#      Distributed PAIold_bb[b,j]  :  Extrapolated vectors returns
+#      Distributed Doldai_a[a,i]  :  Extrapolated vectors returns
+#      Distributed Doldbj_b[b,j]  :  Extrapolated vectors returns
 #
       SIAL DIIS_2INDEX_UHF_CCSDGRAD
 #     -----------------------------
@@ -156,7 +150,7 @@ import "ccsdgrad_uhf_vars.sialx"
                endif
             ENDDO d2
 
-            PUT PAIold_aa[a,i] = tai[a,i]
+            PUT Doldai_a[a,i] = tai[a,i]
       ENDPARDO a, i
 
       PARDO b, j
@@ -196,7 +190,7 @@ import "ccsdgrad_uhf_vars.sialx"
                endif
             ENDDO d2
 
-            PUT PAIold_bb[b,j] = tbj[b,j]
+            PUT Doldai_b[b,j] = tbj[b,j]
       ENDPARDO b, j
 
       server_barrier

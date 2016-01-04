@@ -6,6 +6,7 @@ import "ccsdgrad_rhf_defs.sialx"
 # Declare indices
 # ---------------
       index Ngrads   = 1: Three_Natoms
+      Index Twelve   = 1: 12
 
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -127,6 +128,7 @@ import "ccsdgrad_rhf_defs.sialx"
       distributed Dbb[b1,b]
       distributed L1aa[a1,a]
       distributed L1ai[a1,i]
+      distributed D_gradient[Ngrads]
 
       temp Tpq[mu,nu]
       temp Txx[mu,nu]
@@ -394,11 +396,11 @@ import "ccsdgrad_rhf_defs.sialx"
       temp QQbb[j,lambda,j1,sigma]
       temp  Qab[i,lambda,j,b]
       temp QQab[i,lambda,j,sigma]
+      temp GRAD_AO_INTS[mu,nu,lambda,sigma]
 
 #     contiguous local L_gradient[Ngrads]
       static L_gradient[Ngrads]
       static gradient[Ngrads]
-      static BB[d1,d2]
       local Laa[a,a1]
       local Lbb[b,b1]
       local L1bb[b1,b]
@@ -413,6 +415,12 @@ import "ccsdgrad_rhf_defs.sialx"
       scalar etemp
       scalar esum
       scalar eacbd
+      scalar zmax 
+      scalar imax 
+      scalar six
+      scalar two 
+      scalar one 
+      scalar flag 
 
         ENDSIAL CCSD_2GRAD_RHF_VARS
 #       ---------------------------

@@ -1,5 +1,5 @@
 import "ccsdgrad_rhf_defs.sialx"
-import "ccsdgrad_rhf_vars.sialx"
+import "ccsd_1grad_rhf_vars.sialx"
 #
 # This is a standalone sial procedure to DIIS only two index array
 # vectors are involved. This is a closed shell only version. 
@@ -17,7 +17,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #      Served D0ai[a,i]            : The vector at zero iteration.
 #
 #
-#      dstributed PAIold_aa[a,i]   : The extrapolated vector returns
+#      dstributed Ddoldai_a[a,i]   : The extrapolated vector returns
 #                                    in this generic distributed array.
 #                                    Copy this to the name of the variable 
 #                                    name being used in the calling
@@ -119,7 +119,7 @@ import "ccsdgrad_rhf_vars.sialx"
                endif
             ENDDO d2
 
-            PUT PAIold_aa[a,i] = tai[a,i]
+            PUT Doldai_a[a,i] = tai[a,i]
       ENDPARDO a, i
 
       server_barrier

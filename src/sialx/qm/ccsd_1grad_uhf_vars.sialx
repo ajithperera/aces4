@@ -342,10 +342,12 @@ import "ccsdgrad_uhf_defs.sialx"
       temp T2bj[b,j]
       temp T3ai[a,i]
       temp T3bj[b,j]
+      temp Txx[mu,nu]
 
       served VSpipi[p1,i,p,i1]
       served Viaai[i,a1,a,i1]
       served Vaaii[a,a1,i,i1]
+      served Vaaai[a,a1,a2,i]
       served VSaaai[a2,a,a1,i]
       served VSqjqj[q1,j,q,j1]
       served Vjbbj[j,b1,b,j1]
@@ -431,8 +433,11 @@ import "ccsdgrad_uhf_defs.sialx"
       served Ixxbi[mu,nu,b,i]
       served Ixxaj[mu,nu,a,j]
       served Jxxxi[mu,nu,lambda,i]
+      served Ixxxi[mu,nu,lambda,i]
       served Ixxxj[mu,nu,lambda,j]
       served Jxxxj[mu,nu,lambda,j]
+      served D0ai[a,i]
+      served D0bj[b,j]
 
       distributed t1a_old[a,i]
       distributed t1b_old[b,j]
@@ -483,10 +488,12 @@ import "ccsdgrad_uhf_defs.sialx"
       distributed Dnewai_a[a,i]
       distributed Doldai_b[b,j]
       distributed Dnewai_b[b,j]
-      distributed D0ai[a,i]
-      distributed D0bj[b,j]
-      distributed e1ai[a,i]
-      distributed e1bj[b,j]
+      distributed Dai[a,i,idiis]
+      distributed Dbj[b,j,idiis]
+      distributed eai[a,i,idiis]
+      distributed ebj[b,j,idiis]
+      distributed D_gradient[Ngrads]
+      Distributed DIST_BB[d1,d2]
 
       static Spq[mu,nu]
 #     contiguous local L_gradient[Ngrads]
@@ -519,6 +526,24 @@ import "ccsdgrad_uhf_defs.sialx"
       scalar ecrit
       scalar ediff
       scalar rank
+      scalar AAAA
+      scalar BBBB
+      Scalar n1
+      Scalar n2
+      Scalar kcount
+      Scalar scale2
+      scalar one
+      scalar flag
+      scalar zmax
+      scalar imax
+      scalar two
+      scalar six
+      scalar etmp
+      scalar sum
+
+      Int worder
+      Int Iorder
+      Int niter 
 
            ENDSIAL CCSD_1GRAD_UHF_VARS
 #          ---------------------------

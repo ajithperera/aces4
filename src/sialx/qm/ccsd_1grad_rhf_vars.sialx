@@ -201,7 +201,7 @@ import "ccsdgrad_rhf_defs.sialx"
       temp tqq[q,q1]
       temp Taa[a,a1]
       temp T1aa[a,a1]
-      temp Tbb[b,b1]
+      temp TTbb[b,b1]
       temp T1bb[b,b1]
       temp Tae_a[a,a1]
       temp Tae_b[b,b1]
@@ -343,6 +343,7 @@ import "ccsdgrad_rhf_defs.sialx"
       temp T3ai[a,i]
       temp T2ai[a,i]
       temp Tbb[idiis,jdiis]
+      temp Txx[mu,nu]
 
 
       served VSpipi[p1,i,p,i1]
@@ -406,6 +407,7 @@ import "ccsdgrad_rhf_defs.sialx"
       served Jxxxi[mu,nu,lambda,i]
       served Ixxxj[mu,nu,lambda,j]
       served Jxxxj[mu,nu,lambda,j]
+      served D0ai[a,i]
 
       distributed t1a_old[a,i]
       distributed l1a_old[i,a]
@@ -449,8 +451,10 @@ import "ccsdgrad_rhf_defs.sialx"
       distributed I1xj[mu,j]
       distributed Doldai_a[a,i]
       distributed Dnewai_a[a,i]
-      distributed Dai[a,i]
-      distributed eai[a,i]
+      distributed Dai[a,i,idiis]
+      distributed eai[a,i,idiis]
+      distributed D_gradient[Ngrads]
+      Distributed DIST_BB[d1,d2]
 
       static DSii[i,i1]
       static DS1ii[i,i1]
@@ -490,6 +494,23 @@ import "ccsdgrad_rhf_defs.sialx"
       scalar enew
       scalar ecrit
       scalar ediff
+      scalar AAAA
+      Scalar n1
+      Scalar n2
+      Scalar kcount
+      Scalar scale2
+      scalar one
+      scalar flag
+      scalar zmax
+      scalar imax
+      scalar two
+      scalar six
+      scalar etmp
+      
+      Int worder
+      Int Iorder
+      Int niter
 
         ENDSIAL CCSD_1GRAD_RHF_VARS
+#       -----------------------------
 #       ---------------------------

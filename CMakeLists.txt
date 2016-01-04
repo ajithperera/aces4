@@ -607,10 +607,18 @@ set(SIAL_FILES
     src/sialx/qm/lambda_uhf_vars.sialx;
     src/sialx/qm/diis_4index_lambda_uhf.sialx; 
     src/sialx/qm/lambda_uhf.sialx;
-    src/sialx/qm/ccsd_1grad_rhf.defs.sialx;
-    src/sialx/qm/ccsd_1grad_rhf.vars.sialx;
-    src/sialx/qm/diis_2index_ccsdgrad_rhf.sialx;
-    src/sialx/qm/ccsd_1grad_rhf.sialx)
+    src/sialx/qm/ccsdgrad_rhf_defs.sialx;
+    src/sialx/qm/ccsd_1grad_rhf_vars.sialx;
+    src/sialx/qm/diis_2index_ccgrad_rhf.sialx;
+    src/sialx/qm/ccsd_1grad_rhf.sialx;
+    src/sialx/qm/ccsd_2grad_rhf_vars.sialx;
+    src/sialx/qm/ccsd_2grad_rhf.sialx;
+    src/sialx/qm/ccsdgrad_uhf_defs.sialx;
+    src/sialx/qm/ccsd_1grad_uhf_vars.sialx;
+    src/sialx/qm/diis_2index_ccgrad_uhf.sialx;
+    src/sialx/qm/ccsd_1grad_uhf.sialx;
+    src/sialx/qm/ccsd_2grad_uhf_vars.sialx;
+    src/sialx/qm/ccsd_2grad_uhf.sialx)
 
 #    src/sialx/qm/scf_hess_uhf.sialx;
 #    src/sialx/qm/scf_hess_uhf_defs.sialx)

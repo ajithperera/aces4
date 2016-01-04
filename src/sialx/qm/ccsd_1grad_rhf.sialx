@@ -1,5 +1,6 @@
 import "ccsdgrad_rhf_defs.sialx"
-import "ccsdgrad_rhf_vars.sialx"
+import "ccsd_1grad_rhf_vars.sialx"
+import "diis_2index_ccgrad_rhf.sialx"
 
 #  Copyright (c) 2003-2010 University of Florida
 #
@@ -53,7 +54,7 @@ import "ccsdgrad_rhf_vars.sialx"
 # I11                        COMPLETE 
 # IABDIRECT                  COMPLETE 
 # IFOCK                      COMPLETE 
-# DAI                        COMPLETE 
+# LINEQ                      COMPLETE 
 #
 # DAB                        COMPLETE  
 # DIJ                        COMPLETE  
@@ -79,7 +80,7 @@ import "ccsdgrad_rhf_vars.sialx"
       restore_persistent l1a_old  "l1a_old"
       restore_persistent L2old_aa "L2old_aa"
       restore_persistent L2old_ab "L2old_ab"   
-      serever_barrier 
+      server_barrier 
 
      ENDPROC READ_2EL
 #    ----------------
@@ -96,7 +97,7 @@ import "ccsdgrad_rhf_vars.sialx"
      set_persistent L2old_ab "L2old_ab"
      set_persistent Doldai_a "Doldai_a"
      set_persistent DOR_ii   "DOR_ii"
-     set_persistent DOR_bb   "DOR_bb"
+     set_persistent DOR_aa   "DOR_aa"
      server_barrier
 
      ENDPROC WRITE_2EL
@@ -201,7 +202,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO b, b1
 #
-            Tbb[b,b1] = 0.0
+            TTbb[b,b1] = 0.0
 #
             DO j
             DO j1
@@ -212,7 +213,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
                T1bb[b,b1]  = L2old_aa[j,b,j1,b2]*T2old_aa[b1,j,b2,j1]
                T1bb[b,b1] *= 0.5
-               Tbb[b,b1]  -= T1bb[b,b1]
+               TTbb[b,b1]  -= T1bb[b,b1]
 #
             ENDDO b2
             ENDDO j1
@@ -226,13 +227,13 @@ import "ccsdgrad_rhf_vars.sialx"
                REQUEST L2old_ab[i,a,j,b]  
 #
                T1bb[b,b1] = L2old_ab[i,a,j,b]*T2old_ab[a,i,b1,j]
-               Tbb[b,b1] -= T1bb[b,b1]
+               TTbb[b,b1] -= T1bb[b,b1]
 #
             ENDDO a
             ENDDO i
             ENDDO j
 #
-            PUT Gae_b[b,b1] += Tbb[b,b1]
+            PUT Gae_b[b,b1] += TTbb[b,b1]
 #
       ENDPARDO b, b1
 #
@@ -573,7 +574,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO i2, a2, b, j   
 #
-            REQUEST L2old_ab[i2,a2,j,b] j 
+            REQUEST L2old_ab[i2,a2,j,b]
 #
             DO i1  
             DO a1  
@@ -587,7 +588,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO i2, a2, b, j   
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO i1, a1, i2, a2    
 #
@@ -647,7 +648,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO j, b, a1, i1
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO j, b, a3, i3
 #
@@ -681,7 +682,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO j, b, j1, b1
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO i1, a1, j, b 
 #
@@ -935,8 +936,8 @@ import "ccsdgrad_rhf_vars.sialx"
                DO b1
 #
                   GET l1a_old[j,b1]
-                  Tbb[b,b1]  = t1a_old[b,j]*l1a_old[j,b1]
-                  Lbb[b,b1] += Tbb[b,b1]
+                  TTbb[b,b1]  = t1a_old[b,j]*l1a_old[j,b1]
+                  Lbb[b,b1] += TTbb[b,b1]
 #
                ENDDO b1
 #
@@ -1060,7 +1061,7 @@ import "ccsdgrad_rhf_vars.sialx"
             DO j
             DO b
 #
-               REQUEST                     T2old_ab[a,i,b,j] j 
+               REQUEST                     T2old_ab[a,i,b,j] 
                Tiabj[i1,a1,b,j]          = L2old_aa[i1,a1,i,a]*T2old_ab[a,i,b,j]
                PREPARE Liabj[i1,a1,b,j] += Tiabj[i1,a1,b,j] 
 #
@@ -1123,7 +1124,7 @@ import "ccsdgrad_rhf_vars.sialx"
             DO j
             DO b
 #
-               REQUEST                     T2old_aa[b,j,b1,j1] j1 
+               REQUEST                     T2old_aa[b,j,b1,j1]
                Tjbbj[j2,b2,b,j]          = L2old_aa[j2,b2,j1,b1]*T2old_aa[b,j,b1,j1]
                PREPARE Ljbbj[j2,b2,b,j] += Tjbbj[j2,b2,b,j] 
 #
@@ -1562,9 +1563,9 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             GET l1a_old[j,b1] 
             GET t1a_old[b,j] 
-            Tbb[b1,b]      = t1a_old[b,j]*l1a_old[j,b1] 
-            Tbb[b1,b]     *= -1.0  
-            PUT Dbb[b1,b] += Tbb[b1,b] 
+            TTbb[b1,b]      = t1a_old[b,j]*l1a_old[j,b1] 
+            TTbb[b1,b]     *= -1.0  
+            PUT Dbb[b1,b] += TTbb[b1,b] 
 #
       ENDPARDO b1, b, j  
 #
@@ -1671,7 +1672,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO i, a, a1, i1
 #
-      execute server_barrier 
+      server_barrier 
 #
 #     PARDO b, b1, j, j1 
 #
@@ -1869,12 +1870,12 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, j1, j, i1
 #
-            REQUEST Vpiqj[a,i1,j,j1] j1 
+            REQUEST Vpiqj[a,i1,j,j1]
             Tqpqp[j,i1,j1,a]  = Vpiqj[a,i1,j,j1]
 #
             DO i
 #
-               REQUEST Dijkl_ab[i,j,i1,j1] j1 
+               REQUEST Dijkl_ab[i,j,i1,j1] 
 #
                Tai[a,i]         = Dijkl_ab[i,j,i1,j1]*Tqpqp[j,i1,j1,a]
                PUT Iai_aa[a,i] += Tai[a,i]
@@ -1967,7 +1968,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, i, b, j  
 #
-            REQUEST T2old_ab[a,i,b,j]j  
+            REQUEST T2old_ab[a,i,b,j]
 #
             DO i1 
             DO a1 
@@ -1988,7 +1989,7 @@ import "ccsdgrad_rhf_vars.sialx"
             ENDDO i1 
 #
       ENDPARDO a, i, b, j  
-      execute server_barrier 
+      server_barrier 
 #
 # Compute contributions to one-particle intermediates 
 # --------------------------------------------------- 
@@ -1998,8 +1999,8 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO i, a, i2, a1
 #
-            REQUEST Vaaii[a1,a,i2,i] i
-            REQUEST Viaai[i2,a,a1,i] i
+            REQUEST Vaaii[a1,a,i2,i] 
+            REQUEST Viaai[i2,a,a1,i] 
 #
             Tpppp[a,i2,a1,i]  = Vaaii[a1,a,i2,i]
             T1pppp[a,i2,a1,i] = Viaai[i2,a,a1,i]
@@ -2078,7 +2079,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
 # Done one-particle intermediate contributions 
 # -------------------------------------------- 
-      execute sip_barrier 
+      sip_barrier 
 #
       ENDPROC DIBJAAAAA 
 #     ------------------ 
@@ -2267,7 +2268,7 @@ import "ccsdgrad_rhf_vars.sialx"
             DO j 
             DO b 
 #
-               REQUEST                        L2old_ab[i1,a1,j,b] i1  
+               REQUEST                        L2old_ab[i1,a1,j,b] 
                Tiajb[i,a,j,b]               = T2old_aa[a,i,a1,i1]*L2old_ab[i1,a1,j,b]  
                Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
                Tibja[i,b,j,a]              *= 0.5 
@@ -2292,7 +2293,6 @@ import "ccsdgrad_rhf_vars.sialx"
                GET t1a_old[a,i1] 
                tai[a,i1] = t1a_old[a,i1] 
 #
-#              T1iajb(i,a,j,b)          = T2old_ab(a1,i1,b,j)*L2old_aa(i1,a1,i,a)  
                Tiaai[i,a,a1,i1]         = L2old_aa[i1,a1,i,a] 
                Tiabj[i,a,b,j]           = Tiaai[i,a,a1,i1]*T2old_ab[a1,i1,b,j]    
                Tiajb[i,a,j,b]           = Tiabj[i,a,b,j] 
@@ -2435,7 +2435,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO a1
 #
-               REQUEST Dibja_abba[j,a1,i,b] b 
+               REQUEST Dibja_abba[j,a1,i,b] 
 #
                Taa[a,a1]         = Viaai[i,a,b,j]*Dibja_abba[j,a1,i,b]
                Taa[a,a1]        *= -1.0  
@@ -2450,11 +2450,11 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, b, j, i1
 #
-            REQUEST Dibja_abba[j,a,i1,b] b 
+            REQUEST Dibja_abba[j,a,i1,b] 
 #
             DO i
 #
-               REQUEST Vpiqj[i1,i,b,j] j 
+               REQUEST Vpiqj[i1,i,b,j] 
 #
                Tia[i,a]         = Dibja_abba[j,a,i1,b]*Vpiqj[i1,i,b,j]
                Tia[i,a]        *= -1.0  
@@ -2565,7 +2565,7 @@ import "ccsdgrad_rhf_vars.sialx"
             PREPARE Dijka_aaaa[i,i1,i2,a] += Tiiia[i,i1,i2,a] 
 #
       ENDPARDO i, i1, i2, a 
-      execute server_barrier 
+      server_barrier 
 #
 # Compute contributions to one-particle intermediates 
 # --------------------------------------------------- 
@@ -2614,7 +2614,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, i2, i, i1
 #
-            REQUEST VSpipi[a,i1,i2,i] i
+            REQUEST VSpipi[a,i1,i2,i] 
             Tpppp[a,i,i1,i2]  = VSpipi[a,i1,i2,i]
 #
             DO a1
@@ -2818,7 +2818,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, b, j, i1
 #
-            REQUEST Viaai[i1,a,b,j] j 
+            REQUEST Viaai[i1,a,b,j]
             Tqpqp[j,i1,b,a]  = Viaai[i1,a,b,j]
 #
             DO i
@@ -3003,8 +3003,8 @@ import "ccsdgrad_rhf_vars.sialx"
             DO a2 
             DO i1 
 #
-               REQUEST T2old_aa[a,i,a2,i1] i1  
-               REQUEST L2old_aa[i,a1,i1,a2] a2  
+               REQUEST T2old_aa[a,i,a2,i1] 
+               REQUEST L2old_aa[i,a1,i1,a2] 
 #
                Taa[a,a1]        = T2old_aa[a,i,a2,i1]*L2old_aa[i,a1,i1,a2]
                Taa[a,a1]       *= 0.25 
@@ -3018,8 +3018,8 @@ import "ccsdgrad_rhf_vars.sialx"
             DO b 
             DO j 
 #
-               REQUEST T2old_ab[a,i,b,j] j  
-               REQUEST L2old_ab[i,a1,j,b] j  
+               REQUEST T2old_ab[a,i,b,j]   
+               REQUEST L2old_ab[i,a1,j,b]   
 #
                Taa[a,a1]        = T2old_ab[a,i,b,j]*L2old_ab[i,a1,j,b]
                Taa[a,a1]       *= 0.5 
@@ -3127,20 +3127,20 @@ import "ccsdgrad_rhf_vars.sialx"
       PROC DIJA 
 #     --------- 
 #
-      PARDO i, a
+      PARDO i, i1
             PUT Dij_a[i,i1] = 0.0
-      ENDPARDO i, a
+      ENDPARDO i, i1
       sip_barrier
   
       PARDO a, a1, i2 
 #
             DO i 
 #
-               REQUEST T2old_aa[a,i,a1,i2] i2  
+               REQUEST T2old_aa[a,i,a1,i2] 
 #
                DO i1 
 #
-                  REQUEST L2old_aa[i1,a,i2,a1] a1  
+                  REQUEST L2old_aa[i1,a,i2,a1] 
 #
                   Tii[i,i1]        = T2old_aa[a,i,a1,i2]*L2old_aa[i1,a,i2,a1] 
                   Tii[i,i1]       *= -0.25   
@@ -3158,11 +3158,11 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO i 
 #
-               REQUEST T2old_ab[a,i,b,j] j 
+               REQUEST T2old_ab[a,i,b,j] 
 #
                DO i1 
 #
-                  REQUEST L2old_ab[i1,a,j,b] b  
+                  REQUEST L2old_ab[i1,a,j,b] 
 #
                   Tii[i,i1]        = T2old_ab[a,i,b,j]*L2old_ab[i1,a,j,b] 
                   Tii[i,i1]       *= -0.5   
@@ -3204,9 +3204,9 @@ import "ccsdgrad_rhf_vars.sialx"
 # Calculate contribution to Iai_aa 
 # -------------------------------- 
 #
-     PARDO i, a
+     PARDO i, i1
             PUT Dij_a[i,i1] = 0.0
-     ENDPARDO i, a
+     ENDPARDO i, i1
      sip_barrier
   
      PARDO a, i, i1, i2  
@@ -3400,8 +3400,8 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO i, i1, b, j 
 #
-            REQUEST Vpiqj[i,i1,b,j] j 
-            REQUEST Vpiqj[i1,i,b,j] j   
+            REQUEST Vpiqj[i,i1,b,j] 
+            REQUEST Vpiqj[i1,i,b,j]   
             GET Doldai_a[b,j] 
 #
             Tppqq[i,i1,b,j]   = Vpiqj[i,i1,b,j]  
@@ -3527,15 +3527,18 @@ import "ccsdgrad_rhf_vars.sialx"
             PUT Iia_aa[i,a] += Tia[i,a] 
 #
       ENDPARDO a, i 
+
+      ENDPROC FOCKIABB
+#     -------------
 #
       PROC IFOCK
 #     ----------
-           CALL FOCKIIJA
-           CALL FOCKIABA
-           CALL FOCKIABB
+          CALL FOCKIIJA
+          CALL FOCKIABA
+          CALL FOCKIABB
       ENDPROC IFOCK
 #     -------------
-# 
+ 
 # ----------------------------------------------------------------------------------------
 #
       PROC IFOCK_PP 
@@ -3653,7 +3656,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO a, b1, i 
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO mu, nu, a, i
             REQUEST Ixxai[mu,nu,a,i]  
@@ -3664,7 +3667,7 @@ import "ccsdgrad_rhf_vars.sialx"
       ENDPARDO mu, nu, a, i
 #
       PARDO mu, nu, b, i
-            REQUEST Ixxbi[mu,nu,b,i] b 
+            REQUEST Ixxbi[mu,nu,b,i] 
             DO lambda 
                txxxi[mu,nu,lambda,i] = Ixxbi[mu,nu,b,i]*ca[lambda,b] 
                PREPARE Jxxxi[mu,nu,lambda,i] += txxxi[mu,nu,lambda,i] 
@@ -3696,7 +3699,7 @@ import "ccsdgrad_rhf_vars.sialx"
             Txxxx[lambda,sigma,mu,nu] -= T1xxxx[lambda,sigma,mu,nu] 
 #
             DO i 
-               REQUEST Ixxxi[mu,nu,lambda,i] i 
+               REQUEST Ixxxi[mu,nu,lambda,i] 
                txi[sigma,i] = Txxxx[lambda,sigma,mu,nu]*Ixxxi[mu,nu,lambda,i]  
                PUT IIxi[sigma,i] += txi[sigma,i] 
             ENDDO i 
@@ -3753,7 +3756,7 @@ import "ccsdgrad_rhf_vars.sialx"
            PREPARE LTau_ab[a,b1,i,j1]   = tpqpq[a,b1,i,j1]  
            PREPARE LL2old_ab[i,j1,a,b1] = t1pqpq[i,j1,a,b1]  
       ENDPARDO a, b1, i, j1 
-      execute server_barrier 
+      server_barrier 
 # 
       PARDO a, a2, a1, a3 
 #
@@ -3763,7 +3766,7 @@ import "ccsdgrad_rhf_vars.sialx"
             DO i 
             DO i1 
 #
-               REQUEST                  LTau_aa[a,a1,i,i1] a 
+               REQUEST                  LTau_aa[a,a1,i,i1] 
                REQUEST                  LL2old_aa[i,i1,a2,a3] 
 #
                Taaaa[a,a1,a2,a3]      = LTau_aa[a,a1,i,i1]*LL2old_aa[i,i1,a2,a3]
@@ -3786,8 +3789,8 @@ import "ccsdgrad_rhf_vars.sialx"
             t1aaaa[a1,a,a3,a2] = DXabcd_aa[a2,a3,a,a1] 
             DO i
 #
-               REQUEST VSaaai[a3,a1,a2,i] i
-               REQUEST VSaaai[a1,a3,a,i]  i  
+               REQUEST VSaaai[a3,a1,a2,i] 
+               REQUEST VSaaai[a1,a3,a,i]    
 #
                Tpppp[i,a1,a2,a3]  = VSaaai[a3,a1,a2,i]
 #
@@ -3835,15 +3838,8 @@ import "ccsdgrad_rhf_vars.sialx"
             DO i 
             DO j 
 #
-              #REQUEST Tau_ab[a,i,b,j]       
-              #REQUEST L2old_ab[i,a1,j,b1]   
-              #Tabij[a,b,i,j]        = Tau_ab[a,i,b,j] 
-              #Tijab[i,j,a1,b1]      = L2old_ab[i,a1,j,b1] 
-#             #Tabab(a,b,a1,b1)      = Tau_ab(a,i,b,j)*L2old_ab(i,a1,j,b1) 
-              #Tabab[a,b,a1,b1]      = Tabij[a,b,i,j]*Tijab[i,j,a1,b1] 
-#
-               REQUEST LTau_ab[a,b,i,j] a 
-               REQUEST LL2old_ab[i,j,a1,b1] i 
+               REQUEST LTau_ab[a,b,i,j] 
+               REQUEST LL2old_ab[i,j,a1,b1] 
                Tabab[a,b,a1,b1]      = LTau_ab[a,b,i,j]*LL2old_ab[i,j,a1,b1] 
                Tabab[a,b,a1,b1]     *= 0.5  
                T1abab[a1,b1,a,b]     = Tabab[a,b,a1,b1]  
@@ -3977,8 +3973,8 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO i1 
 #
-               REQUEST Tau_aa[a,i1,a1,i]   a1  
-               REQUEST L2old_aa[i1,a,i,a1] a1  
+               REQUEST Tau_aa[a,i1,a1,i]   
+               REQUEST L2old_aa[i1,a,i,a1] 
 #
                DO a2 
 #
@@ -4042,7 +4038,7 @@ import "ccsdgrad_rhf_vars.sialx"
 # Done indirect contributions to one-particle intermediates 
 # --------------------------------------------------------- 
 # 
-      execute server_barrier 
+      server_barrier 
 #
       PARDO a, a1, a2, i 
 #
@@ -4188,7 +4184,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO a, b1, j1, i2 
 #
-      execute sip_barrier  
+      sip_barrier  
 #
       PARDO a1, j, a, b 
 #
@@ -4316,7 +4312,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO i
 #
-               REQUEST            Viaai[i,a1,b,j] j 
+               REQUEST            Viaai[i,a1,b,j] 
 #
                Tia[i,a]         = Viaai[i,a1,b,j]*Dabci_abab[a,b,a1,j]
                Tia[i,a]        *= -1.0  
@@ -4328,7 +4324,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a1, b, a, j 
 #
-            REQUEST Dabci_abab[a,b,a1,j] a  
+            REQUEST Dabci_abab[a,b,a1,j] 
 #
 # Compute contributions to one-particle intermediates 
 # --------------------------------------------------- 
@@ -4351,7 +4347,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO i
 #
-               REQUEST             Vpiqj[a,i,b,j] j
+               REQUEST             Vpiqj[a,i,b,j] 
                Tia[i,a1]         = Dabci_abab[a,b,a1,j]*Vpiqj[a,i,b,j]
                Tia[i,a1]        *= -1.0
                PUT Iia_aa[i,a1] += Tia[i,a1]
@@ -4372,7 +4368,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO b1, i, a, b  
 #
-            REQUEST Dabci_abab[b1,a,b,i] a 
+            REQUEST Dabci_abab[b1,a,b,i] 
 #
 # Compute contributions to one-particle intermediates 
 # --------------------------------------------------- 
@@ -4504,7 +4500,7 @@ import "ccsdgrad_rhf_vars.sialx"
            ENDDO lambda
 #
      ENDPARDO a, a1, i, i1
-     execute server_barrier 
+     server_barrier 
 #
 #    Contract Half back transformed arrays with AO integrals 
 #    --> Txixi and T1xixi 
@@ -4517,8 +4513,8 @@ import "ccsdgrad_rhf_vars.sialx"
            DO i 
            DO i1 
 #
-              REQUEST Tao_aa[mu,i,nu,i1] i1  
-              REQUEST Lao_aa[i,mu,i1,nu] i1 
+              REQUEST Tao_aa[mu,i,nu,i1] 
+              REQUEST Lao_aa[i,mu,i1,nu] 
 #
               Txixi[lambda,i,sigma,i1]      = Tao_aa[mu,i,nu,i1]*aoint[mu,lambda,nu,sigma] 
               PREPARE Ixixi[lambda,i,sigma,i1] += Txixi[lambda,i,sigma,i1] 
@@ -4643,7 +4639,7 @@ import "ccsdgrad_rhf_vars.sialx"
            ENDDO lambda
 #
      ENDPARDO a, b, i, j
-     execute server_barrier 
+     server_barrier 
 #
 #    Contract Half back transformed arrays with AO integrals 
 #    --> Txixj and T1xixj 
@@ -4723,7 +4719,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
      ENDPARDO a, a1, b 
 #
-     execute sip_barrier 
+     sip_barrier 
 #
      ENDPROC IABAA2 
 #    -------------- 
@@ -4743,7 +4739,7 @@ import "ccsdgrad_rhf_vars.sialx"
                GET        Dnewai_a[a,i] 
                GET        Doldai_a[a,i] 
                Tai[a,i] = Dnewai_a[a,i] 
-               execute energy_denominator Tai[a,i] fock_A AAAA
+               execute energy_denominator Tai[a,i] fock_a fock_a AAAA
                Tai[a,i] -= Doldai_a[a,i] 
     
                If kiter < diis_order
@@ -4798,8 +4794,8 @@ import "ccsdgrad_rhf_vars.sialx"
 #                                    + V^{ci}_{ka} - V^{ci}_{ak} ] 
 #                           - D(C,K)*[ V^{Ca}_{Ki} + V^{Ci}_{Ka} ] 
 #
-      PROC DAI
-#     -------- 
+      PROC LINEQ
+#     ----------
 #
 # First get initial guess 
 # ----------------------- 
@@ -4812,7 +4808,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             GET                        Xai_aa[a,i] 
             Tai[a,i]                 = Xai_aa[a,i]  
-            execute energy_denominator Tai[a,i] fock_a AAAA
+            execute energy_denominator Tai[a,i] fock_a fock_a AAAA
             PUT Doldai_a[a,i]        = Tai[a,i] 
             PREPARE D0ai[a,i]        = Tai[a,i] 
 #
@@ -4893,7 +4889,7 @@ import "ccsdgrad_rhf_vars.sialx"
                etemp = Dnewai_a[a,i]*Dnewai_a[a,i]  
                esum += etemp 
                Tai[a,i] = Dnewai_a[a,i] 
-               execute energy_denominator Tai[a,i]  fock_a AAAA
+               execute energy_denominator Tai[a,i]  fock_a fock_a AAAA
                PUT Doldai_a[a,i] = Tai[a,i] 
 #
          ENDPARDO a, i 
@@ -4949,8 +4945,8 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDDO KITER  
 # 
-      ENDPROC DAI
-#     ----------- 
+      ENDPROC LINEQ
+#     -------------
 #
       PROC I1TRANS
 #     ------------
@@ -5128,7 +5124,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO i, i1
 #
-      execute sip_barrier
+      sip_barrier
 #
 # Finally contract with the derivative integrals
 # ----------------------------------------------
@@ -5233,7 +5229,7 @@ import "ccsdgrad_rhf_vars.sialx"
             PUT Dhfb[mu,nu] += Tpq[mu,nu]
 #
       ENDPARDO mu, nu, j
-      execute sip_barrier
+      sip_barrier
 #
       ENDPROC WHFDENS
 #     --------------
@@ -5252,7 +5248,7 @@ import "ccsdgrad_rhf_vars.sialx"
             tii[i1,i]                 = Iij_aa[i,i1] 
             tii[i1,i]                -= Iij_aa[i1,i] 
 #
-            execute udenominator tii[i1,i] fock_a AAAA
+            execute energy_denominator tii[i1,i] fock_a fock_a AAAA
             PUT DOR_ii[i1,i]         += tii[i1,i] 
 #
       ENDPARDO i, i1 
@@ -5274,7 +5270,7 @@ import "ccsdgrad_rhf_vars.sialx"
             taa[a1,a]                 = Iab_aa[a,a1] 
             taa[a1,a]                -= Iab_aa[a1,a] 
 #
-            execute udenominator taa[a,a1] fock_a AAAA
+            execute energy_denominator taa[a,a1] fock_a fock_a AAAA
             PUT DOR_aa[a1,a]         += taa[a1,a] 
 #
       ENDPARDO a, a1 
@@ -5299,7 +5295,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO a, i  
 #
-      execute sip_barrier 
+      sip_barrier 
 #
 # Add contributions from the o-o and v-v orbital response density. 
 # ----------------------------------------------------------------   
@@ -5367,7 +5363,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO a, i, b, b1 
 #
-      execute sip_barrier 
+      sip_barrier 
 #
       ENDPROC XAI_FULL   
 #     ---------------- 
@@ -5378,7 +5374,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO i 
            DO i1 
               GET Iij_aa[i,i1] 
-              execute dump_block Iij_aa[i,i1]  
+              print  Iij_aa[i,i1]  
            ENDDO i1 
            ENDDO i 
 #
@@ -5391,7 +5387,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO a 
            DO a1 
               GET Iab_aa[a,a1] 
-              execute dump_block Iab_aa[a,a1]  
+              print  Iab_aa[a,a1]  
            ENDDO a1 
            ENDDO a 
 #
@@ -5404,7 +5400,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO a 
            DO i 
               GET Iai_aa[a,i] 
-              execute dump_block Iai_aa[a,i]  
+              print Iai_aa[a,i]  
            ENDDO i 
            ENDDO a 
 #
@@ -5417,7 +5413,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO a 
            DO i 
               GET Iia_aa[i,a] 
-              execute dump_block Iia_aa[i,a]  
+              print Iia_aa[i,a]  
            ENDDO i 
            ENDDO a 
 #
@@ -5430,7 +5426,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO i
            DO i1
               GET Iij_aa[i,i1]
-              execute dump_block Iij_aa[i,i1]
+              print Iij_aa[i,i1]
            ENDDO i1
            ENDDO i
 #
@@ -5442,7 +5438,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO a
            DO a1
               GET Iab_aa[a,a1]
-              execute dump_block Iab_aa
+               print Iab_aa[a,a1]
            ENDDO a1
            ENDDO a
 #
@@ -5454,7 +5450,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO i
            DO a
               GET Iia_aa[i,a]
-              execute dump_block Iia_aa
+              print Iia_aa[i,a]
            ENDDO a
            ENDDO i
 #
@@ -5467,7 +5463,7 @@ import "ccsdgrad_rhf_vars.sialx"
            DO i
            DO a
               GET Iai_aa[a,i]
-              execute dump_block Iai_aa
+              print Iai_aa[a,i]
            ENDDO a
            ENDDO i
 #
@@ -5596,7 +5592,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
 # Finally solve for Dai iteratively 
 # --------------------------------- 
-         CALL DAI 
+         CALL LINEQ
          sip_barrier  
 #
 # Compute the contributions to Iai coming from the Fock matrix 
@@ -5658,8 +5654,8 @@ import "ccsdgrad_rhf_vars.sialx"
       CALL READ_2EL 
 #
       PARDO a, a1, a2, i 
-            REQUEST                     Vaabj[a,a1,a2,i] a 
-            REQUEST                     Vaabj[a2,a1,a,i] a 
+            REQUEST                     Vaabj[a,a1,a2,i] 
+            REQUEST                     Vaabj[a2,a1,a,i] 
             tpppp[a,a1,a2,i]          = Vaabj[a,a1,a2,i] 
             t1pppp[a,a1,a2,i]         = Vaabj[a2,a1,a,i] 
             tpppp[a,a1,a2,i]         -= t1pppp[a,a1,a2,i]  

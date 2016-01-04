@@ -1,5 +1,6 @@
 import "ccsdgrad_uhf_defs.sialx"
-import "ccsdgrad_uhf_vars.sialx"
+import "ccsd_1grad_uhf_vars.sialx"
+import "diis_2index_ccgrad_uhf.sialx"
 
 #  Copyright (c) 2003-2010 University of Florida
 #
@@ -53,7 +54,7 @@ import "ccsdgrad_uhf_vars.sialx"
 # I11                        COMPLETE 
 # IABDIRECT                  COMPLETE 
 # IFOCK                      COMPLETE 
-# DAI                        COMPLETE 
+# LINEQ                      COMPLETE 
 #
 # DAB                        COMPLETE  
 # DIJ                        COMPLETE  
@@ -246,8 +247,8 @@ import "ccsdgrad_uhf_vars.sialx"
             DO j1
             DO b2
 #
-               REQUEST T2old_bb[b1,j,b2,j1] j1 
-               REQUEST L2old_bb[j,b,j1,b2]  j1 
+               REQUEST T2old_bb[b1,j,b2,j1] 
+               REQUEST L2old_bb[j,b,j1,b2]  
 #
                T1bb[b,b1]  = L2old_bb[j,b,j1,b2]*T2old_bb[b1,j,b2,j1]
                T1bb[b,b1] *= 0.5
@@ -261,8 +262,8 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i
             DO a
 #
-               REQUEST T2old_ab[a,i,b1,j] j 
-               REQUEST L2old_ab[i,a,j,b]  j 
+               REQUEST T2old_ab[a,i,b1,j]  
+               REQUEST L2old_ab[i,a,j,b]   
 #
                T1bb[b,b1] = L2old_ab[i,a,j,b]*T2old_ab[a,i,b1,j]
                Tbb[b,b1] -= T1bb[b,b1]
@@ -286,7 +287,7 @@ import "ccsdgrad_uhf_vars.sialx"
 
          PARDO b, b1
             PUT Gae_b[b,b1] += Tbb[b,b1]
-         ENDPARDO b b1
+         ENDPARDO b, b1
          sip_barrier 
 
          CALL GAEA
@@ -543,7 +544,7 @@ import "ccsdgrad_uhf_vars.sialx"
       ENDPARDO mu, nu, b, j
 #
       PARDO mu, nu, a, j
-            REQUEST Ixxaj[mu,nu,a,j] a 
+            REQUEST Ixxaj[mu,nu,a,j] 
             DO lambda 
                txxxj[mu,nu,lambda,j] = Ixxaj[mu,nu,a,j]*ca[lambda,a] 
                PREPARE Jxxxj[mu,nu,lambda,j] += txxxj[mu,nu,lambda,j] 
@@ -566,19 +567,19 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO lambda, sigma, mu, nu  
 #
-            compute_integrals            AOINT[lambda,mu,sigma,nu]
-            compute_integrals            AOINT1[sigma,mu,lambda,nu]
+            execute compute_integral_batch  AOINT[lambda,mu,sigma,nu]
+            execute compute_integral_batch  AOINT1[sigma,mu,lambda,nu]
             Txxxx[lambda,sigma,mu,nu]  = AOINT[lambda,mu,sigma,nu] 
             T1xxxx[lambda,sigma,mu,nu] = AOINT1[sigma,mu,lambda,nu] 
 #
             DO i 
-               REQUEST Jxxxi[mu,nu,lambda,i] i 
+               REQUEST Jxxxi[mu,nu,lambda,i] 
                txi[sigma,i] = Txxxx[lambda,sigma,mu,nu]*Jxxxi[mu,nu,lambda,i]  
                PUT JJxi[sigma,i] += txi[sigma,i] 
             ENDDO i 
 #
             DO j 
-               REQUEST Jxxxj[mu,nu,lambda,j] j 
+               REQUEST Jxxxj[mu,nu,lambda,j] 
                txj[sigma,j] = Txxxx[lambda,sigma,mu,nu]*Jxxxj[mu,nu,lambda,j]  
                PUT JJxj[sigma,j] += txj[sigma,j] 
             ENDDO j 
@@ -586,13 +587,13 @@ import "ccsdgrad_uhf_vars.sialx"
             Txxxx[lambda,sigma,mu,nu] -= T1xxxx[lambda,sigma,mu,nu] 
 #
             DO i 
-               REQUEST Ixxxi[mu,nu,lambda,i] i 
+               REQUEST Ixxxi[mu,nu,lambda,i] 
                txi[sigma,i] = Txxxx[lambda,sigma,mu,nu]*Ixxxi[mu,nu,lambda,i]  
                PUT IIxi[sigma,i] += txi[sigma,i] 
             ENDDO i 
 #
             DO j 
-               REQUEST Ixxxj[mu,nu,lambda,j] j 
+               REQUEST Ixxxj[mu,nu,lambda,j] 
                txj[sigma,j] = Txxxx[lambda,sigma,mu,nu]*Ixxxj[mu,nu,lambda,j]  
                PUT IIxj[sigma,j] += txj[sigma,j] 
             ENDDO j 
@@ -706,7 +707,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, a1, i, i1 
 #
-            REQUES Tau_aa[a,i,a1,i1]   
+            REQUEST Tau_aa[a,i,a1,i1]   
             REQUEST L2old_aa[i,a,i1,a1] 
 #
             Tiiaa[i,i1,a,a1]  = Tau_aa[a,i,a1,i1] 
@@ -842,7 +843,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       ENDPARDO i2, a2, a1, i1   
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO i2, a2, a, i   
 #
@@ -851,7 +852,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i1  
             DO a1  
 #
-               REQUEST                       T2old_aa[a,i,a1,i1] i1 
+               REQUEST                       T2old_aa[a,i,a1,i1] 
                Tiaai[i2,a2,a1,i1]          = L2old_aa[i2,a2,i,a]*T2old_aa[a,i,a1,i1]
                PREPARE Liaai[i2,a2,a1,i1] += Tiaai[i2,a2,a1,i1] 
 #
@@ -867,7 +868,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i1  
             DO a1  
 #
-               REQUEST                       T2old_ab[a1,i1,b,j] j 
+               REQUEST                       T2old_ab[a1,i1,b,j] 
                Tiaai[i2,a2,a1,i1]          = L2old_ab[i2,a2,j,b]*T2old_ab[a1,i1,b,j]
                PREPARE Liaai[i2,a2,a1,i1] += Tiaai[i2,a2,a1,i1] 
 #
@@ -876,7 +877,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       ENDPARDO i2, a2, b, j   
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO i1, a1, i2, a2    
 #
@@ -944,7 +945,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i1
             DO a1
 #
-               REQUEST                     T2old_aa[a3,i3,a1,i1] i1 
+               REQUEST                     T2old_aa[a3,i3,a1,i1] 
                Tjbai[j,b,a1,i1]          = L2old_ab[i3,a3,j,b]*T2old_aa[a3,i3,a1,i1]
                PREPARE Ljbai[j,b,a1,i1] += Tjbai[j,b,a1,i1]
 #
@@ -955,12 +956,12 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO j, b, j1, b1
 #
-            REQUEST L2old_bb[j1,b1,j,b] j1 
+            REQUEST L2old_bb[j1,b1,j,b] 
 #
             DO i1
             DO a1
 #
-               REQUEST                     T2old_ab[a1,i1,b1,j1] j1 
+               REQUEST                     T2old_ab[a1,i1,b1,j1] 
                Tjbai[j,b,a1,i1]          = L2old_bb[j1,b1,j,b]*T2old_ab[a1,i1,b1,j1]
                PREPARE Ljbai[j,b,a1,i1] += Tjbai[j,b,a1,i1]
 #
@@ -972,7 +973,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO i1, a1, j, b 
 #
-            REQUEST Ljbai[j,b,a1,i1] b 
+            REQUEST Ljbai[j,b,a1,i1] 
 #
             DO i
             DO a
@@ -1025,12 +1026,12 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO i2, a1, a, i
 #
-           REQUEST VSpipi[a,i2,a1,i] i
+           REQUEST VSpipi[a,i2,a1,i] 
            Tpppp[i2,a1,a,i]  = VSpipi[a,i2,a1,i]
 #
            DO i1
 #
-              REQUEST Dijab_aa[i1,i2,a1,a] a 
+              REQUEST Dijab_aa[i1,i2,a1,a]  
 #
               Tii[i,i1]         = Dijab_aa[i1,i2,a1,a]*Tpppp[i2,a1,a,i]
 #             Tii(i,i1)        *= -1.0  
@@ -1046,11 +1047,11 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, a2, i, i1
 #
-            REQUEST VSpipi[a,i,a2,i1] i1  
+            REQUEST VSpipi[a,i,a2,i1] 
 #
             DO a1
 #
-               REQUEST Dijab_aa[i,i1,a1,a2] a2 
+               REQUEST Dijab_aa[i,i1,a1,a2] 
 #
                Taa[a,a1]         = VSpipi[a,i,a2,i1]*Dijab_aa[i,i1,a1,a2]
 #              Taa(a,a1)        *= -1.0  
@@ -1066,12 +1067,12 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, a1, a2, i1
 #
-            REQUEST VSaaai[a1,a,a2,i1] i1  
+            REQUEST VSaaai[a1,a,a2,i1]
             Tpppp[i1,a1,a2,a]  = VSaaai[a1,a,a2,i1]
 #
             DO i
 #
-               REQUEST Dijab_aa[i,i1,a1,a2] a2 
+               REQUEST Dijab_aa[i,i1,a1,a2]  
 #
                Tai[a,i]         = Dijab_aa[i,i1,a1,a2]*Tpppp[i1,a1,a2,a]
                Tai[a,i]        *= 2.0  
@@ -1086,11 +1087,11 @@ import "ccsdgrad_uhf_vars.sialx"
 # 
       PARDO a, a1, i2, i1
 #
-            REQUEST Dijab_aa[i2,i1,a,a1] a1 
+            REQUEST Dijab_aa[i2,i1,a,a1] 
 #
             DO i
 #
-               REQUEST VSpipi[a1,i1,i,i2] i2  
+               REQUEST VSpipi[a1,i1,i,i2]  
 #
                Tia[i,a]           = VSpipi[a1,i1,i,i2]*Dijab_aa[i2,i1,a,a1]
 #              Tia(i,a)          *= -1.0  
@@ -1330,7 +1331,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO j
             DO b
 #
-               REQUEST                     T2old_bb[b,j,b1,j1]   j1 
+               REQUEST                     T2old_bb[b,j,b1,j1]   
                Tiabj[i1,a1,b,j]          = L2old_ab[i1,a1,j1,b1]*T2old_bb[b,j,b1,j1]
                PREPARE Liabj[i1,a1,b,j] += Tiabj[i1,a1,b,j] 
 #
@@ -1346,7 +1347,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO j
             DO b
 #
-               REQUEST                     T2old_ab[a,i,b,j] j 
+               REQUEST                     T2old_ab[a,i,b,j] 
                Tiabj[i1,a1,b,j]          = L2old_aa[i1,a1,i,a]*T2old_ab[a,i,b,j]
                PREPARE Liabj[i1,a1,b,j] += Tiabj[i1,a1,b,j] 
 #
@@ -1436,7 +1437,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO j, b, b2, j2
 #
-            REQUEST Ljbbj[j2,b2,b,j] b 
+            REQUEST Ljbbj[j2,b2,b,j]
 #
             DO i
             DO a
@@ -1651,7 +1652,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i
             DO b
 #
-               REQUEST T2old_ab[a,i,b,j] j 
+               REQUEST T2old_ab[a,i,b,j] 
                REQUEST L2old_ab[i,a1,j1,b] 
 #
                Tajaj[a,j1,a1,j]  = T2old_ab[a,i,b,j]*L2old_ab[i,a1,j1,b]
@@ -1689,7 +1690,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
 #     PARDO b, a, j, i 
 #
-#           REQUEST Dijab_ab(i,j,a,b) b  
+#           REQUEST Dijab_ab(i,j,a,b)   
 #           Tijab(i,j,a,b)        = 2.0*Dijab_ab(i,j,a,b)
 #           PREPARE Dijab_ab(i,j,a,b) = Tijab(i,j,a,b) 
 #
@@ -1780,7 +1781,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, a1, b, j
 #
-            REQUEST Vaabj[a1,a,b,j] j
+            REQUEST Vaabj[a1,a,b,j]
             Tqpqp[j,a1,b,a]  = Vaabj[a1,a,b,j]
 #
             DO i
@@ -2251,7 +2252,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b, j2, b1, j1
 #
-            REQUEST VSqjqj[b1,j2,b,j1] j1  
+            REQUEST VSqjqj[b1,j2,b,j1] 
             Tqqqq[j2,b,b1,j1]  = VSqjqj[b1,j2,b,j1]
 #
             DO j
@@ -2346,16 +2347,16 @@ import "ccsdgrad_uhf_vars.sialx"
 # -------------------------------------------------- 
 #
            pardo i,i1
-                 put Dii(i,i1) = 0
+                 put Dii[i,i1] = 0.0
            endpardo i,i1
            pardo j,j1
-                 put Djj(j,j1) = 0
+                 put Djj[j,j1] = 0.0
            endpardo j,j1
            pardo a,a1
-                 put Daa(a,a1) = 0
+                 put Daa[a,a1] = 0.0
            endpardo a,a1
            pardo b,b1
-                 put Dbb(b,b1) = 0
+                 put Dbb[b,b1] = 0.0
            endpardo b,b1
            sip_barrier 
 #
@@ -2548,7 +2549,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #     ------------- 
 # 
       pardo b, j
-           put  Rbj(b,j) = 0.0
+           put Rbj[b,j] = 0.0
       endpardo b, j
       sip_barrier 
 
@@ -2560,7 +2561,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i 
             DO j 
 #
-               REQUEST LTau_ab[a,b,i,j] a 
+               REQUEST LTau_ab[a,b,i,j] 
                REQUEST LL2old_ab[i,j,a1,b1] 
                Tabab[a,b,a1,b1]      = LTau_ab[a,b,i,j]*LL2old_ab[i,j,a1,b1] 
                Tabab[a,b,a1,b1]     *= 0.5  
@@ -2717,7 +2718,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, i2, i3, i1
 #
-            REQUEST VSpipi[i3,i2,a,i1] i1  
+            REQUEST VSpipi[i3,i2,a,i1]   
             Tpppp[i3,i1,i2,a]  = VSpipi[i3,i2,a,i1]
 #
             DO i
@@ -2939,7 +2940,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b, i1, i, j1
 #
-            REQUEST Vpiqj[i,i1,b,j1] j1 
+            REQUEST Vpiqj[i,i1,b,j1]
             Tpqpq[i,j1,i1,b]  = Vpiqj[i,i1,b,j1]
 #
             DO j
@@ -3038,7 +3039,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, i, b, j  
 #
-            REQUEST T2old_ab[a,i,b,j]j  
+            REQUEST T2old_ab[a,i,b,j]
 #
             DO i1 
             DO a1 
@@ -3254,7 +3255,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, b, i1, b1
 #
-            REQUEST Vbbai[b,b1,a,i1] i1 
+            REQUEST Vbbai[b,b1,a,i1] 
             Tqpqp[b,i1,b1,a]  = Vbbai[b,b1,a,i1]
 #
             DO i
@@ -3367,7 +3368,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             DO j
 #
-               REQUEST Dibja_baba[j,a1,j2,a] a 
+               REQUEST Dibja_baba[j,a1,j2,a] 
 #
                Tjj[j1,j]         = Dibja_baba[j,a1,j2,a]*Vaajj[a,a1,j2,j1]
                PUT Iij_bb[j1,j] += Tjj[j1,j]
@@ -3381,7 +3382,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, a2, j, j1
 #
-            REQUEST Vaajj[a2,a,j1,j] j1  
+            REQUEST Vaajj[a2,a,j1,j] 
 #
             DO a1
 #
@@ -3399,7 +3400,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b, a, j1, a1
 #
-            REQUEST Vaabj[a,a1,b,j1] j1  
+            REQUEST Vaabj[a,a1,b,j1] 
             Tpqpq[a,j1,a1,b]  = Vaabj[a,a1,b,j1]
 #
             DO j
@@ -3459,7 +3460,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b, j, b2, j2  
 #
-            REQUEST     T2old_bb[b,j,b2,j2] j2 
+            REQUEST     T2old_bb[b,j,b2,j2] 
             GET         t1b_old[b,j2]
             GET         t1b_old[b2,j]
             tbj[b,j2] = t1b_old[b,j2]
@@ -3503,7 +3504,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO j1  
             DO b1 
 #
-               REQUEST                          L2old_ab[i,a,j1,b1] b1 
+               REQUEST                          L2old_ab[i,a,j1,b1] 
 #
                Tjbia[j,b,i,a]                 = T2old_ab[a,i,b,j]  
                T2jbjb[j,b,j1,b1]              = Tjbia[j,b,i,a]*L2old_ab[i,a,j1,b1]  
@@ -3793,7 +3794,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, b, j, a1
 #
-            REQUEST Vaabj[a,a1,b,j] j
+            REQUEST Vaabj[a,a1,b,j]
             Tqqpp[b,j,a1,a] = Vaabj[a,a1,b,j]
 #
             DO i
@@ -3911,7 +3912,7 @@ import "ccsdgrad_uhf_vars.sialx"
             DO i
             DO a
 #
-               REQUEST                        L2old_ab[i,a,j1,b1] j1 
+               REQUEST                        L2old_ab[i,a,j1,b1] 
                Tjbia[j,b,i,a]               = T2old_bb[b,j,b1,j1]*L2old_ab[i,a,j1,b1]
                Tjbia[j,b,i,a]              *= 0.5
                Tjaib[j,a,i,b]               = Tjbia[j,b,i,a]
@@ -4219,7 +4220,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             DO i1 
 #
-               REQUEST Vibja_aaaa[i,a2,i1,a]  a2   
+               REQUEST Vibja_aaaa[i,a2,i1,a] 
                GET t1a_old[a1,i1] 
 #
                T1aaai[a,a1,a2,i]  = Vibja_aaaa[i,a2,i1,a]*t1a_old[a1,i1]  
@@ -4244,7 +4245,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO i, a, a2, a1  
 #
-            REQUEST Dabci_aaaa[a,a1,a2,i] a 
+            REQUEST Dabci_aaaa[a,a1,a2,i] 
 #
 # Compute indirect contributions to one-particle intermediates 
 # ------------------------------------------------------------ 
@@ -4314,7 +4315,7 @@ import "ccsdgrad_uhf_vars.sialx"
             tpppp[a2,a1,i,a] = Dabci_aaaa[a,a1,a2,i] 
             DO a3
 #
-               REQUEST              VSaaai[a3,a2,a1,i] i
+               REQUEST              VSaaai[a3,a2,a1,i]
                Taa[a3,a]          = VSaaai[a3,a2,a1,i]*tpppp[a2,a1,i,a]
                Taa[a3,a]         *= -1.0
                PUT Iab_aa[a3,a]  += Taa[a3,a]
@@ -4520,7 +4521,7 @@ import "ccsdgrad_uhf_vars.sialx"
             tqqqq[b2,b1,j,b] = Dabci_bbbb[b,b1,b2,j]  
             DO b3
 #
-               REQUEST              VSbbbj[b3,b2,b1,j] j
+               REQUEST              VSbbbj[b3,b2,b1,j]
                Tbb[b3,b]          = VSbbbj[b3,b2,b1,j]*tqqqq[b2,b1,j,b]
                Tbb[b3,b]         *= -1.0
                PUT Iab_bb[b3,b]  += Tbb[b3,b]
@@ -4567,7 +4568,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       ENDPARDO a, b1, j1, i2 
 #
-      execute sip_barrier  
+      sip_barrier  
 #
       PARDO a1, j, a, b 
 #
@@ -4590,8 +4591,8 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, i, b, j  
 #
-            REQUEST Tau_ab[a,i,b,j]   b  
-            REQUEST L2old_ab[i,a,j,b] b  
+            REQUEST Tau_ab[a,i,b,j]   
+            REQUEST L2old_ab[i,a,j,b] 
 #
             DO a1  
 #
@@ -4668,7 +4669,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       ENDPARDO a, a1, j, j1  
 #
-      execute server_barrier 
+      server_barrier 
 #
       PARDO a, j, a1, b  
 #
@@ -4813,7 +4814,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       ENDPARDO b, i1, j, a1   
 #
-      execute sip_barrier 
+      sip_barrier 
 #
       PARDO b1, b, a, i 
 #
@@ -4928,7 +4929,7 @@ import "ccsdgrad_uhf_vars.sialx"
             tqppq[b,a,i,b1] = Dabci_baba[b1,a,b,i] 
             DO b2  
 #
-               REQUEST              Vbbai[b2,b,a,i] i 
+               REQUEST              Vbbai[b2,b,a,i] 
                Tbb[b2,b1]         = Vbbai[b2,b,a,i]*tqppq[b,a,i,b1]  
                Tbb[b2,b1]        *= -1.0  
                PUT Iab_bb[b2,b1] += Tbb[b2,b1]
@@ -5100,7 +5101,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             DO i3 
 # 
-               REQUEST Vijmn_aaaa[i,i1,i2,i3] i3  
+               REQUEST Vijmn_aaaa[i,i1,i2,i3] 
                GET t1a_old[a,i3] 
 # 
                T1iiia[i,i1,i2,a] = Vijmn_aaaa[i,i1,i2,i3]*t1a_old[a,i3] 
@@ -5117,7 +5118,7 @@ import "ccsdgrad_uhf_vars.sialx"
             PREPARE Dijka_aaaa[i,i1,i2,a] += Tiiia[i,i1,i2,a] 
 #
       ENDPARDO i, i1, i2, a 
-      execute server_barrier 
+      server_barrier 
 #
 # Compute contributions to one-particle intermediates 
 # --------------------------------------------------- 
@@ -5127,7 +5128,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO i2, i3, a, i
 #
-            REQUEST VSpipi[a,i2,i3,i] i
+            REQUEST VSpipi[a,i2,i3,i] 
             Tpppp[i2,i3,a,i]  = VSpipi[a,i2,i3,i]
 #
             DO i1
@@ -5166,7 +5167,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, i2, i, i1
 #
-            REQUEST VSpipi[a,i1,i2,i] i
+            REQUEST VSpipi[a,i1,i2,i]
             Tpppp[a,i,i1,i2]  = VSpipi[a,i1,i2,i]
 #
             DO a1
@@ -5404,7 +5405,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO a, b, j, i1
 #
-            REQUEST Viabj[i1,a,b,j] j 
+            REQUEST Viabj[i1,a,b,j] 
             Tqpqp[j,i1,b,a]  = Viabj[i1,a,b,j]
 #
             DO i
@@ -5548,7 +5549,7 @@ import "ccsdgrad_uhf_vars.sialx"
             PREPARE Dijka_baba[j,i,j1,a] += Tjija[j,i,j1,a] 
 #
       ENDPARDO j, i, j1, a 
-      execute server_barrier
+      server_barrier
 #
 # Compute contributions to one-particle intermediates 
 # --------------------------------------------------- 
@@ -5654,7 +5655,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b, a, i, j1
 #
-            REQUEST Viabj[i,a,b,j1] j1  
+            REQUEST Viabj[i,a,b,j1] 
             Tpqpq[i,j1,a,b]  = Viabj[i,a,b,j1]
 #
             DO j
@@ -5793,7 +5794,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO j2, j3, b, j1
 #
-            REQUEST VSqjqj[b,j2,j3,j1] j1  
+            REQUEST VSqjqj[b,j2,j3,j1] 
             Tqqqq[j2,j3,b,j1]  = VSqjqj[b,j2,j3,j1]
 #
             DO j
@@ -5832,7 +5833,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b1, j2, j, j1
 #
-            REQUEST VSqjqj[b1,j1,j2,j] j
+            REQUEST VSqjqj[b1,j1,j2,j] 
             Tqqqq[b1,j,j1,j2]  = VSqjqj[b1,j1,j2,j]
 #
             DO b
@@ -6042,10 +6043,10 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PROC DAB 
            pardo a,a1
-              PUT Dab_a[a,a1] = 0
+              PUT Dab_a[a,a1] = 0.0
            endpardo a,a1
            pardo b,b1
-              PUT Dab_b[b,b1] = 0
+              PUT Dab_b[b,b1] = 0.0
            endpardo b,b1
            sip_barrier 
 
@@ -6069,11 +6070,11 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             DO i 
 #
-               REQUEST T2old_aa[a,i,a1,i2] i2  
+               REQUEST T2old_aa[a,i,a1,i2] 
 #
                DO i1 
 #
-                  REQUEST L2old_aa[i1,a,i2,a1] a1  
+                  REQUEST L2old_aa[i1,a,i2,a1] 
 #
                   Tii[i,i1]        = T2old_aa[a,i,a1,i2]*L2old_aa[i1,a,i2,a1] 
                   Tii[i,i1]       *= -0.25   
@@ -6091,11 +6092,11 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             DO i 
 #
-               REQUEST T2old_ab[a,i,b,j] j 
+               REQUEST T2old_ab[a,i,b,j] 
 #
                DO i1 
 #
-                  REQUEST L2old_ab[i1,a,j,b] b  
+                  REQUEST L2old_ab[i1,a,j,b] 
 #
                   Tii[i,i1]        = T2old_ab[a,i,b,j]*L2old_ab[i1,a,j,b] 
                   Tii[i,i1]       *= -0.5   
@@ -6133,8 +6134,8 @@ import "ccsdgrad_uhf_vars.sialx"
             DO j1 
             DO j 
 #
-               REQUEST L2old_bb[j,b,j2,b1]  j2  
-               REQUEST T2old_bb[b,j1,b1,j2] j2  
+               REQUEST L2old_bb[j,b,j2,b1]  
+               REQUEST T2old_bb[b,j1,b1,j2]  
 #
                Tjj[j1,j]        = T2old_bb[b,j1,b1,j2]*L2old_bb[j,b,j2,b1] 
                Tjj[j1,j]       *= -0.25   
@@ -6151,11 +6152,11 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             DO j1 
 #
-               REQUEST T2old_ab[a,i,b,j1] j1  
+               REQUEST T2old_ab[a,i,b,j1] 
 #
                DO j 
 #
-                  REQUEST L2old_ab[i,a,j,b] b  
+                  REQUEST L2old_ab[i,a,j,b] 
 #
                   Tjj[j1,j]        = T2old_ab[a,i,b,j1]*L2old_ab[i,a,j,b] 
                   Tjj[j1,j]       *= -0.5   
@@ -6334,8 +6335,8 @@ import "ccsdgrad_uhf_vars.sialx"
 #
       PARDO b, b1, i, i1 
 #
-            REQUEST Vbbii[b,b1,i,i1] b1  
-            REQUEST Vbbii[b,b1,i1,i] b1  
+            REQUEST Vbbii[b,b1,i,i1] 
+            REQUEST Vbbii[b,b1,i1,i]  
             GET Dab_b[b,b1] 
 #
             Tppqq[i,i1,b,b1]  = Vbbii[b,b1,i,i1]  
@@ -6810,8 +6811,8 @@ import "ccsdgrad_uhf_vars.sialx"
 #
      PARDO lambda, sigma, i, i1 
 #
-           REQUEST Ixixi[lambda,i,sigma,i1]  i1  
-           REQUEST I1xixi[lambda,i,sigma,i1] i1  
+           REQUEST Ixixi[lambda,i,sigma,i1]  
+           REQUEST I1xixi[lambda,i,sigma,i1] 
 #
            DO a1 
 #
@@ -6840,7 +6841,7 @@ import "ccsdgrad_uhf_vars.sialx"
            ENDDO a1 
 #
      ENDPARDO lambda, sigma, i, i1 
-     execute server_barrier 
+     server_barrier 
 #
 #    Perform final contraction 
 #    ------------------------- 
@@ -6865,8 +6866,7 @@ import "ccsdgrad_uhf_vars.sialx"
            ENDDO i 
 #
      ENDPARDO a, a1, a2 
-     execute sip_barrier 
-     execute server_barrier 
+     server_barrier 
 #
      ENDPROC IABAA1 
 #    -------------- 
@@ -6930,8 +6930,8 @@ import "ccsdgrad_uhf_vars.sialx"
            DO i 
            DO j 
 #
-              REQUEST Tao_ab[mu,i,nu,j] j  
-              REQUEST Lao_ab[i,mu,j,nu] j  
+              REQUEST Tao_ab[mu,i,nu,j] 
+              REQUEST Lao_ab[i,mu,j,nu] 
 #
               Txixj[lambda,i,sigma,j]       = Tao_ab[mu,i,nu,j]*aoint[mu,lambda,nu,sigma] 
               PREPARE Ixixj[lambda,i,sigma,j]  += Txixj[lambda,i,sigma,j] 
@@ -7005,8 +7005,8 @@ import "ccsdgrad_uhf_vars.sialx"
            DO i 
            DO j 
 #
-              REQUEST  Iaibj[a,i,b,j] j  
-              REQUEST I1aibj[a,i,b,j] j  
+              REQUEST  Iaibj[a,i,b,j] 
+              REQUEST I1aibj[a,i,b,j] 
               REQUEST L2old_ab[i,a,j,b1]   
               REQUEST Tau_ab[a,i,b1,j]     
 #
@@ -7020,7 +7020,7 @@ import "ccsdgrad_uhf_vars.sialx"
            ENDDO i 
 #
      ENDPARDO b, b1, a 
-     execute sip_barrier 
+     sip_barrier 
 #
      ENDPROC IABAA2 
 #    -------------- 
@@ -7144,10 +7144,10 @@ import "ccsdgrad_uhf_vars.sialx"
            DO j 
            DO j1 
 #
-              REQUEST  Ibjbj[b,j,b2,j1]    b2  
-              REQUEST I1bjbj[b,j,b2,j1]    b2  
-              REQUEST L2old_bb[j,b1,j1,b2] b2  
-              REQUEST Tau_bb[b1,j,b2,j1]   b2  
+              REQUEST  Ibjbj[b,j,b2,j1]    
+              REQUEST I1bjbj[b,j,b2,j1]      
+              REQUEST L2old_bb[j,b1,j1,b2]   
+              REQUEST Tau_bb[b1,j,b2,j1]     
 #
               Tbb[b,b1]         = Ibjbj[b,j,b2,j1]*L2old_bb[j,b1,j1,b2] 
               T1bb[b,b1]        = I1bjbj[b,j,b2,j1]*Tau_bb[b1,j,b2,j1] 
@@ -7289,7 +7289,7 @@ import "ccsdgrad_uhf_vars.sialx"
            ENDDO i 
 #
      ENDPARDO b, b1, a 
-     execute sip_barrier 
+     sip_barrier 
 #
      ENDPROC IABBB2 
 #    -------------- 
@@ -7311,7 +7311,7 @@ import "ccsdgrad_uhf_vars.sialx"
                GET        Dnewai_a[a,i] 
                GET        Doldai_a[a,i] 
                Tai[a,i] = Dnewai_a[a,i] 
-               execute energy_denominator Tai[a,i] fock_a AAAA
+               execute energy_denominator Tai[a,i] fock_a fock_a AAAA
                Tai[a,i] -= Doldai_a[a,i] 
 
                If kiter < diis_order
@@ -7334,7 +7334,7 @@ import "ccsdgrad_uhf_vars.sialx"
                GET        Dnewai_b[b,j] 
                GET        Doldai_b[b,j] 
                Tbj[b,j] = Dnewai_b[b,j] 
-               execute energy_denominator Tbj[b,j]  fock_b BBBB
+               execute energy_denominator Tbj[b,j] fock_b  fock_b BBBB
                Tbj[b,j] -= Doldai_b[b,j] 
 
                If kiter < diis_order
@@ -7409,8 +7409,8 @@ import "ccsdgrad_uhf_vars.sialx"
 #                                    + V^{ci}_{ka} - V^{ci}_{ak} ] 
 #                           - D(C,K)*[ V^{Ca}_{Ki} + V^{Ci}_{Ka} ] 
 #
-      PROC DAI
-#     -------- 
+      PROC LINEQ
+#     ---------- 
 #
 # First get initial guess 
 # ----------------------- 
@@ -7457,9 +7457,9 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             GET Xai_aa[a,i] 
             Tai[a,i] = Xai_aa[a,i] 
-            execute energy_denominator Tai[a,i] fock_a AAAA
+            execute energy_denominator Tai[a,i] fock_a fock_a AAAA
             PUT Doldai_a[a,i] = Tai[a,i] 
-            PUT D0ai[a,i] = Tai[a,i] 
+            PREPARE D0ai[a,i] = Tai[a,i] 
 #
       ENDPARDO a, i 
 #
@@ -7467,12 +7467,12 @@ import "ccsdgrad_uhf_vars.sialx"
 #
             GET Xai_bb[b,j] 
             Tbj[b,j] = Xai_bb[b,j] 
-            execute energy_denominator Tbj[b,j] fock_b BBBB
+            execute energy_denominator Tbj[b,j] fock_b fock_b BBBB
             PUT Doldai_b[b,j] = Tbj[b,j] 
-            PUT D0bj[b,j] = Tbj[b,j] 
+            PREPARE D0bj[b,j] = Tbj[b,j] 
 #
       ENDPARDO b, j 
-      sip_barrier 
+      server_barrier 
 #
 # Start iterations 
 # ---------------- 
@@ -7573,7 +7573,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #
 #        DONE BB-spin 
 #        ------------ 
-         execute sip_barrier 
+         sip_barrier 
 #
 #        Update error vector for diis
 #        ----------------------------
@@ -7591,7 +7591,7 @@ import "ccsdgrad_uhf_vars.sialx"
                etemp = Dnewai_a[a,i]*Dnewai_a[a,i]  
                esum += etemp 
                Tai[a,i] = Dnewai_a[a,i] 
-               execute energy_denominator Tai[a,i] fock_a AAAA
+               execute energy_denominator Tai[a,i] fock_a fock_a AAAA
                PUT Doldai_a[a,i] = Tai[a,i] 
 #
          ENDPARDO a, i 
@@ -7602,12 +7602,12 @@ import "ccsdgrad_uhf_vars.sialx"
                etemp = Dnewai_b[b,j]*Dnewai_b[b,j] 
                esum += etemp 
                Tbj[b,j] = Dnewai_b[b,j] 
-               execute energy_denominator Tbj[b,j] fock_b BBBB
+               execute energy_denominator Tbj[b,j] fock_b fock_b BBBB
                PUT Doldai_b[b,j] = Tbj[b,j] 
 #
          ENDPARDO b, j 
 
-         execute sip_barrier 
+         sip_barrier 
          collective enew += esum 
 #
 #        Check on convergence
@@ -7656,8 +7656,8 @@ import "ccsdgrad_uhf_vars.sialx"
       ENDDO KITER  
       sip_barrier 
 #
-      ENDPROC DAI
-#     ----------- 
+      ENDPROC LINEQ
+#     ------------- 
 #
       PROC I1TRANS
 #     ------------
@@ -7795,7 +7795,7 @@ import "ccsdgrad_uhf_vars.sialx"
             ENDDO mu
 #
       ENDPARDO j, j1
-      execute sip_barrier
+      sip_barrier
 #
 # Finally contract with the derivative integrals
 # ----------------------------------------------
@@ -7807,7 +7807,9 @@ import "ccsdgrad_uhf_vars.sialx"
 
       PARDO mu, nu
             GET Ipq[mu,nu]
-            Tpq[mu,nu]  = Ipq[mu,nu]
+
+            Tpq[mu,nu] = Ipq[mu,nu]
+            Txx[mu,nu] = 0.0
 
             execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
@@ -7966,7 +7968,7 @@ import "ccsdgrad_uhf_vars.sialx"
             ENDDO mu
 #
       ENDPARDO j, j1
-      execute sip_barrier
+      sip_barrier
 #
 # Finally contract with the derivative integrals
 # ----------------------------------------------
@@ -8010,7 +8012,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #     -----------
 #
       pardo mu,nu
-            PUT Dhf(mu,nu) = 0.0
+            PUT Dhf[mu,nu] = 0.0
       endpardo mu,nu
       sip_barrier 
       
@@ -8037,7 +8039,7 @@ import "ccsdgrad_uhf_vars.sialx"
 #     ------------
 #
       pardo mu,nu
-            PUT Dhfa(mu,nu) = 0.0
+            PUT Dhfa[mu,nu] = 0.0
       endpardo mu,nu
       sip_barrier 
 
@@ -8080,7 +8082,7 @@ import "ccsdgrad_uhf_vars.sialx"
             PUT Dhfb[mu,nu] += Tpq[mu,nu]
 #
       ENDPARDO mu, nu, j
-      execute sip_barrier
+      sip_barrier
 #
       ENDPROC WHFDENS
 #     --------------
@@ -8090,14 +8092,14 @@ import "ccsdgrad_uhf_vars.sialx"
            DO i 
            DO i1 
               GET Iij_aa[i,i1] 
-              execute dump_block Iij_aa[i,i1]  
+              print Iij_aa[i,i1]  
            ENDDO i1 
            ENDDO i 
 #
            DO j 
            DO j1 
               GET Iij_bb[j,j1] 
-              execute dump_block Iij_bb[j,j1]  
+              print Iij_bb[j,j1]  
            ENDDO j1 
            ENDDO j 
 #
@@ -8110,14 +8112,14 @@ import "ccsdgrad_uhf_vars.sialx"
            DO a 
            DO a1 
               GET Iab_aa[a,a1] 
-              execute dump_block Iab_aa[a,a1]  
+              print Iab_aa[a,a1]  
            ENDDO a1 
            ENDDO a 
 #
            DO b 
            DO b1 
               GET Iab_bb[b,b1] 
-              execute dump_block Iab_bb[b,b1]  
+              print Iab_bb[b,b1]  
            ENDDO b1 
            ENDDO b 
 #
@@ -8130,14 +8132,14 @@ import "ccsdgrad_uhf_vars.sialx"
            DO a 
            DO i 
               GET Iai_aa[a,i] 
-              execute dump_block Iai_aa[a,i]  
+              print Iai_aa[a,i]  
            ENDDO i 
            ENDDO a 
 #
            DO b 
            DO j 
               GET Iai_bb[b,j] 
-              execute dump_block Iai_bb[b,j]  
+              print Iai_bb[b,j]  
            ENDDO j 
            ENDDO b 
 #
@@ -8150,14 +8152,14 @@ import "ccsdgrad_uhf_vars.sialx"
            DO a 
            DO i 
               GET Iia_aa[i,a] 
-              execute dump_block Iia_aa[i,a]  
+              print Iia_aa[i,a]  
            ENDDO i 
            ENDDO a 
 #
            DO b 
            DO j 
               GET Iia_bb[j,b] 
-              execute dump_block Iia_bb[j,b]  
+              print Iia_bb[j,b]  
            ENDDO j 
            ENDDO b 
 #
@@ -8277,8 +8279,8 @@ import "ccsdgrad_uhf_vars.sialx"
            ENDPARDO j, b
            sip_barrier 
            collective etot += esum 
-           rint "checksum of Iai_bb"
-           execute print_scalar etot 
+           print "checksum of Iai_bb"
+           print etot 
 #
       ENDPROC PRINTIAI
 #     ----------------
@@ -8418,8 +8420,8 @@ import "ccsdgrad_uhf_vars.sialx"
 #
 # Finally solve for Dai iteratively 
 # --------------------------------- 
-         CALL DAI 
-         execute sip_barrier  
+         CALL LINEQ
+         sip_barrier  
 #
 # Compute the contributions to Iai coming from the Fock matrix 
 # ------------------------------------------------------------ 

@@ -1,5 +1,5 @@
-import "ccsdgrad_rhf_defs.sialx"
-import "ccsdgrad_rhf_vars.sialx"
+import "ccsdgrad_uhf_defs.sialx"
+import "ccsd_2grad_uhf_vars.sialx"
 #
 #  Copyright (c) 2003-2010 University of Florida
 #
@@ -48,7 +48,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, i, a1, i1
 #
-            REQUEST T2old_aa[a,i,a1,i1] i1 
+            REQUEST T2old_aa[a,i,a1,i1] 
 #
             GET t1a_old[a1,i1]
             GET t1a_old[a1,i]
@@ -73,7 +73,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO b, j, b1, j1
 #
-            REQUEST T2old_bb[b,j,b1,j1] j1 
+            REQUEST T2old_bb[b,j,b1,j1] 
             GET t1b_old[b1,j1]
             GET t1b_old[b1,j]
             GET t1b_old[b,j1]
@@ -97,7 +97,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, i, b, j
 #
-            REQUEST T2old_ab[a,i,b,j] j 
+            REQUEST T2old_ab[a,i,b,j] 
             GET t1a_old[a,i]
             GET t1b_old[b,j]
 #
@@ -222,7 +222,7 @@ import "ccsdgrad_rhf_vars.sialx"
             Gmi_a[i1,i] = 0.0
 #
       ENDPARDO i1, i
-      execute sip_barrier Gmi_a
+      sip_barrier 
 #
       PARDO a, a1, i, i1
 #
@@ -264,7 +264,7 @@ import "ccsdgrad_rhf_vars.sialx"
             Gmi_b[j1,j] = 0.0
 #
       ENDPARDO j1, j
-      execute sip_barrier Gmi_b
+      sip_barrier 
 #
       PARDO b, b1, j, j1
 #
@@ -448,10 +448,7 @@ import "ccsdgrad_rhf_vars.sialx"
             PUT L1aa[a1,a2] += Taa[a1,a2]
 #
       ENDPARDO a1, a2, i  
-#
-      CREATE L1ai 
-      sip_barrier 
-#
+
       PARDO a1, a2, i      
 #
             GET t1a_old[a2,i] 
@@ -460,8 +457,7 @@ import "ccsdgrad_rhf_vars.sialx"
             PUT L1ai[a1,i] += Tai[a1,i] 
 #
       ENDPARDO a1, a2, i    
-      execute sip_barrier 
-      DELETE L1aa 
+      sip_barrier 
 #
       PARDO a, a1, i, i1  
 #
@@ -1014,7 +1010,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
                DO b 
 #
-                  REQUEST T2old_bb[b,j1,b1,j] j 
+                  REQUEST T2old_bb[b,j1,b1,j] 
                   GET t1b_old[b,j1]
 #
                   Tjbjb[j,b,j1,b1]       = t1b_old[b,j1]^tbj[b1,j]
@@ -1208,7 +1204,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO a  
 #
-               REQUEST Dijax[i,j1,a,sigma] a  
+               REQUEST Dijax[i,j1,a,sigma] 
 #
                T1ijxx[i,j1,lambda,sigma]  = Dijax[i,j1,a,sigma]*ca[lambda,a] 
                Tijxx[i,j1,lambda,sigma]  += T1ijxx[i,j1,lambda,sigma]  
@@ -1586,7 +1582,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO b1 
 #
-               REQUEST Dijab_bb[j,j1,b,b1] b1  
+               REQUEST Dijab_bb[j,j1,b,b1]
 #
                T1jjbx[j,j1,b,sigma] = Dijab_bb[j,j1,b,b1]*cb[sigma,b1] 
                Tjjbx[j,j1,b,sigma] += T1jjbx[j,j1,b,sigma]  
@@ -1596,7 +1592,7 @@ import "ccsdgrad_rhf_vars.sialx"
             PREPARE Djjbx[j,j1,b,sigma] = Tjjbx[j,j1,b,sigma] 
 #
       ENDPARDO b, sigma, j, j1 
-      execute server_barrier 
+      server_barrier 
 #
       PARDO lambda, sigma, j, j1 
 #
@@ -1635,16 +1631,16 @@ import "ccsdgrad_rhf_vars.sialx"
 # -------------------------------------------------- 
 #
            pardo i,i1
-                 put Dii(i,i1) = 0.0
+                 put Dii[i,i1] = 0.0
            endpardo i,i1
            pardo j,j1
-                 put Djj(j,j1) = 0.0
+                 put Djj[j,j1] = 0.0
            endpardo j,j1
            pardo a,a1
-                 put Daa(a,a1) = 0.0
+                 put Daa[a,a1] = 0.0
            endpardo a,a1
            pardo b,b1
-                 put Daa(a,a1) = 0.0
+                 put Dbb[b,b1] = 0.0
            endpardo b,b1
            sip_barrier 
 
@@ -1698,7 +1694,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO a, a1, i, i1  
 #
-      execute server_barrier 
+      server_barrier 
 #
 # Perform backtransformation to AO representation 
 # ----------------------------------------------- 
@@ -1725,7 +1721,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       ENDPARDO mu, i1, i2, i3  
 #
-      execute server_barrier 
+      server_barrier 
       PARDO nu, i2, i3, mu  
 #
             Tiixx[i2,i3,mu,nu] = 0.0  
@@ -1801,8 +1797,8 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO j 
 #
-               REQUEST Dijkl_bb[j,j1,j2,j3] j3  
-               REQUEST Dijkl_bb[j,j1,j3,j2] j3  
+               REQUEST Dijkl_bb[j,j1,j2,j3] 
+               REQUEST Dijkl_bb[j,j1,j3,j2] 
 #
                Tjjjj[j,j1,j2,j3]   = Dijkl_bb[j,j1,j2,j3]
                T1jjjj[j,j1,j2,j3]  = Dijkl_bb[j,j1,j3,j2] 
@@ -1824,7 +1820,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO j1  
 #
-               REQUEST Dxjjj[mu,j1,j2,j3] j3  
+               REQUEST Dxjjj[mu,j1,j2,j3] 
 #
                T1jjxx[j2,j3,mu,nu]  = Dxjjj[mu,j1,j2,j3]*cb[nu,j1] 
                Tjjxx[j2,j3,mu,nu]  += T1jjxx[j2,j3,mu,nu]  
@@ -2041,7 +2037,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO a 
 #
-               REQUEST Dibja_aaaa[i,a1,i1,a] a  
+               REQUEST Dibja_aaaa[i,a1,i1,a] 
 #
                T1iaix[i,a1,i1,sigma]  = Dibja_aaaa[i,a1,i1,a]*ca[sigma,a] 
                Tiaix[i,a1,i1,sigma]  += T1iaix[i,a1,i1,sigma]   
@@ -2060,7 +2056,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO a1  
 #
-               REQUEST Diaix[i,a1,i1,sigma] a1  
+               REQUEST Diaix[i,a1,i1,sigma] 
 #
                T1ixix[i,nu,i1,sigma] = Diaix[i,a1,i1,sigma]*ca[nu,a1]  
                T1xiix[nu,i,i1,sigma] = T1ixix[i,nu,i1,sigma]  
@@ -2410,7 +2406,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO b1 
 #
-               REQUEST Djbjx[j,b1,j1,sigma] b1  
+               REQUEST Djbjx[j,b1,j1,sigma] 
 #
                T1jxjx[j,nu,j1,sigma]      = Djbjx[j,b1,j1,sigma]*cb[nu,b1]  
                T1xjjx[nu,j,j1,sigma]      = T1jxjx[j,nu,j1,sigma]  
@@ -2570,7 +2566,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO b1 
 #
-               REQUEST Dibjx[i,b1,j1,sigma] b1 
+               REQUEST Dibjx[i,b1,j1,sigma] 
 #
                T1ixxj[i,nu,sigma,j1] = Dibjx[i,b1,j1,sigma]*cb[nu,b1]  
                Tixxj[i,nu,sigma,j1] += T1ixxj[i,nu,sigma,j1]  
@@ -2948,7 +2944,7 @@ import "ccsdgrad_rhf_vars.sialx"
 # Back transform to full AO representation
 # ---------------------------------------- 
 # 
-      execute server_barrier 
+      server_barrier 
       PARDO mu, a1, a2, i 
 #
             REQUEST Dxaai[mu,a1,a2,i] 
@@ -2961,7 +2957,7 @@ import "ccsdgrad_rhf_vars.sialx"
             ENDDO nu 
 # 
       ENDPARDO mu, a1, a2, i 
-      execute server_barrier 
+      server_barrier 
 #
       PARDO mu, nu, i 
 #
@@ -2969,7 +2965,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
             DO a2 
 #
-               REQUEST Dxxai[mu,nu,a2,i] i  
+               REQUEST Dxxai[mu,nu,a2,i] 
                Lxxai[mu,nu,a2,i] = Dxxai[mu,nu,a2,i] 
 #
             ENDDO a2 
@@ -3219,7 +3215,7 @@ import "ccsdgrad_rhf_vars.sialx"
       server_barrier 
       PARDO mu, b, a1, j 
 #
-            REQUEST Dxbaj[mu,b,a1,j] j  
+            REQUEST Dxbaj[mu,b,a1,j]
 # 
             DO nu 
 #
@@ -3316,7 +3312,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
                DO j 
 #
-                  REQUEST I3ba[j,b,i1,i] j 
+                  REQUEST I3ba[j,b,i1,i] 
                   REQUEST Tau_ab[a,i1,b1,j] 
 
 #                 T1babi(b1,a,b,i)  = Tau_ab(a,i1,b1,j)*I3ba(j,b,i1,i)
@@ -3508,7 +3504,7 @@ import "ccsdgrad_rhf_vars.sialx"
 # Backtransform to AO basis
 # ------------------------- 
 #
-      execute server_barrier 
+      server_barrier 
       PARDO i, i1, lambda, sigma  
 #
             Tiixx[i,i1,lambda,sigma] = 0.0  
@@ -3728,7 +3724,7 @@ import "ccsdgrad_rhf_vars.sialx"
 # Backtransform to AO basis
 # ------------------------- 
 #
-      execute server_barrier 
+      server_barrier 
       PARDO j, i1, lambda, sigma  
 #
             Tijxx[i1,j,sigma,lambda] = 0.0  
@@ -3746,7 +3742,7 @@ import "ccsdgrad_rhf_vars.sialx"
             PREPARE Dijxx[i1,j,sigma,lambda] += Tijxx[i1,j,sigma,lambda]  
 #
       ENDPARDO j, i1, lambda, sigma 
-      execute server_barrier
+      server_barrier
 #
 # Done Backtransformation 
 # ----------------------- 
@@ -4040,7 +4036,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
       PARDO a, b, i, j 
 #
-            REQUEST T2old_ab[a,i,b,j] a  
+            REQUEST T2old_ab[a,i,b,j] 
 #
             DO i1 
 #
@@ -4166,7 +4162,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
      PARDO a, a1, i, i1
 #
-           REQUEST L2old_aa[i,a,i1,a1] a 
+           REQUEST L2old_aa[i,a,i1,a1] 
 #
            DO lambda
 #
@@ -4189,7 +4185,7 @@ import "ccsdgrad_rhf_vars.sialx"
 #
      PARDO b, b1, j, j1
 #  
-           REQUEST Tau_bb[b,j,b1,j1] b 
+           REQUEST Tau_bb[b,j,b1,j1] 
 #
            DO lambda
 #
@@ -4805,7 +4801,7 @@ import "ccsdgrad_rhf_vars.sialx"
               GET Dij_a[i,i1] 
               etemp = Dij_a[i,i1]*Dij_a[i,i1] 
               esum += etemp 
-              execute dump_block Dij_a[i,i1] 
+              print Dij_a[i,i1] 
 #
            ENDDO i1 
            ENDDO i 
@@ -4838,7 +4834,7 @@ import "ccsdgrad_rhf_vars.sialx"
               GET Dab_a[a,a1] 
               etemp = Dab_a[a,a1]*Dab_a[a,a1] 
               esum += etemp 
-              execute dump_block Dab_a[a,a1] 
+              print Dab_a[a,a1] 
 #
            ENDDO a1 
            ENDDO a 
@@ -4856,7 +4852,7 @@ import "ccsdgrad_rhf_vars.sialx"
            ENDDO b1 
            ENDDO b 
            print "Checksum of Dab_b"
-           execute print_scalar esum 
+           print esum 
            print esum 
 #               
       ENDPROC S2DAB 
@@ -4868,7 +4864,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, i2, i3 
 #
-            REQUEST Dijkl_aa[i,i1,i2,i3] i  
+            REQUEST Dijkl_aa[i,i1,i2,i3] 
             etemp = Dijkl_aa[i,i1,i2,i3]*Dijkl_aa[i,i1,i2,i3]
             esum += etemp
 #            
@@ -4879,7 +4875,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO j, j1, j2, j3 
 #
-            REQUEST Dijkl_bb[j,j1,j2,j3] j  
+            REQUEST Dijkl_bb[j,j1,j2,j3] 
             etemp = Dijkl_bb[j,j1,j2,j3]*Dijkl_bb[j,j1,j2,j3]
             esum += etemp
 #            
@@ -4891,7 +4887,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, j, j1 
 #
-            REQUEST Dijkl_ab[i,j,i1,j1] i  
+            REQUEST Dijkl_ab[i,j,i1,j1] 
             etemp = Dijkl_ab[i,j,i1,j1]*Dijkl_ab[i,j,i1,j1]
             esum += etemp
 #            
@@ -4908,7 +4904,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO a, a1, a2, i 
 #
-            REQUEST Dabci_aaaa[a,a1,a2,i] i  
+            REQUEST Dabci_aaaa[a,a1,a2,i]   
             etemp = Dabci_aaaa[a,a1,a2,i]*Dabci_aaaa[a,a1,a2,i]
             esum += etemp
 #
@@ -4920,7 +4916,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO b, b1, b2, j 
 #
-            REQUEST Dabci_bbbb[b,b1,b2,j] j  
+            REQUEST Dabci_bbbb[b,b1,b2,j] 
             etemp = Dabci_bbbb[b,b1,b2,j]*Dabci_bbbb[b,b1,b2,j]
             esum += etemp
 #
@@ -4932,7 +4928,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO a, a1, b, j 
 #
-            REQUEST Dabci_abab[a,b,a1,j] j  
+            REQUEST Dabci_abab[a,b,a1,j]  
             etemp = Dabci_abab[a,b,a1,j]*Dabci_abab[a,b,a1,j]
             esum += etemp
 #
@@ -4943,7 +4939,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO a, b1, b, i 
 #
-            REQUEST Dabci_baba[b,a,b1,i] i   
+            REQUEST Dabci_baba[b,a,b1,i]    
             etemp = Dabci_baba[b,a,b1,i]*Dabci_baba[b,a,b1,i]
             esum += etemp
 #
@@ -4960,7 +4956,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, i2, a 
 #
-            REQUEST Dijka_aaaa[i,i1,i2,a] a  
+            REQUEST Dijka_aaaa[i,i1,i2,a]   
             etemp = Dijka_aaaa[i,i1,i2,a]*Dijka_aaaa[i,i1,i2,a]
             esum += etemp
 #            
@@ -4972,7 +4968,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO j, j1, j2, b 
 #
-            REQUEST Dijka_bbbb[j,j1,j2,b] b  
+            REQUEST Dijka_bbbb[j,j1,j2,b] 
             etemp = Dijka_bbbb[j,j1,j2,b]*Dijka_bbbb[j,j1,j2,b]
             esum += etemp
 #            
@@ -4984,7 +4980,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, j, b 
 #
-            REQUEST Dijka_abab[i,j,i1,b] b  
+            REQUEST Dijka_abab[i,j,i1,b]   
             etemp = Dijka_abab[i,j,i1,b]*Dijka_abab[i,j,i1,b]
             esum += etemp
 #            
@@ -4995,7 +4991,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, j1, j, a 
 #
-            REQUEST Dijka_baba[j,i,j1,a] a  
+            REQUEST Dijka_baba[j,i,j1,a]   
             etemp = Dijka_baba[j,i,j1,a]*Dijka_baba[j,i,j1,a]
             esum += etemp
 #            
@@ -5012,7 +5008,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, a, a1  
 #
-            REQUEST Dijab_aa[i,i1,a,a1] a  
+            REQUEST Dijab_aa[i,i1,a,a1] 
             etemp = Dijab_aa[i,i1,a,a1]*Dijab_aa[i,i1,a,a1]
             esum += etemp
 #            
@@ -5024,7 +5020,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO j, j1, b, b1  
 #
-            REQUEST Dijab_bb[j,j1,b,b1] b  
+            REQUEST Dijab_bb[j,j1,b,b1]  
             etemp = Dijab_bb[j,j1,b,b1]*Dijab_bb[j,j1,b,b1]
             esum += etemp
 #            
@@ -5036,7 +5032,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, j, a, b  
 #
-            REQUEST Dijab_ab[i,j,a,b] a  
+            REQUEST Dijab_ab[i,j,a,b] 
             etemp = Dijab_ab[i,j,a,b]*Dijab_ab[i,j,a,b]
             esum += etemp
 #            
@@ -5053,7 +5049,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, a, a1  
 #
-            REQUEST Dibja_aaaa[i,a,i1,a1] a  
+            REQUEST Dibja_aaaa[i,a,i1,a1]   
             etemp = Dibja_aaaa[i,a,i1,a1]*Dibja_aaaa[i,a,i1,a1]
             esum += etemp
 #            
@@ -5064,7 +5060,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO j, j1, b, b1  
 #
-            REQUEST Dibja_bbbb[j,b,j1,b1] b  
+            REQUEST Dibja_bbbb[j,b,j1,b1]   
             etemp = Dibja_bbbb[j,b,j1,b1]*Dibja_bbbb[j,b,j1,b1]
             esum += etemp
 #            
@@ -5075,7 +5071,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, i1, b, b1  
 #
-            REQUEST Dibja_abab[i,b,i1,b1] b  
+            REQUEST Dibja_abab[i,b,i1,b1]   
             etemp = Dibja_abab[i,b,i1,b1]*Dibja_abab[i,b,i1,b1]
             esum += etemp
 #            
@@ -5086,7 +5082,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO j, j1, a, a1  
 #
-            REQUEST Dibja_baba[j,a,j1,a1] a  
+            REQUEST Dibja_baba[j,a,j1,a1]   
             etemp = Dibja_baba[j,a,j1,a1]*Dibja_baba[j,a,j1,a1]
             esum += etemp
 #            
@@ -5097,7 +5093,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, j, a, b  
 #
-            REQUEST Dibja_abba[i,b,j,a] a  
+            REQUEST Dibja_abba[i,b,j,a]   
             etemp = Dibja_abba[i,b,j,a]*Dibja_abba[i,b,j,a]
             esum += etemp
 #            
@@ -5108,7 +5104,7 @@ import "ccsdgrad_rhf_vars.sialx"
       esum = 0.0 
       PARDO i, j, a, b  
 #
-            REQUEST Dibja_baab[j,a,i,b] a  
+            REQUEST Dibja_baab[j,a,i,b]   
             etemp = Dibja_baab[j,a,i,b]*Dibja_baab[j,a,i,b]
             esum += etemp
 #            
@@ -5126,7 +5122,7 @@ import "ccsdgrad_rhf_vars.sialx"
          CALL TAU 
          CALL GAE 
          CALL GMI 
-         execute server_barrier 
+         server_barrier 
 #
 # Form DABCD. This is done here as the half-transformed amplitudes used 
 # are not needed anywhere else  

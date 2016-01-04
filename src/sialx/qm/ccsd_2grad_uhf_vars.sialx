@@ -1,9 +1,10 @@
-import "ccsdgrad_rhf_defs.sialx"
+import "ccsdgrad_uhf_defs.sialx"
 #
         SIAL CCSD_2GRAD_UHF_VARS
 #       -----------------------
 
       index Ngrads   = 1: Three_Natoms
+      Index Twelve   = 1: 12
 
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -75,6 +76,7 @@ import "ccsdgrad_rhf_defs.sialx"
       served Dijka_baba[j,i,j1,a]
       served Dijka_bbbb[j,j2,j1,b]
       served Dxaai[mu,a,a1,i]
+      served Dxxai[mu,nu,a2,i]
       served Dxxxi[mu,nu,sigma,i]
       served Dxbbj[mu,b,b1,j]
       served Dxxbj[mu,nu,b1,j]
@@ -133,12 +135,10 @@ import "ccsdgrad_rhf_defs.sialx"
       distributed t1b_old[b,j]
       distributed l1a_old[i,a]
       distributed l1b_old[j,b]
-#
       distributed Gmi_a[i,i1]
       distributed Gmi_b[j,j1]
       distributed Gae_a[a,a1]
       distributed Gae_b[b,b1]
-#
       distributed Doldai_a[a,i]
       distributed Doldai_b[b,j]
       distributed DpqA[mu,nu]
@@ -155,7 +155,26 @@ import "ccsdgrad_rhf_defs.sialx"
       distributed Dbb[b1,b]
       distributed L1aa[a1,a]
       distributed L1ai[a1,i]
+      distributed D_gradient[Ngrads]
 
+      temp Taa[a,a1]
+      temp T1aa[a,a1]
+      temp Tbb[b,b1]
+      temp T1bb[b,b1]
+      temp Tae_a[a,a1]
+      temp Tae_b[b,b1]
+      temp Tia[i,a]
+      temp T1ia[i,a]
+      temp T2ia[i,a]
+      temp T3ia[i,a]
+      temp T4ia[i,a]
+      temp Tjb[j,b]
+      temp T1jb[j,b]
+      temp T2jb[j,b]
+      temp T3jb[j,b]
+      temp T4jb[j,b]
+      temp Tme_a[i,a]
+      temp Tme_b[j,b]
       temp Tpq[mu,nu]
       temp Txx[mu,nu]
       temp Txi[mu,i]
@@ -194,10 +213,7 @@ import "ccsdgrad_rhf_defs.sialx"
       temp T1xjij[mu,j,i1,j2]
       temp Txxij[mu,nu,i1,j2]
       temp T1xxij[mu,nu,i1,j2]
-      temp Txjjj[mu,j,j1,j2]
-      temp T1xjjj[mu,j,j1,j2]
-      temp Txxjj[mu,nu,j1,j2]
-      temp T1xxjj[mu,nu,j1,j2]
+
       temp Tiaix[i,a,i1,sigma]
       temp T1iaix[i,a,i1,sigma]
       temp Tixix[i,nu,i1,sigma]
@@ -282,69 +298,6 @@ import "ccsdgrad_rhf_defs.sialx"
       temp T1ai[a,i]
       temp Tbj[b,j]
       temp T1bj[b,j]
-      temp Taa[a,a1]
-      temp T1aa[a,a1]
-      temp Tbb[b,b1]
-      temp T1bb[b,b1]
-      temp Tae_a[a,a1]
-      temp Tae_b[b,b1]
-      temp Tia[i,a]
-      temp T1ia[i,a]
-      temp T2ia[i,a]
-      temp T3ia[i,a]
-      temp T4ia[i,a]
-      temp Tjb[j,b]
-      temp T1jb[j,b]
-      temp T2jb[j,b]
-      temp T3jb[j,b]
-      temp T4jb[j,b]
-      temp Tme_a[i,a]
-      temp Tme_b[j,b]
-      temp Tii[i,i1]
-      temp T1ii[i,i1]
-      temp Tjj[j,j1]
-      temp T1jj[j,j1]
-      temp Tmi_a[i,i1]
-      temp Tmi_b[j,j1]
-      temp Liaai[i,a,a1,i1]
-      temp Tiaai[i,a,a1,i1]
-      temp T1iaai[i,a,a1,i1]
-      temp Ljbbj[j,b,b1,j1]
-      temp Tjbbj[j,b,b1,j1]
-      temp T1jbbj[j,b,b1,j1]
-      temp Liabj[i,a,b,j]
-      temp Tiabj[i,a,b,j]
-      temp Lbjai[b,j,a,i]
-      temp Tbjai[b,j,a,i]
-      temp Ljbai[j,b,a,i]
-      temp Tjbai[j,b,a,i]
-      temp Taaaa[a,a1,a2,a3]
-      temp T1aaaa[a,a1,a2,a3]
-      temp Taabb[a,a1,b,b1]
-      temp T1aabb[a,a1,b,b1]
-      temp Tbbbb[b,b1,b2,b3]
-      temp T1bbbb[b,b1,b2,b3]
-      temp Tiiii[i,i1,i2,i3]
-      temp T1iiii[i,i1,i2,i3]
-      temp Tiijj[i,i1,j,j1]
-      temp Taa[a,a1]
-      temp T1aa[a,a1]
-      temp Tbb[b,b1]
-      temp T1bb[b,b1]
-      temp Tae_a[a,a1]
-      temp Tae_b[b,b1]
-      temp Tia[i,a]
-      temp T1ia[i,a]
-      temp T2ia[i,a]
-      temp T3ia[i,a]
-      temp T4ia[i,a]
-      temp Tjb[j,b]
-      temp T1jb[j,b]
-      temp T2jb[j,b]
-      temp T3jb[j,b]
-      temp T4jb[j,b]
-      temp Tme_a[i,a]
-      temp Tme_b[j,b]
       temp Tii[i,i1]
       temp T1ii[i,i1]
       temp Tjj[j,j1]
@@ -471,6 +424,7 @@ import "ccsdgrad_rhf_defs.sialx"
       temp QQbb[j,lambda,j1,sigma]
       temp Qab[i,lambda,j,b]
       temp QQab[i,lambda,j,sigma]
+      temp GRAD_AO_INTS[mu,nu,lambda,sigma]
 
 #     contiguous local L_gradient[Ngrads]
       static L_gradient[Ngrads]
@@ -489,6 +443,12 @@ import "ccsdgrad_rhf_defs.sialx"
       scalar etemp
       scalar esum
       scalar eacbd
+      scalar zmax
+      scalar imax
+      scalar six
+      scalar two
+      scalar one
+      scalar flag
 
         ENDSIAL CCSD_2GRAD_UHF_VARS
 #       ---------------------------
