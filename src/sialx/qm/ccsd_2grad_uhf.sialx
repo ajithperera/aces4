@@ -26,6 +26,9 @@ import "ccsd_2grad_uhf_vars.sialx"
 #     -------------
 
      restore_persistent  ca "ca"
+     restore_persistent  cb "cb"
+     restore_persistent  fock_a "fock_a"
+     restore_persistent  fock_b "fock_b"
      restore_persistent  t1a_old  "t1a_old"
      restore_persistent  t1b_old  "t1b_old"
      restore_persistent  T2old_aa "T2old_aa"
@@ -35,9 +38,10 @@ import "ccsd_2grad_uhf_vars.sialx"
      restore_persistent  l1b_old  "l1b_old"
      restore_persistent  L2old_aa "L2old_aa"
      restore_persistent  L2old_ab "L2old_ab"
-     restore_persistent  L2old_bb "L2old_aa"
+     restore_persistent  L2old_bb "L2old_bb"
      restore_persistent  Doldai_a "Doldai_a"
      restore_persistent  Doldai_b "Doldai_b"
+     restore_persistent  D_gradient "D_gradient"
      server_barrier
 
      ENDPROC READ_2EL
@@ -4787,6 +4791,14 @@ import "ccsd_2grad_uhf_vars.sialx"
 #
       ENDPARDO mu, nu, lambda, sigma  
       server_barrier 
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap+2-el gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
 #
       ENDPROC PDCONT 
 #     -------------- 
@@ -5175,11 +5187,11 @@ import "ccsd_2grad_uhf_vars.sialx"
 #
 # The main program. Lets do the initializtions
 #
-     zmax   = 0.0
-     imax   = 0.0
-     one = 1.0
-     two = 2.0
-     six = 6.0
+     zmax = 0.0
+     imax = 0.0
+     one  = 1.0
+     two  = 2.0
+     six  = 6.0
 
      execute compute_int_scratchmem oed_ovl zmax imax
 

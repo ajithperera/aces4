@@ -37,6 +37,7 @@ import "ccsd_2grad_rhf_vars.sialx"
      restore_persistent Doldai_a "Doldai_a"
      restore_persistent DOR_ii   "DOR_ii"
      restore_persistent DOR_aa   "DOR_aa"
+     restore_persistent D_Gradient "D_Gradient"
      server_barrier
 
       ENDPROC READ_2EL
@@ -3260,6 +3261,15 @@ import "ccsd_2grad_rhf_vars.sialx"
 
       ENDPARDO mu, nu, lambda, sigma  
       server_barrier 
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap+2-el gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+
 #
       ENDPROC PDCONT 
 #     -------------- 
@@ -3588,6 +3598,14 @@ import "ccsd_2grad_rhf_vars.sialx"
 # Read converged T and Lambda amplitudes 
 # -------------------------------------- 
       CALL READ_2EL
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
 
       CALL DMAIN 
 #

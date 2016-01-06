@@ -540,6 +540,9 @@ import "ccsdgrad_uhf_defs.sialx"
       scalar six
       scalar etmp
       scalar sum
+      scalar tmp
+      scalar suma 
+      scalar sumb 
 
       Int worder
       Int Iorder

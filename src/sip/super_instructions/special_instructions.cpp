@@ -131,6 +131,12 @@ void energy_denominator(
         int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
 	int& ierr);
 
+void energy_udenominator(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
 void energy_numerator_rhf(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
@@ -589,6 +595,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["compute_int_scratchmem_lowmem"]=(fp0)&compute_int_scratchmem_lowmem;
 	procmap_["energy_denominator_rhf"]=(fp0)&energy_denominator_rhf;
 	procmap_["energy_denominator"]=(fp0)&energy_denominator;
+	procmap_["energy_udenominator"]=(fp0)&energy_udenominator;
 	procmap_["energy_numerator_rhf"]=(fp0)&energy_numerator_rhf;
 	procmap_["return_vpq"]=(fp0)&return_vpq;
 	procmap_["return_diagonal"]=(fp0)&return_diagonal;

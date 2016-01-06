@@ -55,6 +55,7 @@ special eigen_calc_sqr_inv uuu
 special eigen_calc uu
 special compute_int_scratchmem uuu
 special energy_denominator urrr
+special energy_udenominator urr
 special compute_integral_batch w
 special compute_diis u
 

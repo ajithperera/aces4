@@ -98,6 +98,7 @@ import "diis_2index_ccgrad_rhf.sialx"
      set_persistent Doldai_a "Doldai_a"
      set_persistent DOR_ii   "DOR_ii"
      set_persistent DOR_aa   "DOR_aa"
+     set_persistent D_Gradient "D_Gradient"
      server_barrier
 
      ENDPROC WRITE_2EL
@@ -3199,16 +3200,22 @@ import "diis_2index_ccgrad_rhf.sialx"
 #     ----------- 
 # 
      PROC I11 
-#    -------- 
+#    --------
+
+      pardo i,a
+            PUT Iai_aa[a,i] = 0.0
+      endpardo i,a
+      pardo i, i1
+            PUT Iij_aa[i,i1] = 0.0
+      endpardo i, i1
+      pardo a,a1
+            put Iab_aa[a,a1] = 0.0
+      endpardo a,a1
+      sip_barrier
 #
 # Calculate contribution to Iai_aa 
 # -------------------------------- 
 #
-     PARDO i, i1
-            PUT Dij_a[i,i1] = 0.0
-     ENDPARDO i, i1
-     sip_barrier
-  
      PARDO a, i, i1, i2  
 #
            REQUEST VSpipi[a,i2,i1,i] 
@@ -3262,11 +3269,6 @@ import "diis_2index_ccgrad_rhf.sialx"
 #     Dab contribution 
 #     ---------------- 
 #
-      PARDO i, i1
-            PUT Iij_aa[i,i1] = 0.0
-      ENDPARDO i, i1
-      sip_barrier 
-
       PARDO a, a1, i, i1 
 #
             REQUEST Vaaii[a,a1,i,i1] 
@@ -3355,6 +3357,7 @@ import "diis_2index_ccgrad_rhf.sialx"
 #
 #     I(i,j) = - f(i,m) D(j,m)
 #
+      
       PROC FOCKIIJA
 #     -------------
 #
@@ -3539,7 +3542,6 @@ import "diis_2index_ccgrad_rhf.sialx"
       ENDPROC IFOCK
 #     -------------
  
-# ----------------------------------------------------------------------------------------
 #
       PROC IFOCK_PP 
 #     -------------
@@ -4756,7 +4758,6 @@ import "diis_2index_ccgrad_rhf.sialx"
                Endif
 #
          ENDPARDO a, i 
-         sip_barrier 
 #
          ENDPROC UPDATE_DAI 
 #        ------------------ 
@@ -4911,13 +4912,15 @@ import "diis_2index_ccgrad_rhf.sialx"
          print ediff
 
          IF ediff < ecrit
+            Print "Iterative solution of CPHF like equations are converged" 
+            Print ""
             exit
          ENDIF
 
 #bgn_debug
-         print eold
-         print enew
-         print ediff
+#         print eold
+#         print enew
+#        print ediff
 #end_debug
 
          if kiter >= diis_start
@@ -4930,6 +4933,7 @@ import "diis_2index_ccgrad_rhf.sialx"
          eold = enew
 
          CALL MOVE_DAI 
+         sip_barrier 
 #
 #        Zero out Dai 
 #        ------------ 
@@ -5022,15 +5026,19 @@ import "diis_2index_ccgrad_rhf.sialx"
 # Finally contract with the derivative integrals
 # ----------------------------------------------
 #
-      PARDO mu, nu
       flag = 3.0
       Do Ngrads
          L_Gradient[Ngrads] = 0.0
       Enddo Ngrads
 
+      PARDO mu, nu
+
             GET Ipq[mu,nu]
             Tpq[mu,nu]  = Ipq[mu,nu]
             Tpq[mu,nu] *= 2.0  
+
+            Txx[mu,nu]  = 0.0
+
 
             execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
 
@@ -5129,6 +5137,10 @@ import "diis_2index_ccgrad_rhf.sialx"
 # Finally contract with the derivative integrals
 # ----------------------------------------------
 #
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+
       DO mu 
       DO nu
             GET Dpq[mu,nu]
@@ -5240,6 +5252,11 @@ import "diis_2index_ccgrad_rhf.sialx"
 # Alpha-alpha block 
 # ----------------- 
 #
+      pardo i,i1
+           put DOR_ii[i,i1] = 0.0
+      endpardo i,i1
+      sip_barrier 
+
       PARDO i, i1 
 #
             GET                         Iij_aa[i,i1]    
@@ -5248,7 +5265,7 @@ import "diis_2index_ccgrad_rhf.sialx"
             tii[i1,i]                 = Iij_aa[i,i1] 
             tii[i1,i]                -= Iij_aa[i1,i] 
 #
-            execute energy_denominator tii[i1,i] fock_a fock_a AAAA
+            execute energy_udenominator tii[i1,i] fock_a AAAA
             PUT DOR_ii[i1,i]         += tii[i1,i] 
 #
       ENDPARDO i, i1 
@@ -5262,6 +5279,11 @@ import "diis_2index_ccgrad_rhf.sialx"
 # Alpha-alpha block 
 # ----------------- 
 #
+      pardo a,a1
+            put DOR_aa[a,a1] = 0.0
+      endpardo a,a1
+      sip_barrier 
+      
       PARDO a, a1 
 #
             GET                         Iab_aa[a,a1]    
@@ -5270,7 +5292,7 @@ import "diis_2index_ccgrad_rhf.sialx"
             taa[a1,a]                 = Iab_aa[a,a1] 
             taa[a1,a]                -= Iab_aa[a1,a] 
 #
-            execute energy_denominator taa[a,a1] fock_a fock_a AAAA
+            execute energy_udenominator taa[a1,a] fock_a AAAA
             PUT DOR_aa[a1,a]         += taa[a1,a] 
 #
       ENDPARDO a, a1 
@@ -5616,11 +5638,12 @@ import "diis_2index_ccgrad_rhf.sialx"
 # 
 # Main program, Start with the initialization calls.
 #
-     zmax   = 0.0
-     imax   = 0.0
-     one = 1.0
-     two = 2.0
-     six = 6.0
+     zmax = 0.0
+     imax = 0.0
+     one  = 1.0
+     two  = 2.0
+     six  = 6.0
+     AAAA = 1.0
 
      execute compute_int_scratchmem oed_ovl zmax imax
 
@@ -5632,6 +5655,8 @@ import "diis_2index_ccgrad_rhf.sialx"
 #      print diis_order
 #      print diis_start
 #end_debug
+
+     execute compute_nn_repulsion_grad Gradient
 
      DO Ngrads
         Put D_gradient[Ngrads] = Gradient[Ngrads]
