@@ -222,7 +222,6 @@ set(INCLUDE_DIRS
     ${CMAKE_BINARY_DIR};
     ${MPI_INCLUDE_PATH};
     ${CMAKE_SOURCE_DIR}/src/sip;
-    ${CMAKE_SOURCE_DIR}/src/sip/super_instructions;
     ${CMAKE_SOURCE_DIR}/src/sip/tensor_algebra;
     ${CMAKE_SOURCE_DIR}/src/sip/core;
     ${CMAKE_SOURCE_DIR}/src/sip/setup;
@@ -232,14 +231,16 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
     ${ACES_JSON_DIR};
-    ${CMAKE_SOURCE_DIR}/sia/test)
+    ${CMAKE_SOURCE_DIR}/sia/test;
+    ${CMAKE_SOURCE_DIR}/aces/src/super_instructions)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
     ${JSON_LIBRARIES};
     ${MPI_LIBRARIES};
-    superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
+    acessuperinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
+    siasuperinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
 
 
@@ -343,6 +344,7 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
 
 # All Super instructions are in this directory
 add_subdirectory(src/sip/super_instructions)
+add_subdirectory(aces/src/super_instructions)
 
 # Add Jsoncpp library
 if(HAVE_JSON)
@@ -411,20 +413,20 @@ endif()
 
 # Dependencies
 if(HAVE_CUDA)
-	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
-	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
-	add_dependencies(print_array_info tensordil superinstructions cudasuperinstructions)
-	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
-	add_dependencies(print_worker_checkpoint tensordil superinstructions cudasuperinstructions)
+	add_dependencies(aces4 tensordil siasuperinstructions acessuperinstructions cudasuperinstructions)
+	add_dependencies(print_siptables tensordil siasuperinstructions acessuperinstructions cudasuperinstructions)
+	add_dependencies(print_array_info tensordil siasuperinstructions acessuperinstructions cudasuperinstructions)
+	add_dependencies(print_init_file tensordil siasuperinstructions acessuperinstructions cudasuperinstructions)
+	add_dependencies(print_worker_checkpoint tensordil siasuperinstructions acessuperinstructions cudasuperinstructions)
 else()
-	add_dependencies(aces4 tensordil superinstructions)
-	add_dependencies(print_siptables tensordil superinstructions)
-	add_dependencies(print_array_info tensordil superinstructions)
-	add_dependencies(print_init_file tensordil superinstructions)
-	add_dependencies(print_worker_checkpoint tensordil superinstructions)
+	add_dependencies(aces4 tensordil siasuperinstructions acessuperinstructions)
+	add_dependencies(print_siptables tensordil siasuperinstructions acessuperinstructions)
+	add_dependencies(print_array_info tensordil siasuperinstructions acessuperinstructions)
+	add_dependencies(print_init_file tensordil siasuperinstructions acessuperinstructions)
+	add_dependencies(print_worker_checkpoint tensordil siasuperinstructions acessuperinstructions)
 endif()
 
-add_dependencies(superinstructions aces4_sip tensordil)
+add_dependencies(siasuperinstructions acessuperinstructions aces4_sip tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
