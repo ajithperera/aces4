@@ -359,7 +359,7 @@ add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_DEFINITIONS}")
 
 # executable for main program
-add_executable(aces4 src/aces_main/main.cpp)
+add_executable(aces4 sia/src/main/main.cpp)
 
 # executables for tools in the util directory
 add_executable(print_siptables src/util/print_siptables.cpp)
