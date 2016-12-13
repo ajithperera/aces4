@@ -41,7 +41,7 @@ TEST(Sial_BasicQM,scf_rhf_aguess_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -73,7 +73,7 @@ TEST(Sial_BasicQM,scf_uhfrhf_aguess_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -110,7 +110,7 @@ TEST(Sial_BasicQM,scf_uhf_triplet_aguess_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -149,7 +149,7 @@ TEST(Sial_BasicQM,lindep_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {

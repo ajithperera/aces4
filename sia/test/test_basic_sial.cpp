@@ -41,9 +41,6 @@ int test_transpose4d_op(double*);
 int test_contraction_small2(double*);
 }
 
-//static const std::string dir_name("src/sialx/test/");
-//static const std::string qm_dir_name("src/sialx/qm/");
-//static const std::string expected_output_dir_name("../test/expected_output/");
 
 
 //bool VERBOSE_TEST = false;

@@ -232,7 +232,7 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
     ${ACES_JSON_DIR};
-    ${CMAKE_SOURCE_DIR}/test)
+    ${CMAKE_SOURCE_DIR}/sia/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
@@ -289,41 +289,41 @@ enable_testing()
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 # COPY FILES NEEDED FOR TESTS TO THE BUILD DIRECTORY
-configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-#configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-#configure_file(${CMAKE_SOURCE_DIR}/test/eom_water_dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-#configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-#configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-#configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_ccsd_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_ccsd_water_right_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/frag_scf_333_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/fef_ccpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_222_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/scf_uhfrhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/scf_uhf_triplet_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/lccd_frozencore_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/lamccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/helloworld1.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays_wild.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/loop_over_simple_indices.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/scalar_valued_blocks.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/scalars.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays_2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/test_1el_ecp_ints.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_water_dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_ccsd_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/eom_ccsd_water_right_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/frag_scf_333_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/fef_ccpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/mcpt2_222_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/scf_uhfrhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/scf_uhf_triplet_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/lccd_frozencore_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/lamccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/aces/test/test_1el_ecp_ints.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/helloworld1.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/local_arrays_wild.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/local_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/loop_over_simple_indices.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/scalar_valued_blocks.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/scalars.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/static_array_test.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/static_array_test2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/tmp_arrays_2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/tmp_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 
 #----------------------------------------------------------------------
 # Build aces4 & other executables
@@ -429,25 +429,27 @@ add_dependencies(superinstructions aces4_sip tensordil)
 #----------------------------------------------------------------------
 
 add_library(test_controllers
-            test/test_controller.h;
-            test/test_controller.cpp;
-            test/test_controller_parallel.h;
-            test/test_controller_parallel.cpp;
-            test/test_constants.h;
-            test/test_constants.cpp)
+            sia/test/test_controller.h;
+            sia/test/test_controller.cpp;
+            sia/test/test_controller_parallel.h;
+            sia/test/test_controller_parallel.cpp;
+            sia/test/test_constants.h;
+            sia/test/test_constants.cpp)
 
 
+# SIP test routines
+add_executable(test_basic_sial      sia/test/test_basic_sial.cpp;
+                                    sia/test/test_transpose_op.F; 
+                                    sia/test/test_transpose4d_op.F;
+                                    sia/test/test_contraction_small2.F)
+add_executable(test_sial  	        sia/test/test_sial.cpp)
+add_executable(test_unit            sia/test/test_unit.cpp)
 
-add_executable(test_basic_sial      test/test_basic_sial.cpp;
-                                    test/test_transpose_op.F; 
-                                    test/test_transpose4d_op.F;
-                                    test/test_contraction_small2.F)
-add_executable(test_sial  	    test/test_sial.cpp)
-add_executable(test_basic_qm        test/test_basic_qm.cpp)
-add_executable(test_qm              test/test_qm.cpp)
-add_executable(test_qm_aux          test/test_qm_aux.cpp)
-add_executable(test_qm_frag         test/test_qm_frag.cpp)
-add_executable(test_unit            test/test_unit.cpp)
+# QC test routines
+add_executable(test_basic_qm        aces/test/test_basic_qm.cpp)
+add_executable(test_qm              aces/test/test_qm.cpp)
+add_executable(test_qm_aux          aces/test/test_qm_aux.cpp)
+add_executable(test_qm_frag         aces/test/test_qm_frag.cpp)
 
 # Link test executable against gtest & gtest_main
 set_target_properties(test_basic_sial   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
@@ -617,58 +619,58 @@ set(SIAL_FILES
     src/sialx/test/disk_backing_put_acc_stress.sialx;
     src/sialx/test/decreasing_segs.sialx;
     src/sialx/test/check_block_number_calc.sialx;
-    src/sialx/qm/utility/drop_core_in_sial.sialx;
-    src/sialx/qm/utility/tran_rhf_no4v.sialx;
-    src/sialx/qm/utility/tran_uhf_no4v.sialx;
-    src/sialx/qm/utility/tran_rhf_no4v_defs.sialx;
-    src/sialx/qm/utility/tran_rhf_no3v.sialx;
-    src/sialx/qm/scf/scf_rhf_coreh.sialx;
-    src/sialx/qm/scf/scf_defs.sialx;
-    src/sialx/qm/scf/scf_uhf.sialx;
-    src/sialx/qm/scf/scf_uhf_defs.sialx;
-    src/sialx/qm/scf/scf_rhf.sialx; 
-    src/sialx/qm/scf/scf_rhf_defs.sialx;
-    src/sialx/qm/cc/mp2_rhf_disc.sialx;
-    src/sialx/qm/cc/rccsd_rhf.sialx;
-    src/sialx/qm/cc/rlambda_rhf.sialx;
-    src/sialx/qm/cc/rlccd_rhf.sialx;
-    src/sialx/qm/cc/rlccsd_rhf.sialx;
-    src/sialx/qm/cc/rccsd_rhf_defs.sialx;
-    src/sialx/qm/cc/rccsdpt_aaa.sialx;
-    src/sialx/qm/cc/rccsdpt_aab.sialx;
-    src/sialx/qm/cc/rlamccsdpt_aaa.sialx;
-    src/sialx/qm/cc/rlamccsdpt_aab.sialx;
-    src/sialx/qm/cc/rccpt1p2_prop.sialx;
-    src/sialx/qm/eom/eom_rhf_defs.sialx  
-    src/sialx/qm/eom/eom_rhf_hbar.sialx;
-    src/sialx/qm/eom/eom_rhf_tran.sialx;
-    src/sialx/qm/eom/eom_rhf_vars.sialx;
-    src/sialx/qm/eom/eom_ccsd_rhf_right.sialx;
-    src/sialx/qm/eom/eom_ccsd_rhf_left.sialx;
-    src/sialx/qm/eom/rcis_rhf_defs.sialx;
-    src/sialx/qm/eom/rcis_rhf_vars.sialx;
-    src/sialx/qm/eom/rcis_rhf.sialx;
-    src/sialx/qm/eom/rcis_d_rhf.sialx;
-    src/sialx/qm/eom/rcis_ccpt2_rhf.sialx;
-    src/sialx/qm/fef-cc/frag_rhf.sialx;
-    src/sialx/qm/fef-cc/frag_pol_rhf.sialx;
-    src/sialx/qm/fef-cc/frag_rcis_rhf.sialx;
-    src/sialx/qm/fef-cc/tran_frag.sialx;
-    src/sialx/qm/fef-cc/MOI_reom_defs.sialx;
-    src/sialx/qm/fef-cc/MOI_reom_vars.sialx;
-    src/sialx/qm/fef-cc/MOI_cis_guess.sialx;
-    src/sialx/qm/fef-cc/MOI_rcis.sialx;
-    src/sialx/qm/fef-cc/MOI_reom_elements.sialx;
-    src/sialx/qm/fef-cc/MOI_reom_fefccpt2.sialx;
-    src/sialx/qm/fef-cc/fef_ccpt2.sialx;
-    src/sialx/qm/fef-cc/fef_cis_ccpt2.sialx;
-    src/sialx/qm/fef-cc/mcpt2_corr.sialx;
-    src/sialx/qm/fef-cc/mcpt2_corr_lowmem.sialx;
-    src/sialx/qm/fef-cc/mcpt2_vars.sialx;
-    src/sialx/qm/fef-cc/mcpt2_defs.sialx;
-    src/sialx/qm/fef-cc/mcpt2_singles.sialx;
-    src/sialx/qm/fef-cc/mcpt2_doubles.sialx;
-    src/sialx/qm/fef-cc/mcpt2_util.sialx)
+    aces/src/sialx/utility/drop_core_in_sial.sialx;
+    aces/src/sialx/utility/tran_rhf_no4v.sialx;
+    aces/src/sialx/utility/tran_uhf_no4v.sialx;
+    aces/src/sialx/utility/tran_rhf_no4v_defs.sialx;
+    aces/src/sialx/utility/tran_rhf_no3v.sialx;
+    aces/src/sialx/scf/scf_rhf_coreh.sialx;
+    aces/src/sialx/scf/scf_defs.sialx;
+    aces/src/sialx/scf/scf_uhf.sialx;
+    aces/src/sialx/scf/scf_uhf_defs.sialx;
+    aces/src/sialx/scf/scf_rhf.sialx; 
+    aces/src/sialx/scf/scf_rhf_defs.sialx;
+    aces/src/sialx/cc/mp2_rhf_disc.sialx;
+    aces/src/sialx/cc/rccsd_rhf.sialx;
+    aces/src/sialx/cc/rlambda_rhf.sialx;
+    aces/src/sialx/cc/rlccd_rhf.sialx;
+    aces/src/sialx/cc/rlccsd_rhf.sialx;
+    aces/src/sialx/cc/rccsd_rhf_defs.sialx;
+    aces/src/sialx/cc/rccsdpt_aaa.sialx;
+    aces/src/sialx/cc/rccsdpt_aab.sialx;
+    aces/src/sialx/cc/rlamccsdpt_aaa.sialx;
+    aces/src/sialx/cc/rlamccsdpt_aab.sialx;
+    aces/src/sialx/cc/rccpt1p2_prop.sialx;
+    aces/src/sialx/eom/eom_rhf_defs.sialx  
+    aces/src/sialx/eom/eom_rhf_hbar.sialx;
+    aces/src/sialx/eom/eom_rhf_tran.sialx;
+    aces/src/sialx/eom/eom_rhf_vars.sialx;
+    aces/src/sialx/eom/eom_ccsd_rhf_right.sialx;
+    aces/src/sialx/eom/eom_ccsd_rhf_left.sialx;
+    aces/src/sialx/eom/rcis_rhf_defs.sialx;
+    aces/src/sialx/eom/rcis_rhf_vars.sialx;
+    aces/src/sialx/eom/rcis_rhf.sialx;
+    aces/src/sialx/eom/rcis_d_rhf.sialx;
+    aces/src/sialx/eom/rcis_ccpt2_rhf.sialx;
+    aces/src/sialx/fef-cc/frag_rhf.sialx;
+    aces/src/sialx/fef-cc/frag_pol_rhf.sialx;
+    aces/src/sialx/fef-cc/frag_rcis_rhf.sialx;
+    aces/src/sialx/fef-cc/tran_frag.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_defs.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_vars.sialx;
+    aces/src/sialx/fef-cc/MOI_cis_guess.sialx;
+    aces/src/sialx/fef-cc/MOI_rcis.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_elements.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_fefccpt2.sialx;
+    aces/src/sialx/fef-cc/fef_ccpt2.sialx;
+    aces/src/sialx/fef-cc/fef_cis_ccpt2.sialx;
+    aces/src/sialx/fef-cc/mcpt2_corr.sialx;
+    aces/src/sialx/fef-cc/mcpt2_corr_lowmem.sialx;
+    aces/src/sialx/fef-cc/mcpt2_vars.sialx;
+    aces/src/sialx/fef-cc/mcpt2_defs.sialx;
+    aces/src/sialx/fef-cc/mcpt2_singles.sialx;
+    aces/src/sialx/fef-cc/mcpt2_doubles.sialx;
+    aces/src/sialx/fef-cc/mcpt2_util.sialx)
     
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)

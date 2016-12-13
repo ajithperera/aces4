@@ -54,7 +54,7 @@ TEST(Sial_QM,DISABLED_eom_water_dimer_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -63,11 +63,11 @@ TEST(Sial_QM,DISABLED_eom_water_dimer_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -76,7 +76,7 @@ TEST(Sial_QM,DISABLED_eom_water_dimer_test){
 	}
 //
 // lambda 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -92,7 +92,7 @@ TEST(Sial_QM,DISABLED_eom_water_dimer_test){
 	}
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -105,7 +105,7 @@ TEST(Sial_QM,DISABLED_eom_water_dimer_test){
 	}
 //
 // eom
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {

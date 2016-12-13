@@ -26,7 +26,7 @@ TEST(Sial_QM_FRAG,DISABLED_mcpt2_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // mcpt
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -85,7 +85,7 @@ TEST(Sial_QM_FRAG,mcpt2_water_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // mcpt
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -217,7 +217,7 @@ TEST(Sial_QM_FRAG,frag_scf_333_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // frag_rhf
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -235,7 +235,7 @@ TEST(Sial_QM_FRAG,DISABLED_mcpt2_222_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // MOI SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -244,11 +244,11 @@ TEST(Sial_QM_FRAG,DISABLED_mcpt2_222_test){
 	}
 //
 // frag SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // mcpt
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -267,7 +267,7 @@ TEST(Sial_QM_FRAG,DISABLED_mcpt2_222_test){
 	}
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -321,7 +321,7 @@ TEST(Sial_QM_FRAG,fef_ccpt2_water_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // frag SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
 		double total_scf_energy = controller.scalar_value("total_scf_energy");
@@ -329,7 +329,7 @@ TEST(Sial_QM_FRAG,fef_ccpt2_water_test){
 	}
 //
 // frag pol SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
 		double total_scf_energy = controller.scalar_value("total_scf_energy");
@@ -337,7 +337,7 @@ TEST(Sial_QM_FRAG,fef_ccpt2_water_test){
 	}
 //
 // fef-ccpt
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {

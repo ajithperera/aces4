@@ -26,19 +26,19 @@ TEST(Sial_QM,DISABLED_ccsdpt_test){
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -79,7 +79,7 @@ TEST(Sial_QM,second_ccsdpt_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -88,11 +88,11 @@ TEST(Sial_QM,second_ccsdpt_test){
 	}
 //
 // tran
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -103,7 +103,7 @@ TEST(Sial_QM,second_ccsdpt_test){
 	}
 //
 // ccsdpt aaa
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -114,7 +114,7 @@ TEST(Sial_QM,second_ccsdpt_test){
 	}
 //
 // ccsdpt aab
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -158,7 +158,7 @@ TEST(Sial_QM,cis_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -167,11 +167,11 @@ TEST(Sial_QM,cis_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -184,7 +184,7 @@ TEST(Sial_QM,cis_test){
 	}
 //
 // CIS(D)
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -232,7 +232,7 @@ TEST(Sial_QM,DISABLED_eom_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -241,11 +241,11 @@ TEST(Sial_QM,DISABLED_eom_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -254,11 +254,11 @@ TEST(Sial_QM,DISABLED_eom_test){
 	}
 //
 // lambda 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -271,7 +271,7 @@ TEST(Sial_QM,DISABLED_eom_test){
 	}
 //
 // eom
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -312,7 +312,7 @@ TEST(Sial_QM,rlambda_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
                 double * dipole = controller.static_array("dipole");
@@ -324,15 +324,15 @@ TEST(Sial_QM,rlambda_test){
 	}
 //
 // tran
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // rlambda
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -376,7 +376,7 @@ TEST(Sial_QM,DISABLED_lccd_dropcoreinsial_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
                 double * dipole = controller.static_array("dipole");
@@ -390,15 +390,15 @@ TEST(Sial_QM,DISABLED_lccd_dropcoreinsial_test){
 	}
 //
 // drop core
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // tran
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // lccd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
 		double lccd_correlation = controller.scalar_value("lccd_correlation");
@@ -441,7 +441,7 @@ TEST(Sial_QM,lccd_frozencore_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
                 double * dipole = controller.static_array("dipole");
@@ -455,11 +455,11 @@ TEST(Sial_QM,lccd_frozencore_test){
 	}
 //
 // tran
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // lccd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
 		double lccd_correlation = controller.scalar_value("lccd_correlation");
@@ -502,7 +502,7 @@ TEST(Sial_QM,DISABLED_lccsd_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
                 double * dipole = controller.static_array("dipole");
@@ -516,11 +516,11 @@ TEST(Sial_QM,DISABLED_lccsd_test){
 	}
 //
 // tran
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // lccd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 	if (attr->global_rank() == 0) {
 		double lccsd_correlation = controller.scalar_value("lccsd_correlation");
@@ -563,7 +563,7 @@ TEST(Sial_QM,DISABLED_eom_lccsd_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -572,11 +572,11 @@ TEST(Sial_QM,DISABLED_eom_lccsd_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -589,7 +589,7 @@ TEST(Sial_QM,DISABLED_eom_lccsd_test){
 	}
 //
 // lccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -598,7 +598,7 @@ TEST(Sial_QM,DISABLED_eom_lccsd_test){
 	}
 //
 // eom
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -644,7 +644,7 @@ TEST(Sial_QM,DISABLED_eom_lccd_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -653,11 +653,11 @@ TEST(Sial_QM,DISABLED_eom_lccd_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -670,7 +670,7 @@ TEST(Sial_QM,DISABLED_eom_lccd_test){
 	}
 //
 // lccd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -679,7 +679,7 @@ TEST(Sial_QM,DISABLED_eom_lccd_test){
 	}
 //
 // eom
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -725,7 +725,7 @@ TEST(Sial_QM,DISABLED_eom_mp2_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -734,11 +734,11 @@ TEST(Sial_QM,DISABLED_eom_mp2_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -751,7 +751,7 @@ TEST(Sial_QM,DISABLED_eom_mp2_test){
 	}
 //
 // mp2
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -760,7 +760,7 @@ TEST(Sial_QM,DISABLED_eom_mp2_test){
 	}
 //
 // eom
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -803,7 +803,7 @@ TEST(Sial_QM,lamccsdpt_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -812,11 +812,11 @@ TEST(Sial_QM,lamccsdpt_test){
 	}
 //
 // tran
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -825,11 +825,11 @@ TEST(Sial_QM,lamccsdpt_test){
 	}
 //
 // lambda
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // lambda ccsdpt aaa
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -840,7 +840,7 @@ TEST(Sial_QM,lamccsdpt_test){
 	}
 //
 // ccsdpt aab
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -887,7 +887,7 @@ TEST(Sial_QM,eom_ccsd_water_right_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -896,11 +896,11 @@ TEST(Sial_QM,eom_ccsd_water_right_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -909,15 +909,15 @@ TEST(Sial_QM,eom_ccsd_water_right_test){
 	}
 //
 // lambda 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // eom
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -970,7 +970,7 @@ TEST(Sial_QM,eom_ccsd_water_test){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
 // SCF
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -979,11 +979,11 @@ TEST(Sial_QM,eom_ccsd_water_test){
 	}
 //
 // TRAN
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // ccsd
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -992,15 +992,15 @@ TEST(Sial_QM,eom_ccsd_water_test){
 	}
 //
 // lambda 
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // CIS
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 //
 // eom right
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
@@ -1013,7 +1013,7 @@ TEST(Sial_QM,eom_ccsd_water_test){
 	}
 //
 // eom left
-	controller.initSipTables(qm_dir_name);
+	controller.initSipTables(dir_name);
 	controller.run();
 
 	if (attr->global_rank() == 0) {
