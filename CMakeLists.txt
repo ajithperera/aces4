@@ -362,17 +362,17 @@ set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_D
 add_executable(aces4 sia/src/main/main.cpp)
 
 # executables for tools in the util directory
-add_executable(print_siptables src/util/print_siptables.cpp)
-add_executable(print_array_info src/util/print_array_info.cpp)
-add_executable(print_init_file src/util/print_init_file.cpp)
-add_executable(print_worker_checkpoint src/util/print_worker_checkpoint.cpp)
+add_executable(print_siptables sia/src/util/print_siptables.cpp)
+add_executable(print_array_info sia/src/util/print_array_info.cpp)
+add_executable(print_init_file sia/src/util/print_init_file.cpp)
+add_executable(print_worker_checkpoint sia/src/util/print_worker_checkpoint.cpp)
 
 if(HAVE_MPI)
-	add_executable(check_system src/util/check_system.cpp)
+	add_executable(check_system sia/src/util/check_system.cpp)
 endif()
 
 ## dump_array_file executable
-#add_executable(dump_array_file src/util/dump_array_file.cpp)
+#add_executable(dump_array_file sia/src/util/dump_array_file.cpp)
 
 
 # Setting Compile & link flags
