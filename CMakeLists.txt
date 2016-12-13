@@ -131,7 +131,7 @@ endif()
 
 if (HAVE_JSON)
     set(ACES_JSON_DIR
-       ${CMAKE_SOURCE_DIR}/jsoncpp)
+       ${CMAKE_SOURCE_DIR}/sia/src/jsoncpp)
     set(JSON_LIBRARIES
        jasoncpp)
 else ()
@@ -347,9 +347,11 @@ add_subdirectory(src/sip/super_instructions)
 # Add Jsoncpp library
 if(HAVE_JSON)
 add_library(jsoncpp;
-    jsoncpp/jsoncpp.cpp;
-    jsoncpp/json/json.h;
-    jsoncpp/json/json-forwards.h)
+    sia/src/jsoncpp/jsoncpp.cpp;
+    sia/src/jsoncpp/json_value.cpp;
+    sia/src/jsoncpp/json_writer.cpp.cpp;
+    sia/src/jsoncpp/json/json.h;
+    sia/src/jsoncpp/json/json-forwards.h)
 endif()
 
 # The tensor library is added separately
