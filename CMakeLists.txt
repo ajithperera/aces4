@@ -60,61 +60,61 @@ configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 # ACES4 sources, libraries, includes
 #----------------------------------------------------------------------
 set(ACES_SETUP_FILES 
-    src/sip/setup/io_utils.h;
-    src/sip/setup/setup_reader.h;
-    src/sip/setup/setup_interface.h;
-    src/sip/setup/setup_writer.h;
-    src/sip/setup/setup_reader.cpp;
-    src/sip/setup/setup_interface.cpp;
-    src/sip/setup/setup_writer.cpp;
-    src/sip/setup/io_utils.cpp)
+    sia/src/sip/setup/io_utils.h;
+    sia/src/sip/setup/setup_reader.h;
+    sia/src/sip/setup/setup_interface.h;
+    sia/src/sip/setup/setup_writer.h;
+    sia/src/sip/setup/setup_reader.cpp;
+    sia/src/sip/setup/setup_interface.cpp;
+    sia/src/sip/setup/setup_writer.cpp;
+    sia/src/sip/setup/io_utils.cpp)
 
 set(ACES_CORE_FILES 
-    src/sip/core/array_constants.h;
-    src/sip/core/array_constants.cpp;
-    src/sip/core/sip.h;
-    src/sip/core/sip.cpp;
-    src/sip/core/aces_defs.h;
-    src/sip/core/aces_log.h;
-    src/sip/core/aces_log.cpp;
-    src/sip/core/job_control.h;
-    src/sip/core/job_control.cpp)
+    sia/src/sip/core/array_constants.h;
+    sia/src/sip/core/array_constants.cpp;
+    sia/src/sip/core/sip.h;
+    sia/src/sip/core/sip.cpp;
+    sia/src/sip/core/aces_defs.h;
+    sia/src/sip/core/aces_log.h;
+    sia/src/sip/core/aces_log.cpp;
+    sia/src/sip/core/job_control.h;
+    sia/src/sip/core/job_control.cpp)
 
 # MPI - Conditional compile for MPI files
 if (HAVE_MPI AND MPI_CXX_FOUND)
     set(ACES_MPI_FILES
-        src/sip/mpi/data_distribution.cpp ;
-        src/sip/mpi/data_distribution.h;
-        src/sip/mpi/sip_mpi_utils.h;
-        src/sip/mpi/sip_mpi_utils.cpp;
-        src/sip/mpi/sip_mpi_constants.h;
-        src/sip/mpi/sip_mpi_constants.cpp;
-        src/sip/mpi/barrier_support.h;
-        src/sip/mpi/async_acks.h;
-        src/sip/mpi/async_acks.cpp;
-        src/sip/mpi/sip_server.h;
-        src/sip/mpi/sip_server.cpp;
-        src/sip/worker/sial_ops_parallel.h;
-        src/sip/worker/sial_ops_parallel.cpp;
-        src/sip/mpi/server_block.h;
-        src/sip/mpi/server_block.cpp;
-        src/sip/mpi/disk_backed_block_map.h;
-        src/sip/mpi/disk_backed_block_map.cpp;
-        src/sip/mpi/server_persistent_array_manager.h;
-        src/sip/mpi/server_persistent_array_manager.cpp;
-        src/sip/mpi/async_ops.h;
-        src/sip/mpi/async_ops.cpp; 
-        src/sip/mpi/counter.h;
-        src/sip/mpi/counter.cpp;   
-        src/sip/mpi/array_file.h;
-        src/sip/mpi/array_file.cpp;
-        src/sip/mpi/chunk_manager.h;
-        src/sip/mpi/chunk_manager.cpp;  
-        src/sip/mpi/chunk.h;
-        src/sip/mpi/chunk.cpp;          
-        src/sip/dynamic_data/mpi_state.h;
-        src/sip/dynamic_data/distributed_block_consistency.h;
-        src/sip/dynamic_data/distributed_block_consistency.cpp      
+        sia/src/sip/mpi/data_distribution.cpp ;
+        sia/src/sip/mpi/data_distribution.h;
+        sia/src/sip/mpi/sip_mpi_utils.h;
+        sia/src/sip/mpi/sip_mpi_utils.cpp;
+        sia/src/sip/mpi/sip_mpi_constants.h;
+        sia/src/sip/mpi/sip_mpi_constants.cpp;
+        sia/src/sip/mpi/barrier_support.h;
+        sia/src/sip/mpi/async_acks.h;
+        sia/src/sip/mpi/async_acks.cpp;
+        sia/src/sip/mpi/sip_server.h;
+        sia/src/sip/mpi/sip_server.cpp;
+        sia/src/sip/worker/sial_ops_parallel.h;
+        sia/src/sip/worker/sial_ops_parallel.cpp;
+        sia/src/sip/mpi/server_block.h;
+        sia/src/sip/mpi/server_block.cpp;
+        sia/src/sip/mpi/disk_backed_block_map.h;
+        sia/src/sip/mpi/disk_backed_block_map.cpp;
+        sia/src/sip/mpi/server_persistent_array_manager.h;
+        sia/src/sip/mpi/server_persistent_array_manager.cpp;
+        sia/src/sip/mpi/async_ops.h;
+        sia/src/sip/mpi/async_ops.cpp; 
+        sia/src/sip/mpi/counter.h;
+        sia/src/sip/mpi/counter.cpp;   
+        sia/src/sip/mpi/array_file.h;
+        sia/src/sip/mpi/array_file.cpp;
+        sia/src/sip/mpi/chunk_manager.h;
+        sia/src/sip/mpi/chunk_manager.cpp;  
+        sia/src/sip/mpi/chunk.h;
+        sia/src/sip/mpi/chunk.cpp;          
+        sia/src/sip/dynamic_data/mpi_state.h;
+        sia/src/sip/dynamic_data/distributed_block_consistency.h;
+        sia/src/sip/dynamic_data/distributed_block_consistency.cpp      
  )
 else ()
     set(ACES_MPI_FILES "")
@@ -123,8 +123,8 @@ endif()
 # CUDA - Conditional compile for CUDA super instructions
 if (HAVE_CUDA AND CUDA_FOUND)
     set(ACES_CUDA_FILES
-        src/sip/cuda/gpu_super_instructions.cu
-        src/sip/cuda/cuda_check.h)
+        sia/src/sip/cuda/gpu_super_instructions.cu
+        sia/src/sip/cuda/cuda_check.h)
 else ()
     set(ACES_CUDA_FILES "")
 endif()
@@ -141,72 +141,72 @@ endif()
     
 
 set(ACES_DATA_FILES
-    src/sip/static_data/array_table.h;
-    src/sip/static_data/array_table.cpp;
-    src/sip/static_data/index_table.h;
-    src/sip/static_data/index_table.cpp;
-    src/sip/static_data/int_table.h;
-    src/sip/static_data/int_table.cpp;
-    src/sip/static_data/sip_tables.h;
-    src/sip/static_data/sip_tables.cpp;
-    src/sip/static_data/opcode.h;
-    src/sip/static_data/opcode.cpp;
-    src/sip/static_data/op_table.h;
-    src/sip/static_data/op_table.cpp;
-    src/sip/static_data/create_map.h;
-    src/sip/dynamic_data/block_id.h;
-    src/sip/dynamic_data/block_id.cpp;
-    src/sip/dynamic_data/block_shape.h;
-    src/sip/dynamic_data/block_shape.cpp;
-    src/sip/dynamic_data/block_selector.h;
-    src/sip/dynamic_data/block_selector.cpp;
-    src/sip/dynamic_data/block.h;
-    src/sip/dynamic_data/block.cpp;
-    src/sip/dynamic_data/block_manager.h;
-    src/sip/dynamic_data/block_manager.cpp;
-    src/sip/dynamic_data/contiguous_array_manager.h;
-    src/sip/dynamic_data/contiguous_array_manager.cpp;
-    src/sip/dynamic_data/data_manager.h;
-    src/sip/dynamic_data/data_manager.cpp;
-    src/sip/dynamic_data/id_block_map.h;
-    src/sip/dynamic_data/worker_persistent_array_manager.h;
-    src/sip/dynamic_data/worker_persistent_array_manager.cpp;
-    src/sip/dynamic_data/lru_array_policy.h;
-    src/sip/dynamic_data/cached_block_map.h;
-    src/sip/dynamic_data/cached_block_map.cpp;
-    src/sip/dynamic_data/contiguous_local_array_manager.h;
-    src/sip/dynamic_data/contiguous_local_array_manager.cpp;
-    src/sip/dynamic_data/memory_tracker.h;
-    src/sip/dynamic_data/memory_tracker.cpp;)
+    sia/src/sip/static_data/array_table.h;
+    sia/src/sip/static_data/array_table.cpp;
+    sia/src/sip/static_data/index_table.h;
+    sia/src/sip/static_data/index_table.cpp;
+    sia/src/sip/static_data/int_table.h;
+    sia/src/sip/static_data/int_table.cpp;
+    sia/src/sip/static_data/sip_tables.h;
+    sia/src/sip/static_data/sip_tables.cpp;
+    sia/src/sip/static_data/opcode.h;
+    sia/src/sip/static_data/opcode.cpp;
+    sia/src/sip/static_data/op_table.h;
+    sia/src/sip/static_data/op_table.cpp;
+    sia/src/sip/static_data/create_map.h;
+    sia/src/sip/dynamic_data/block_id.h;
+    sia/src/sip/dynamic_data/block_id.cpp;
+    sia/src/sip/dynamic_data/block_shape.h;
+    sia/src/sip/dynamic_data/block_shape.cpp;
+    sia/src/sip/dynamic_data/block_selector.h;
+    sia/src/sip/dynamic_data/block_selector.cpp;
+    sia/src/sip/dynamic_data/block.h;
+    sia/src/sip/dynamic_data/block.cpp;
+    sia/src/sip/dynamic_data/block_manager.h;
+    sia/src/sip/dynamic_data/block_manager.cpp;
+    sia/src/sip/dynamic_data/contiguous_array_manager.h;
+    sia/src/sip/dynamic_data/contiguous_array_manager.cpp;
+    sia/src/sip/dynamic_data/data_manager.h;
+    sia/src/sip/dynamic_data/data_manager.cpp;
+    sia/src/sip/dynamic_data/id_block_map.h;
+    sia/src/sip/dynamic_data/worker_persistent_array_manager.h;
+    sia/src/sip/dynamic_data/worker_persistent_array_manager.cpp;
+    sia/src/sip/dynamic_data/lru_array_policy.h;
+    sia/src/sip/dynamic_data/cached_block_map.h;
+    sia/src/sip/dynamic_data/cached_block_map.cpp;
+    sia/src/sip/dynamic_data/contiguous_local_array_manager.h;
+    sia/src/sip/dynamic_data/contiguous_local_array_manager.cpp;
+    sia/src/sip/dynamic_data/memory_tracker.h;
+    sia/src/sip/dynamic_data/memory_tracker.cpp;)
 #need only header files for templates--these include .cpp
 
 set(ACES_WORKER_FILES
-    src/sip/worker/loop_manager.cpp;
-    src/sip/worker/loop_manager.h;
-    src/sip/worker/fragment_loop_manager.cpp;
-    src/sip/worker/fragment_loop_manager.h;
-    src/sip/worker/pardo_loop_factory.cpp;
-    src/sip/worker/pardo_loop_factory.h;
-    src/sip/worker/interpreter.cpp;
-    src/sip/worker/interpreter.h;
-    src/sip/worker/siox_reader.h;
-    src/sip/worker/siox_reader.cpp;
-    src/sip/worker/sial_ops_sequential.h;
-    src/sip/worker/sial_ops_sequential.cpp;
-    src/sip/worker/sial_printer.h;
-    src/sip/worker/sial_printer.cpp;
-    src/sip/worker/sial_math.h;
-    src/sip/worker/sial_math.cpp;
-    src/sip/worker/tracer.h;
-    src/sip/worker/tracer.cpp;
-    src/sip/sip_interface.h;
-    src/sip/sip_interface.cpp;
-    src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
-    src/sip/cuda/gpu_super_instructions.h;
-    src/sip/mpi/sip_mpi_attr.h;
-    src/sip/mpi/sip_mpi_attr.cpp;
-    src/sip/mpi/rank_distribution.h ;
-    src/sip/mpi/rank_distribution.cpp ;)
+    sia/src/sip/worker/loop_manager.cpp;
+    sia/src/sip/worker/loop_manager.h;
+    sia/src/sip/worker/fragment_loop_manager.cpp;
+    sia/src/sip/worker/fragment_loop_manager.h;
+    sia/src/sip/worker/pardo_loop_factory.cpp;
+    sia/src/sip/worker/pardo_loop_factory.h;
+    sia/src/sip/worker/interpreter.cpp;
+    sia/src/sip/worker/interpreter.h;
+    sia/src/sip/worker/siox_reader.h;
+    sia/src/sip/worker/siox_reader.cpp;
+    sia/src/sip/worker/sial_ops_sequential.h;
+    sia/src/sip/worker/sial_ops_sequential.cpp;
+    sia/src/sip/worker/sial_printer.h;
+    sia/src/sip/worker/sial_printer.cpp;
+    sia/src/sip/worker/sial_math.h;
+    sia/src/sip/worker/sial_math.cpp;
+    sia/src/sip/worker/tracer.h;
+    sia/src/sip/worker/tracer.cpp;
+    sia/src/sip/sip_interface.h;
+    sia/src/sip/sip_interface.cpp;
+    sia/src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
+    sia/src/sip/cuda/gpu_super_instructions.h;
+    sia/src/sip/mpi/sip_mpi_attr.h;
+    sia/src/sip/mpi/sip_mpi_attr.cpp;
+    sia/src/sip/mpi/rank_distribution.h ;
+    sia/src/sip/mpi/rank_distribution.cpp ;)
     
 #set(aces4_SRCS
 #    ${ACES_SETUP_FILES};
@@ -216,20 +216,20 @@ set(ACES_WORKER_FILES
 #    ${ACES_WORKER_FILES})
 
 # Dmitry's Tensor library
-set(tensordil_SRCS src/sip/tensor_algebra/tensor_dil_omp.F90)
+set(tensordil_SRCS sia/src/sip/tensor_algebra/tensor_dil_omp.F90)
 
 set(INCLUDE_DIRS     
     ${CMAKE_BINARY_DIR};
     ${MPI_INCLUDE_PATH};
-    ${CMAKE_SOURCE_DIR}/src/sip;
-    ${CMAKE_SOURCE_DIR}/src/sip/tensor_algebra;
-    ${CMAKE_SOURCE_DIR}/src/sip/core;
-    ${CMAKE_SOURCE_DIR}/src/sip/setup;
-    ${CMAKE_SOURCE_DIR}/src/sip/worker;
-    ${CMAKE_SOURCE_DIR}/src/sip/static_data;
-    ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
-    ${CMAKE_SOURCE_DIR}/src/sip/mpi;
-    ${CMAKE_SOURCE_DIR}/src/sip/cuda;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/tensor_algebra;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/core;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/setup;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/worker;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/static_data;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/dynamic_data;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/mpi;
+    ${CMAKE_SOURCE_DIR}/sia/src/sip/cuda;
     ${ACES_JSON_DIR};
     ${CMAKE_SOURCE_DIR}/sia/test;
     ${CMAKE_SOURCE_DIR}/aces/src/super_instructions)
@@ -239,8 +239,8 @@ set (TOLINK_LIBRARIES
     tensordil;
     ${JSON_LIBRARIES};
     ${MPI_LIBRARIES};
-    acessuperinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
-    siasuperinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
+    acessuperinstructions # Points to : ${CMAKE_BINARY_DIR}/aces/src/sip/super_instructions/libacessuperinstructions.a;
+    siasuperinstructions # Points to : ${CMAKE_BINARY_DIR}/sia/src/sip/super_instructions/libsiasuperinstructions.a;
     ${LAPACK_LIBRARIES})
 
 
