@@ -343,7 +343,7 @@ add_library(aces4_sip
 set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
 
 # All Super instructions are in this directory
-add_subdirectory(src/sip/super_instructions)
+add_subdirectory(sia/src/super_instructions)
 add_subdirectory(aces/src/super_instructions)
 
 # Add Jsoncpp library

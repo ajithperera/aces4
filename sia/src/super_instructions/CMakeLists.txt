@@ -19,13 +19,13 @@ set(GENERAL_SOURCE_FILES
     general/one_arg_no_op.cpp;
     general/list_blocks_with_number.cpp;
     general/check_block_number_calculation.cpp;
-    qm/instructions_for_testing.f;
-    qm/tests/get_and_print_int_array_dummy.F;
-    qm/tests/get_and_print_scalar_array_dummy.F;
-    qm/tests/get_scratch_array_dummy.F;
-    qm/tests/fill_block_sequential.f;
-    qm/tests/fill_block_cyclic.f;
-    qm/tests/get_and_print_mpi_rank.F)
+    instructions_for_testing.f;
+    tests/get_and_print_int_array_dummy.F;
+    tests/get_and_print_scalar_array_dummy.F;
+    tests/get_scratch_array_dummy.F;
+    tests/fill_block_sequential.f;
+    tests/fill_block_cyclic.f;
+    tests/get_and_print_mpi_rank.F)
 
 
 set(SRCS 

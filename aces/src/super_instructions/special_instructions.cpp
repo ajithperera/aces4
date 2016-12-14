@@ -64,6 +64,296 @@ void fill_block_cyclic(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
 	int& ierr);
 
+void compute_aabb_batch(
+        int& array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_h1(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_ovl(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_1el_ecpints(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void scf_atom_lowmem(
+	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
+	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
+	int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3,
+	int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4,
+	int & array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5,
+	int& ierr);
+
+void place_scratch(
+	int & array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0,
+	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
+	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
+	int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3,
+	int& ierr);
+
+void return_pairs(
+	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+	int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+	int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
+	int& ierr);
+
+void compute_pair_nn(
+        int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+        int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+        int& ierr);
+
+void return_h1frag(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void compute_int_scratchmem(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
+void compute_int_scratchmem_lowmem(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void energy_denominator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void energy_numerator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void return_vpq(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void return_diagonal(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void eigen_calc_sqr_inv(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
+void eigen_calc(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void gen_eigen_calc(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+	int& ierr);
+
+void set_flags2(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_sval(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void compute_diis(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
+
+void check_dconf(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void compute_ubatch2(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, 
+	int& ierr);
+
+void compute_ubatch1(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+void compute_ubatch3(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+void compute_ubatch4(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+void compute_ubatch6(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+void compute_ubatch7(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+void compute_ubatch8(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+
+void compute_integral_batch(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void compute_xyz_batch(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
+
+void compute_dipole_integrals(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
+
+void aoladder_contraction(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
+
+void compute_nn_repulsion(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void drop_core_in_sip(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
+void set_frag(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void frag_index_range(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
+void stripi(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void set_ijk_aaa(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void set_ijk_aab(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void cis_unit_guess(
+	int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
+void invert_diagonal(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void invert_diagonal_asym(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void energy_ty_denominator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
+void return_diagonal_elements(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void anti_symm_o(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void anti_symm_v(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void a4_david_damp_factor(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_get_init_occupation(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_return_occupation(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_scf_atom(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4,
+        int& array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * data_5,
+         int& ierr);
+
+void a4_dscale(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+	int& ierr);
+
+void print_block_and_index(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void form_diagonal_unit_matrix(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void moi_nn_repulsion(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void return_h1_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void return_ovl_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void remove_diagonal(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
+
 //##############################
 }
 
@@ -253,8 +543,78 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["read_block_from_text_file"]=(fp0)&read_block_from_text_file;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
 	procmap_["list_block_map"]=(fp0)&list_block_map;
+	procmap_["compute_aabb_batch"]=(fp0)&compute_aabb_batch;
 	procmap_["get_my_rank"]=(fp0)&get_my_rank;
+	procmap_["return_sval"]=(fp0)&return_sval;
+	procmap_["check_dconf"]=(fp0)&check_dconf;
+	procmap_["compute_diis"]=(fp0)&compute_diis;
+	procmap_["return_h1"]=(fp0)&return_h1;
+	procmap_["return_ovl"]=(fp0)&return_ovl;
+	procmap_["return_1el_ecpints"]=(fp0)&return_1el_ecpints;
+	procmap_["scf_atom_lowmem"]=(fp0)&scf_atom_lowmem;
+	procmap_["place_scratch"]=(fp0)&place_scratch;
+	procmap_["return_pairs"]=(fp0)&return_pairs;
+	procmap_["compute_pair_nn"]=(fp0)&compute_pair_nn;
+	procmap_["return_h1frag"]=(fp0)&return_h1frag;
+	procmap_["compute_int_scratchmem"]=(fp0)&compute_int_scratchmem;
+	procmap_["compute_int_scratchmem_lowmem"]=(fp0)&compute_int_scratchmem_lowmem;
+	procmap_["energy_denominator_rhf"]=(fp0)&energy_denominator_rhf;
+	procmap_["energy_numerator_rhf"]=(fp0)&energy_numerator_rhf;
+	procmap_["return_vpq"]=(fp0)&return_vpq;
+	procmap_["return_diagonal"]=(fp0)&return_diagonal;
+	procmap_["anti_symm_o"]=(fp0)&anti_symm_o;
+	procmap_["anti_symm_v"]=(fp0)&anti_symm_v;
+	procmap_["eigen_calc_sqr_inv"]=(fp0)&eigen_calc_sqr_inv;
+	procmap_["eigen_calc"]=(fp0)&eigen_calc;
+	procmap_["gen_eigen_calc"]=(fp0)&gen_eigen_calc;
+    procmap_["set_flags2"]=(fp0)&set_flags2;
+    procmap_["compute_ubatch2"]=(fp0)&compute_ubatch2;
+    procmap_["get_scratch_array_dummy"]=(fp0)&get_scratch_array_dummy;
+    procmap_["get_and_print_int_array_dummy"]=(fp0)&get_and_print_int_array_dummy;
+    procmap_["get_and_print_scalar_array_dummy"]=(fp0)&get_and_print_scalar_array_dummy;
+    procmap_["get_first_block_element"]=(fp0)&get_first_block_element;
+    procmap_["compute_ubatch1"]=(fp0)&compute_ubatch1;
+    procmap_["compute_ubatch3"]=(fp0)&compute_ubatch3;
+    procmap_["compute_ubatch4"]=(fp0)&compute_ubatch4;
+    procmap_["compute_ubatch6"]=(fp0)&compute_ubatch6;
+    procmap_["compute_ubatch7"]=(fp0)&compute_ubatch7;
+    procmap_["compute_ubatch8"]=(fp0)&compute_ubatch8;
+    procmap_["compute_integral_batch"]=(fp0)&compute_integral_batch;
+    procmap_["compute_xyz_batch"]=(fp0)&compute_xyz_batch;
+    procmap_["compute_dipole_integrals"]=(fp0)&compute_dipole_integrals;
+    procmap_["aoladder_contraction"]=(fp0)&aoladder_contraction;
+    procmap_["compute_nn_repulsion"]=(fp0)&compute_nn_repulsion;
+    procmap_["drop_core_in_sip"]=(fp0)&drop_core_in_sip;
+    procmap_["set_frag"]=(fp0)&set_frag;
+    procmap_["frag_index_range"]=(fp0)&frag_index_range;
+    procmap_["stripi"]=(fp0)&stripi;
+    procmap_["set_ijk_aaa"]=(fp0)&set_ijk_aaa;
+    procmap_["set_ijk_aab"]=(fp0)&set_ijk_aab;
+    procmap_["swap_blocks"]=(fp0)&swap_blocks;
+    procmap_["cis_unit_guess"]=(fp0)&cis_unit_guess;
+    procmap_["invert_diagonal"]=(fp0)&invert_diagonal;
+    procmap_["invert_diagonal_asym"]=(fp0)&invert_diagonal_asym;
+    procmap_["energy_ty_denominator_rhf"]=(fp0)&energy_ty_denominator_rhf;
+    procmap_["return_diagonal_elements"]=(fp0)&return_diagonal_elements;
+    procmap_["enable_debug_print"]=(fp0)&enable_debug_print;
+    procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
+    procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
+    procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
+    procmap_["get_and_print_mpi_rank"]=(fp0)&get_and_print_mpi_rank;
+    procmap_["one_arg_no_op"]=(fp0)&one_arg_no_op;
+    procmap_["list_blocks_with_number"]=(fp0)&list_blocks_with_number;
+    procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
+    procmap_["a4_david_damp_factor"]=(fp0)&a4_david_damp_factor;
+    procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
+    procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
+    procmap_["a4_dscale"]=(fp0)&a4_dscale;
+    procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
+    procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
     procmap_["check_block_number_calculation"]=(fp0)&check_block_number_calculation;
+    procmap_["moi_nn_repulsion"]=(fp0)&moi_nn_repulsion;
+    procmap_["return_h1_moi"]=(fp0)&return_h1_moi;
+    procmap_["return_ovl_moi"]=(fp0)&return_ovl_moi;
+    procmap_["remove_diagonal"]=(fp0)&remove_diagonal;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
