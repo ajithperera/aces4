@@ -677,7 +677,7 @@ set(SIAL_FILES
     aces/src/sialx/fef-cc/mcpt2_util.sialx)
     
 
-set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
+set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/sia/sial_compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
 set (SIAL_COMPILED_FILES "")
 foreach(F ${SIAL_FILES})
