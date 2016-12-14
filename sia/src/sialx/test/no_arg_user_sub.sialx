@@ -1,4 +1,0 @@
-sial no_arg_user_sub
-	special get_and_print_mpi_rank
-	execute get_and_print_mpi_rank
-endsial no_arg_user_sub
