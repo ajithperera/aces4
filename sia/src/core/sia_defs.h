@@ -1,4 +1,4 @@
-/*! aces_defs.h  Problem specific constants
+/*! sia_defs.h  Problem specific constants
  * 
  *
  *  Created on: May 31, 2013

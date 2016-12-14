@@ -8,7 +8,7 @@
 #ifndef GPU_SUPER_INSTRUCTIONS_H_
 #define GPU_SUPER_INSTRUCTIONS_H_
 
-#include "aces_defs.h"
+#include "sia_defs.h"
 #include <stdio.h>
 
 //**************************************************

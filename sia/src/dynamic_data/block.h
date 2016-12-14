@@ -27,7 +27,7 @@
 #include "config.h"
 #include <bitset>
 //#include <utility>   // for std::rel_ops.  Allows relational ops for BlockId to be derived from == and <
-#include "aces_defs.h"
+#include "sia_defs.h"
 #include "sip.h"
 #include "array_constants.h"
 #include "sip_interface.h"

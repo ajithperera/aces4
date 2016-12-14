@@ -9,7 +9,7 @@
 #define ASYNC_ACKS_H_
 
 #include <mpi.h>
-#include "aces_defs.h"
+#include "sia_defs.h"
 #include "sip.h"
 
 namespace sip {

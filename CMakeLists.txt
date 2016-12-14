@@ -12,7 +12,7 @@ enable_language(Fortran)
 # All custom find modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-# Find required packages for aces4.
+# Find required packages
 find_package(LAPACK REQUIRED)
 find_package(OpenMP)
 
@@ -57,9 +57,9 @@ endif()
 configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 
 #----------------------------------------------------------------------
-# ACES4 sources, libraries, includes
+# SIA sources, libraries, includes
 #----------------------------------------------------------------------
-set(ACES_SETUP_FILES 
+set(SIA_SETUP_FILES 
     sia/src/setup/io_utils.h;
     sia/src/setup/setup_reader.h;
     sia/src/setup/setup_interface.h;
@@ -69,20 +69,20 @@ set(ACES_SETUP_FILES
     sia/src/setup/setup_writer.cpp;
     sia/src/setup/io_utils.cpp)
 
-set(ACES_CORE_FILES 
+set(SIA_CORE_FILES 
     sia/src/core/array_constants.h;
     sia/src/core/array_constants.cpp;
     sia/src/core/sip.h;
     sia/src/core/sip.cpp;
-    sia/src/core/aces_defs.h;
-    sia/src/core/aces_log.h;
-    sia/src/core/aces_log.cpp;
+    sia/src/core/sia_defs.h;
+    sia/src/core/sia_log.h;
+    sia/src/core/sia_log.cpp;
     sia/src/core/job_control.h;
     sia/src/core/job_control.cpp)
 
 # MPI - Conditional compile for MPI files
 if (HAVE_MPI AND MPI_CXX_FOUND)
-    set(ACES_MPI_FILES
+    set(SIA_MPI_FILES
         sia/src/mpi/data_distribution.cpp ;
         sia/src/mpi/data_distribution.h;
         sia/src/mpi/sip_mpi_utils.h;
@@ -117,30 +117,30 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         sia/src/dynamic_data/distributed_block_consistency.cpp      
  )
 else ()
-    set(ACES_MPI_FILES "")
+    set(SIA_MPI_FILES "")
 endif()
 
 # CUDA - Conditional compile for CUDA super instructions
 if (HAVE_CUDA AND CUDA_FOUND)
-    set(ACES_CUDA_FILES
+    set(SIA_CUDA_FILES
         sia/src/cuda/gpu_super_instructions.cu
         sia/src/cuda/cuda_check.h)
 else ()
-    set(ACES_CUDA_FILES "")
+    set(SIA_CUDA_FILES "")
 endif()
 
 if (HAVE_JSON)
-    set(ACES_JSON_DIR
+    set(SIA_JSON_DIR
        ${CMAKE_SOURCE_DIR}/sia/src/jsoncpp)
     set(JSON_LIBRARIES
        jasoncpp)
 else ()
-    set(ACES_JSON_FILES "")
+    set(SIA_JSON_FILES "")
 endif()
     
     
 
-set(ACES_DATA_FILES
+set(SIA_DATA_FILES
     sia/src/static_data/array_table.h;
     sia/src/static_data/array_table.cpp;
     sia/src/static_data/index_table.h;
@@ -180,7 +180,7 @@ set(ACES_DATA_FILES
     sia/src/dynamic_data/memory_tracker.cpp;)
 #need only header files for templates--these include .cpp
 
-set(ACES_WORKER_FILES
+set(SIA_WORKER_FILES
     sia/src/worker/loop_manager.cpp;
     sia/src/worker/loop_manager.h;
     sia/src/worker/fragment_loop_manager.cpp;
@@ -208,13 +208,6 @@ set(ACES_WORKER_FILES
     sia/src/mpi/rank_distribution.h ;
     sia/src/mpi/rank_distribution.cpp ;)
     
-#set(aces4_SRCS
-#    ${ACES_SETUP_FILES};
-#    ${ACES_CORE_FILES};
-#    ${ACES_DATA_FILES};
-#    ${ACES_MPI_FILES};
-#    ${ACES_WORKER_FILES})
-
 # Dmitry's Tensor library
 set(tensordil_SRCS sia/src/tensor_algebra/tensor_dil_omp.F90)
 
@@ -230,7 +223,7 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/sia/src/dynamic_data;
     ${CMAKE_SOURCE_DIR}/sia/src/mpi;
     ${CMAKE_SOURCE_DIR}/sia/src/cuda;
-    ${ACES_JSON_DIR};
+    ${SIA_JSON_DIR};
     ${CMAKE_SOURCE_DIR}/sia/test;
     ${CMAKE_SOURCE_DIR}/aces/src/super_instructions)
 
@@ -251,30 +244,30 @@ if (CUDA_FOUND)
     
     # Support Double precision
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_13) 
-    CUDA_ADD_LIBRARY(cudasuperinstructions ${ACES_CUDA_FILES})
+    CUDA_ADD_LIBRARY(cudasuperinstructions ${SIA_CUDA_FILES})
     CUDA_ADD_CUBLAS_TO_TARGET(cudasuperinstructions)
     set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} cudasuperinstructions)
 endif()
 
 # Accumulating Compile & Link Flags
 
-set(ACES4_COMPILE_FLAGS "")
+set(SIA_COMPILE_FLAGS "")
 set(LIBTENSORDIL_DEFINITIONS "")
-set(ACES4_LINK_FLAGS "")
+set(SIA_LINK_FLAGS "")
 
 # Add LAPACK Linker Flags
-set (ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${LAPACK_LINKER_FLAGS})
+set (SIA_LINK_FLAGS ${SIA_LINK_FLAGS} ${LAPACK_LINKER_FLAGS})
 
 # Add OpenMP Flags
 if (OPENMP_FOUND)
     set(LIBTENSORDIL_DEFINITIONS _OPENMP)
-    set(ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${OpenMP_CXX_FLAGS})
+    set(SIA_LINK_FLAGS ${SIA_LINK_FLAGS} ${OpenMP_CXX_FLAGS})
 endif()
 
 # Add MPI Flags
 if (MPI_CXX_FOUND)
-    set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
-    set(ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${MPI_LINK_FLAGS})
+    set(SIA_COMPILE_FLAGS ${SIA_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
+    set(SIA_LINK_FLAGS ${SIA_LINK_FLAGS} ${MPI_LINK_FLAGS})
 endif()
 
 #----------------------------------------------------------------------
@@ -332,19 +325,19 @@ configure_file(${CMAKE_SOURCE_DIR}/sia/test/expected_output/tmp_arrays.txt ${CMA
 
 include_directories(${INCLUDE_DIRS})
 
-# Static Libraries for ACES4 
-add_library(aces4_sip     
-            ${ACES_SETUP_FILES}     
-            ${ACES_CORE_FILES}
-            ${ACES_WORKER_FILES}
-            ${ACES_DATA_FILES}
-            ${ACES_MPI_FILES})
+# Static Libraries 
+add_library(sip_lib
+            ${SIA_SETUP_FILES}     
+            ${SIA_CORE_FILES}
+            ${SIA_WORKER_FILES}
+            ${SIA_DATA_FILES}
+            ${SIA_MPI_FILES})
 
-set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
+set(TOLINK_LIBRARIES sip_lib ${TOLINK_LIBRARIES})
 
-# All Super instructions are in this directory
-add_subdirectory(sia/src/super_instructions)
+# All Super instructions are in these directories
 add_subdirectory(aces/src/super_instructions)
+add_subdirectory(sia/src/super_instructions)
 
 # Add Jsoncpp library
 if(HAVE_JSON)
@@ -376,26 +369,25 @@ endif()
 ## dump_array_file executable
 #add_executable(dump_array_file sia/src/util/dump_array_file.cpp)
 
-
 # Setting Compile & link flags
-set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${SIA_COMPILE_FLAGS}")
+set_target_properties(aces4 PROPERTIES LINK_FLAGS "${SIA_LINK_FLAGS}")
 
-set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${SIA_COMPILE_FLAGS}")
+set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${SIA_LINK_FLAGS}")
 
-set_target_properties(print_array_info PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(print_array_info PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+set_target_properties(print_array_info PROPERTIES COMPILE_FLAGS "${SIA_COMPILE_FLAGS}")
+set_target_properties(print_array_info PROPERTIES LINK_FLAGS "${SIA_LINK_FLAGS}")
 
-set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${SIA_COMPILE_FLAGS}")
+set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${SIA_LINK_FLAGS}")
 
-set_target_properties(print_worker_checkpoint PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+set_target_properties(print_worker_checkpoint PROPERTIES COMPILE_FLAGS "${SIA_COMPILE_FLAGS}")
+set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${SIA_LINK_FLAGS}")
 
 if (HAVE_MPI)
-	set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-	set_target_properties(check_system PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+	set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${SIA_COMPILE_FLAGS}")
+	set_target_properties(check_system PROPERTIES LINK_FLAGS "${SIA_LINK_FLAGS}")
 endif()
 
 
@@ -426,7 +418,7 @@ else()
 	add_dependencies(print_worker_checkpoint tensordil siasuperinstructions acessuperinstructions)
 endif()
 
-add_dependencies(siasuperinstructions acessuperinstructions aces4_sip tensordil)
+add_dependencies(siasuperinstructions acessuperinstructions sip_lib tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
@@ -456,13 +448,13 @@ add_executable(test_qm_aux          aces/test/test_qm_aux.cpp)
 add_executable(test_qm_frag         aces/test/test_qm_frag.cpp)
 
 # Link test executable against gtest & gtest_main
-set_target_properties(test_basic_sial   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-set_target_properties(test_basic_qm     PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-set_target_properties(test_qm_aux       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-set_target_properties(test_qm_frag      PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+set_target_properties(test_basic_sial   PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
+set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
+set_target_properties(test_basic_qm     PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
+set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
+set_target_properties(test_qm_aux       PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
+set_target_properties(test_qm_frag      PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
+set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${SIA_COMPILE_FLAGS}")
 
 target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
@@ -472,13 +464,13 @@ target_link_libraries(test_qm_aux       test_controllers gtest gtest_main  ${TOL
 target_link_libraries(test_qm_frag      test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
-set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-set_target_properties(test_basic_qm     PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-set_target_properties(test_qm_aux       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-set_target_properties(test_qm_frag      PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
+set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
+set_target_properties(test_basic_qm     PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
+set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
+set_target_properties(test_qm_aux       PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
+set_target_properties(test_qm_frag      PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
+set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${SIA_LINK_FLAGS}")
 
 
 add_dependencies(test_basic_sial   gtest gtest_main test_controllers)
@@ -505,16 +497,68 @@ else() # Single Node Version Tests
     add_test(NAME test_qm           COMMAND test_qm)
 endif()
 
-
-
-
-
-
 #----------------------------------------------------------------------
 # Compile all SIALX files
 #----------------------------------------------------------------------
 
+# this is the list of SIA sial files 
+set(DOMAIN_SIAL_FILES
+    aces/src/sialx/utility/drop_core_in_sial.sialx;
+    aces/src/sialx/utility/tran_rhf_no4v.sialx;
+    aces/src/sialx/utility/tran_uhf_no4v.sialx;
+    aces/src/sialx/utility/tran_rhf_no4v_defs.sialx;
+    aces/src/sialx/utility/tran_rhf_no3v.sialx;
+    aces/src/sialx/scf/scf_rhf_coreh.sialx;
+    aces/src/sialx/scf/scf_defs.sialx;
+    aces/src/sialx/scf/scf_uhf.sialx;
+    aces/src/sialx/scf/scf_uhf_defs.sialx;
+    aces/src/sialx/scf/scf_rhf.sialx; 
+    aces/src/sialx/scf/scf_rhf_defs.sialx;
+    aces/src/sialx/cc/mp2_rhf_disc.sialx;
+    aces/src/sialx/cc/rccsd_rhf.sialx;
+    aces/src/sialx/cc/rlambda_rhf.sialx;
+    aces/src/sialx/cc/rlccd_rhf.sialx;
+    aces/src/sialx/cc/rlccsd_rhf.sialx;
+    aces/src/sialx/cc/rccsd_rhf_defs.sialx;
+    aces/src/sialx/cc/rccsdpt_aaa.sialx;
+    aces/src/sialx/cc/rccsdpt_aab.sialx;
+    aces/src/sialx/cc/rlamccsdpt_aaa.sialx;
+    aces/src/sialx/cc/rlamccsdpt_aab.sialx;
+    aces/src/sialx/cc/rccpt1p2_prop.sialx;
+    aces/src/sialx/eom/eom_rhf_defs.sialx  
+    aces/src/sialx/eom/eom_rhf_hbar.sialx;
+    aces/src/sialx/eom/eom_rhf_tran.sialx;
+    aces/src/sialx/eom/eom_rhf_vars.sialx;
+    aces/src/sialx/eom/eom_ccsd_rhf_right.sialx;
+    aces/src/sialx/eom/eom_ccsd_rhf_left.sialx;
+    aces/src/sialx/eom/rcis_rhf_defs.sialx;
+    aces/src/sialx/eom/rcis_rhf_vars.sialx;
+    aces/src/sialx/eom/rcis_rhf.sialx;
+    aces/src/sialx/eom/rcis_d_rhf.sialx;
+    aces/src/sialx/eom/rcis_ccpt2_rhf.sialx;
+    aces/src/sialx/fef-cc/frag_rhf.sialx;
+    aces/src/sialx/fef-cc/frag_pol_rhf.sialx;
+    aces/src/sialx/fef-cc/frag_rcis_rhf.sialx;
+    aces/src/sialx/fef-cc/tran_frag.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_defs.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_vars.sialx;
+    aces/src/sialx/fef-cc/MOI_cis_guess.sialx;
+    aces/src/sialx/fef-cc/MOI_rcis.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_elements.sialx;
+    aces/src/sialx/fef-cc/MOI_reom_fefccpt2.sialx;
+    aces/src/sialx/fef-cc/fef_ccpt2.sialx;
+    aces/src/sialx/fef-cc/fef_cis_ccpt2.sialx;
+    aces/src/sialx/fef-cc/mcpt2_corr.sialx;
+    aces/src/sialx/fef-cc/mcpt2_corr_lowmem.sialx;
+    aces/src/sialx/fef-cc/mcpt2_vars.sialx;
+    aces/src/sialx/fef-cc/mcpt2_defs.sialx;
+    aces/src/sialx/fef-cc/mcpt2_singles.sialx;
+    aces/src/sialx/fef-cc/mcpt2_doubles.sialx;
+    aces/src/sialx/fef-cc/mcpt2_util.sialx)
+
+# add aces sial files here
 set(SIAL_FILES
+    ${DOMAIN_SIAL_FILES}
     sia/src/sialx/test/empty.sialx;
     sia/src/sialx/test/static_array_test.sialx;
     sia/src/sialx/test/ifelse.sialx;
@@ -622,61 +666,13 @@ set(SIAL_FILES
     sia/src/sialx/test/disk_backing_test.sialx;
     sia/src/sialx/test/disk_backing_put_acc_stress.sialx;
     sia/src/sialx/test/decreasing_segs.sialx;
-    sia/src/sialx/test/check_block_number_calc.sialx;
-    aces/src/sialx/utility/drop_core_in_sial.sialx;
-    aces/src/sialx/utility/tran_rhf_no4v.sialx;
-    aces/src/sialx/utility/tran_uhf_no4v.sialx;
-    aces/src/sialx/utility/tran_rhf_no4v_defs.sialx;
-    aces/src/sialx/utility/tran_rhf_no3v.sialx;
-    aces/src/sialx/scf/scf_rhf_coreh.sialx;
-    aces/src/sialx/scf/scf_defs.sialx;
-    aces/src/sialx/scf/scf_uhf.sialx;
-    aces/src/sialx/scf/scf_uhf_defs.sialx;
-    aces/src/sialx/scf/scf_rhf.sialx; 
-    aces/src/sialx/scf/scf_rhf_defs.sialx;
-    aces/src/sialx/cc/mp2_rhf_disc.sialx;
-    aces/src/sialx/cc/rccsd_rhf.sialx;
-    aces/src/sialx/cc/rlambda_rhf.sialx;
-    aces/src/sialx/cc/rlccd_rhf.sialx;
-    aces/src/sialx/cc/rlccsd_rhf.sialx;
-    aces/src/sialx/cc/rccsd_rhf_defs.sialx;
-    aces/src/sialx/cc/rccsdpt_aaa.sialx;
-    aces/src/sialx/cc/rccsdpt_aab.sialx;
-    aces/src/sialx/cc/rlamccsdpt_aaa.sialx;
-    aces/src/sialx/cc/rlamccsdpt_aab.sialx;
-    aces/src/sialx/cc/rccpt1p2_prop.sialx;
-    aces/src/sialx/eom/eom_rhf_defs.sialx  
-    aces/src/sialx/eom/eom_rhf_hbar.sialx;
-    aces/src/sialx/eom/eom_rhf_tran.sialx;
-    aces/src/sialx/eom/eom_rhf_vars.sialx;
-    aces/src/sialx/eom/eom_ccsd_rhf_right.sialx;
-    aces/src/sialx/eom/eom_ccsd_rhf_left.sialx;
-    aces/src/sialx/eom/rcis_rhf_defs.sialx;
-    aces/src/sialx/eom/rcis_rhf_vars.sialx;
-    aces/src/sialx/eom/rcis_rhf.sialx;
-    aces/src/sialx/eom/rcis_d_rhf.sialx;
-    aces/src/sialx/eom/rcis_ccpt2_rhf.sialx;
-    aces/src/sialx/fef-cc/frag_rhf.sialx;
-    aces/src/sialx/fef-cc/frag_pol_rhf.sialx;
-    aces/src/sialx/fef-cc/frag_rcis_rhf.sialx;
-    aces/src/sialx/fef-cc/tran_frag.sialx;
-    aces/src/sialx/fef-cc/MOI_reom_defs.sialx;
-    aces/src/sialx/fef-cc/MOI_reom_vars.sialx;
-    aces/src/sialx/fef-cc/MOI_cis_guess.sialx;
-    aces/src/sialx/fef-cc/MOI_rcis.sialx;
-    aces/src/sialx/fef-cc/MOI_reom_elements.sialx;
-    aces/src/sialx/fef-cc/MOI_reom_fefccpt2.sialx;
-    aces/src/sialx/fef-cc/fef_ccpt2.sialx;
-    aces/src/sialx/fef-cc/fef_cis_ccpt2.sialx;
-    aces/src/sialx/fef-cc/mcpt2_corr.sialx;
-    aces/src/sialx/fef-cc/mcpt2_corr_lowmem.sialx;
-    aces/src/sialx/fef-cc/mcpt2_vars.sialx;
-    aces/src/sialx/fef-cc/mcpt2_defs.sialx;
-    aces/src/sialx/fef-cc/mcpt2_singles.sialx;
-    aces/src/sialx/fef-cc/mcpt2_doubles.sialx;
-    aces/src/sialx/fef-cc/mcpt2_util.sialx)
+    sia/src/sialx/test/check_block_number_calc.sialx)
     
 
+# Compile all the sialx files
+# this section is made more complicated than needed because
+# a) custom compiler for sial
+# b) taking sub directories and then dumping all the compiled files into a big lump directory is not trivial.
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/sia/sial_compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
 set (SIAL_COMPILED_FILES "")
@@ -684,9 +680,8 @@ foreach(F ${SIAL_FILES})
     get_filename_component(F_WE ${CMAKE_SOURCE_DIR}/${F} NAME_WE)
     get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
 #    get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
-
-    #set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
-    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx")
+#    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
+    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/sialx")
     add_custom_command(
         OUTPUT ${SIAL_COMPILE_DIR}/${F_WE}.siox
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}

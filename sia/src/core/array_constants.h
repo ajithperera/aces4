@@ -9,7 +9,7 @@
 #define ARRAY_CONSTANTS_H_
 
 #include <string>
-#include "aces_defs.h"
+#include "sia_defs.h"
 
 #define DEFAULT_NUM_SUBSEGMENTS 4
 
