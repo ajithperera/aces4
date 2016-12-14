@@ -11,8 +11,8 @@
 #include "sip_mpi_utils.h"
 #endif
 
-const std::string dir_name("src/sialx/");
-const std::string qm_dir_name("src/sialx/");
+const std::string dir_name("sialx/");
+const std::string qm_dir_name("sialx/");
 const std::string expected_output_dir_name("./");
 
 sip::SIPMPIAttr *attr = NULL;
