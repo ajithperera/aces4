@@ -681,7 +681,7 @@ foreach(F ${SIAL_FILES})
     get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
 #    get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 #    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
-    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/sialx")
+    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/siox")
     add_custom_command(
         OUTPUT ${SIAL_COMPILE_DIR}/${F_WE}.siox
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}
