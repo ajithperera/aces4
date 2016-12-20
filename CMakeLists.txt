@@ -60,61 +60,61 @@ configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 # SIA sources, libraries, includes
 #----------------------------------------------------------------------
 set(SIA_SETUP_FILES 
-    sia/src/setup/io_utils.h;
-    sia/src/setup/setup_reader.h;
-    sia/src/setup/setup_interface.h;
-    sia/src/setup/setup_writer.h;
-    sia/src/setup/setup_reader.cpp;
-    sia/src/setup/setup_interface.cpp;
-    sia/src/setup/setup_writer.cpp;
-    sia/src/setup/io_utils.cpp)
+    sia/src/runtime/setup/io_utils.h;
+    sia/src/runtime/setup/setup_reader.h;
+    sia/src/runtime/setup/setup_interface.h;
+    sia/src/runtime/setup/setup_writer.h;
+    sia/src/runtime/setup/setup_reader.cpp;
+    sia/src/runtime/setup/setup_interface.cpp;
+    sia/src/runtime/setup/setup_writer.cpp;
+    sia/src/runtime/setup/io_utils.cpp)
 
 set(SIA_CORE_FILES 
-    sia/src/core/array_constants.h;
-    sia/src/core/array_constants.cpp;
-    sia/src/core/sip.h;
-    sia/src/core/sip.cpp;
-    sia/src/core/sia_defs.h;
-    sia/src/core/sia_log.h;
-    sia/src/core/sia_log.cpp;
-    sia/src/core/job_control.h;
-    sia/src/core/job_control.cpp)
+    sia/src/runtime/core/array_constants.h;
+    sia/src/runtime/core/array_constants.cpp;
+    sia/src/runtime/core/sip.h;
+    sia/src/runtime/core/sip.cpp;
+    sia/src/runtime/core/sia_defs.h;
+    sia/src/runtime/core/sia_log.h;
+    sia/src/runtime/core/sia_log.cpp;
+    sia/src/runtime/core/job_control.h;
+    sia/src/runtime/core/job_control.cpp)
 
 # MPI - Conditional compile for MPI files
 if (HAVE_MPI AND MPI_CXX_FOUND)
     set(SIA_MPI_FILES
-        sia/src/mpi/data_distribution.cpp ;
-        sia/src/mpi/data_distribution.h;
-        sia/src/mpi/sip_mpi_utils.h;
-        sia/src/mpi/sip_mpi_utils.cpp;
-        sia/src/mpi/sip_mpi_constants.h;
-        sia/src/mpi/sip_mpi_constants.cpp;
-        sia/src/mpi/barrier_support.h;
-        sia/src/mpi/async_acks.h;
-        sia/src/mpi/async_acks.cpp;
-        sia/src/mpi/sip_server.h;
-        sia/src/mpi/sip_server.cpp;
-        sia/src/worker/sial_ops_parallel.h;
-        sia/src/worker/sial_ops_parallel.cpp;
-        sia/src/mpi/server_block.h;
-        sia/src/mpi/server_block.cpp;
-        sia/src/mpi/disk_backed_block_map.h;
-        sia/src/mpi/disk_backed_block_map.cpp;
-        sia/src/mpi/server_persistent_array_manager.h;
-        sia/src/mpi/server_persistent_array_manager.cpp;
-        sia/src/mpi/async_ops.h;
-        sia/src/mpi/async_ops.cpp; 
-        sia/src/mpi/counter.h;
-        sia/src/mpi/counter.cpp;   
-        sia/src/mpi/array_file.h;
-        sia/src/mpi/array_file.cpp;
-        sia/src/mpi/chunk_manager.h;
-        sia/src/mpi/chunk_manager.cpp;  
-        sia/src/mpi/chunk.h;
-        sia/src/mpi/chunk.cpp;          
-        sia/src/dynamic_data/mpi_state.h;
-        sia/src/dynamic_data/distributed_block_consistency.h;
-        sia/src/dynamic_data/distributed_block_consistency.cpp      
+        sia/src/runtime/server/data_distribution.cpp ;
+        sia/src/runtime/server/data_distribution.h;
+        sia/src/runtime/server/sip_mpi_utils.h;
+        sia/src/runtime/server/sip_mpi_utils.cpp;
+        sia/src/runtime/server/sip_mpi_constants.h;
+        sia/src/runtime/server/sip_mpi_constants.cpp;
+        sia/src/runtime/server/barrier_support.h;
+        sia/src/runtime/server/async_acks.h;
+        sia/src/runtime/server/async_acks.cpp;
+        sia/src/runtime/server/sip_server.h;
+        sia/src/runtime/server/sip_server.cpp;
+        sia/src/runtime/worker/sial_ops_parallel.h;
+        sia/src/runtime/worker/sial_ops_parallel.cpp;
+        sia/src/runtime/server/server_block.h;
+        sia/src/runtime/server/server_block.cpp;
+        sia/src/runtime/server/disk_backed_block_map.h;
+        sia/src/runtime/server/disk_backed_block_map.cpp;
+        sia/src/runtime/server/server_persistent_array_manager.h;
+        sia/src/runtime/server/server_persistent_array_manager.cpp;
+        sia/src/runtime/server/async_ops.h;
+        sia/src/runtime/server/async_ops.cpp; 
+        sia/src/runtime/server/counter.h;
+        sia/src/runtime/server/counter.cpp;   
+        sia/src/runtime/server/array_file.h;
+        sia/src/runtime/server/array_file.cpp;
+        sia/src/runtime/server/chunk_manager.h;
+        sia/src/runtime/server/chunk_manager.cpp;  
+        sia/src/runtime/server/chunk.h;
+        sia/src/runtime/server/chunk.cpp;          
+        sia/src/runtime/dynamic_data/mpi_state.h;
+        sia/src/runtime/dynamic_data/distributed_block_consistency.h;
+        sia/src/runtime/dynamic_data/distributed_block_consistency.cpp      
  )
 else ()
     set(SIA_MPI_FILES "")
@@ -123,15 +123,15 @@ endif()
 # CUDA - Conditional compile for CUDA super instructions
 if (HAVE_CUDA AND CUDA_FOUND)
     set(SIA_CUDA_FILES
-        sia/src/cuda/gpu_super_instructions.cu
-        sia/src/cuda/cuda_check.h)
+        sia/src/runtime/super_instructions/cuda/gpu_super_instructions.cu
+        sia/src/runtime/super_instructions/cuda/cuda_check.h)
 else ()
     set(SIA_CUDA_FILES "")
 endif()
 
 if (HAVE_JSON)
     set(SIA_JSON_DIR
-       ${CMAKE_SOURCE_DIR}/sia/src/jsoncpp)
+       ${CMAKE_SOURCE_DIR}/sia/src/runtime/jsoncpp)
     set(JSON_LIBRARIES
        jasoncpp)
 else ()
@@ -141,88 +141,88 @@ endif()
     
 
 set(SIA_DATA_FILES
-    sia/src/static_data/array_table.h;
-    sia/src/static_data/array_table.cpp;
-    sia/src/static_data/index_table.h;
-    sia/src/static_data/index_table.cpp;
-    sia/src/static_data/int_table.h;
-    sia/src/static_data/int_table.cpp;
-    sia/src/static_data/sip_tables.h;
-    sia/src/static_data/sip_tables.cpp;
-    sia/src/static_data/opcode.h;
-    sia/src/static_data/opcode.cpp;
-    sia/src/static_data/op_table.h;
-    sia/src/static_data/op_table.cpp;
-    sia/src/static_data/create_map.h;
-    sia/src/dynamic_data/block_id.h;
-    sia/src/dynamic_data/block_id.cpp;
-    sia/src/dynamic_data/block_shape.h;
-    sia/src/dynamic_data/block_shape.cpp;
-    sia/src/dynamic_data/block_selector.h;
-    sia/src/dynamic_data/block_selector.cpp;
-    sia/src/dynamic_data/block.h;
-    sia/src/dynamic_data/block.cpp;
-    sia/src/dynamic_data/block_manager.h;
-    sia/src/dynamic_data/block_manager.cpp;
-    sia/src/dynamic_data/contiguous_array_manager.h;
-    sia/src/dynamic_data/contiguous_array_manager.cpp;
-    sia/src/dynamic_data/data_manager.h;
-    sia/src/dynamic_data/data_manager.cpp;
-    sia/src/dynamic_data/id_block_map.h;
-    sia/src/dynamic_data/worker_persistent_array_manager.h;
-    sia/src/dynamic_data/worker_persistent_array_manager.cpp;
-    sia/src/dynamic_data/lru_array_policy.h;
-    sia/src/dynamic_data/cached_block_map.h;
-    sia/src/dynamic_data/cached_block_map.cpp;
-    sia/src/dynamic_data/contiguous_local_array_manager.h;
-    sia/src/dynamic_data/contiguous_local_array_manager.cpp;
-    sia/src/dynamic_data/memory_tracker.h;
-    sia/src/dynamic_data/memory_tracker.cpp;)
+    sia/src/runtime/static_data/array_table.h;
+    sia/src/runtime/static_data/array_table.cpp;
+    sia/src/runtime/static_data/index_table.h;
+    sia/src/runtime/static_data/index_table.cpp;
+    sia/src/runtime/static_data/int_table.h;
+    sia/src/runtime/static_data/int_table.cpp;
+    sia/src/runtime/static_data/sip_tables.h;
+    sia/src/runtime/static_data/sip_tables.cpp;
+    sia/src/runtime/static_data/opcode.h;
+    sia/src/runtime/static_data/opcode.cpp;
+    sia/src/runtime/static_data/op_table.h;
+    sia/src/runtime/static_data/op_table.cpp;
+    sia/src/runtime/static_data/create_map.h;
+    sia/src/runtime/dynamic_data/block_id.h;
+    sia/src/runtime/dynamic_data/block_id.cpp;
+    sia/src/runtime/dynamic_data/block_shape.h;
+    sia/src/runtime/dynamic_data/block_shape.cpp;
+    sia/src/runtime/dynamic_data/block_selector.h;
+    sia/src/runtime/dynamic_data/block_selector.cpp;
+    sia/src/runtime/dynamic_data/block.h;
+    sia/src/runtime/dynamic_data/block.cpp;
+    sia/src/runtime/dynamic_data/block_manager.h;
+    sia/src/runtime/dynamic_data/block_manager.cpp;
+    sia/src/runtime/dynamic_data/contiguous_array_manager.h;
+    sia/src/runtime/dynamic_data/contiguous_array_manager.cpp;
+    sia/src/runtime/dynamic_data/data_manager.h;
+    sia/src/runtime/dynamic_data/data_manager.cpp;
+    sia/src/runtime/dynamic_data/id_block_map.h;
+    sia/src/runtime/dynamic_data/worker_persistent_array_manager.h;
+    sia/src/runtime/dynamic_data/worker_persistent_array_manager.cpp;
+    sia/src/runtime/dynamic_data/lru_array_policy.h;
+    sia/src/runtime/dynamic_data/cached_block_map.h;
+    sia/src/runtime/dynamic_data/cached_block_map.cpp;
+    sia/src/runtime/dynamic_data/contiguous_local_array_manager.h;
+    sia/src/runtime/dynamic_data/contiguous_local_array_manager.cpp;
+    sia/src/runtime/dynamic_data/memory_tracker.h;
+    sia/src/runtime/dynamic_data/memory_tracker.cpp;)
 #need only header files for templates--these include .cpp
 
 set(SIA_WORKER_FILES
-    sia/src/worker/loop_manager.cpp;
-    sia/src/worker/loop_manager.h;
-    sia/src/worker/fragment_loop_manager.cpp;
-    sia/src/worker/fragment_loop_manager.h;
-    sia/src/worker/pardo_loop_factory.cpp;
-    sia/src/worker/pardo_loop_factory.h;
-    sia/src/worker/interpreter.cpp;
-    sia/src/worker/interpreter.h;
-    sia/src/worker/siox_reader.h;
-    sia/src/worker/siox_reader.cpp;
-    sia/src/worker/sial_ops_sequential.h;
-    sia/src/worker/sial_ops_sequential.cpp;
-    sia/src/worker/sial_printer.h;
-    sia/src/worker/sial_printer.cpp;
-    sia/src/worker/sial_math.h;
-    sia/src/worker/sial_math.cpp;
-    sia/src/worker/tracer.h;
-    sia/src/worker/tracer.cpp;
-    sia/src/sip_interface.h;
-    sia/src/sip_interface.cpp;
-    sia/src/tensor_algebra/tensor_ops_c_prototypes.h;
-    sia/src/cuda/gpu_super_instructions.h;
-    sia/src/mpi/sip_mpi_attr.h;
-    sia/src/mpi/sip_mpi_attr.cpp;
-    sia/src/mpi/rank_distribution.h ;
-    sia/src/mpi/rank_distribution.cpp ;)
+    sia/src/runtime/worker/loop_manager.cpp;
+    sia/src/runtime/worker/loop_manager.h;
+    sia/src/runtime/worker/fragment_loop_manager.cpp;
+    sia/src/runtime/worker/fragment_loop_manager.h;
+    sia/src/runtime/worker/pardo_loop_factory.cpp;
+    sia/src/runtime/worker/pardo_loop_factory.h;
+    sia/src/runtime/worker/interpreter.cpp;
+    sia/src/runtime/worker/interpreter.h;
+    sia/src/runtime/worker/siox_reader.h;
+    sia/src/runtime/worker/siox_reader.cpp;
+    sia/src/runtime/worker/sial_ops_sequential.h;
+    sia/src/runtime/worker/sial_ops_sequential.cpp;
+    sia/src/runtime/worker/sial_printer.h;
+    sia/src/runtime/worker/sial_printer.cpp;
+    sia/src/runtime/worker/sial_math.h;
+    sia/src/runtime/worker/sial_math.cpp;
+    sia/src/runtime/worker/tracer.h;
+    sia/src/runtime/worker/tracer.cpp;
+    sia/src/runtime_interface/sip_interface.h;
+    sia/src/runtime_interface/sip_interface.cpp;
+    sia/src/runtime/tensor_algebra/tensor_ops_c_prototypes.h;
+    sia/src/runtime/super_instructions/cuda/gpu_super_instructions.h;
+    sia/src/runtime/server/sip_mpi_attr.h;
+    sia/src/runtime/server/sip_mpi_attr.cpp;
+    sia/src/runtime/server/rank_distribution.h ;
+    sia/src/runtime/server/rank_distribution.cpp ;)
     
 # Dmitry's Tensor library
-set(tensordil_SRCS sia/src/tensor_algebra/tensor_dil_omp.F90)
+set(tensordil_SRCS sia/src/runtime/tensor_algebra/tensor_dil_omp.F90)
 
 set(INCLUDE_DIRS     
     ${CMAKE_BINARY_DIR};
     ${MPI_INCLUDE_PATH};
-    ${CMAKE_SOURCE_DIR}/sia/src;
-    ${CMAKE_SOURCE_DIR}/sia/src/tensor_algebra;
-    ${CMAKE_SOURCE_DIR}/sia/src/core;
-    ${CMAKE_SOURCE_DIR}/sia/src/setup;
-    ${CMAKE_SOURCE_DIR}/sia/src/worker;
-    ${CMAKE_SOURCE_DIR}/sia/src/static_data;
-    ${CMAKE_SOURCE_DIR}/sia/src/dynamic_data;
-    ${CMAKE_SOURCE_DIR}/sia/src/mpi;
-    ${CMAKE_SOURCE_DIR}/sia/src/cuda;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime_interface;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/tensor_algebra;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/core;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/setup;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/worker;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/static_data;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/dynamic_data;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/server;
+    ${CMAKE_SOURCE_DIR}/sia/src/runtime/super_instructions/cuda;
     ${SIA_JSON_DIR};
     ${CMAKE_SOURCE_DIR}/sia/test;
     ${CMAKE_SOURCE_DIR}/aces/src/super_instructions)
@@ -232,7 +232,7 @@ set (TOLINK_LIBRARIES
     tensordil;
     ${JSON_LIBRARIES};
     ${MPI_LIBRARIES};
-    acessuperinstructions # Points to : ${CMAKE_BINARY_DIR}/aces/src/super_instructions/libacessuperinstructions.a;
+    acessuperinstructions # Points to : ${CMAKE_BINARY_DIR}/aces/src/runtime/super_instructions/libacessuperinstructions.a;
     siasuperinstructions # Points to : ${CMAKE_BINARY_DIR}/sia/src/super_instructions/libsiasuperinstructions.a;
     ${LAPACK_LIBRARIES})
 
@@ -337,16 +337,16 @@ set(TOLINK_LIBRARIES sip_lib ${TOLINK_LIBRARIES})
 
 # All Super instructions are in these directories
 add_subdirectory(aces/src/super_instructions)
-add_subdirectory(sia/src/super_instructions)
+add_subdirectory(sia/src/runtime/super_instructions)
 
 # Add Jsoncpp library
 if(HAVE_JSON)
 add_library(jsoncpp;
-    sia/src/jsoncpp/jsoncpp.cpp;
-    sia/src/jsoncpp/json_value.cpp;
-    sia/src/jsoncpp/json_writer.cpp.cpp;
-    sia/src/jsoncpp/json/json.h;
-    sia/src/jsoncpp/json/json-forwards.h)
+    sia/src/runtime/jsoncpp/jsoncpp.cpp;
+    sia/src/runtime/jsoncpp/json_value.cpp;
+    sia/src/runtime/jsoncpp/json_writer.cpp.cpp;
+    sia/src/runtime/jsoncpp/json/json.h;
+    sia/src/runtime/jsoncpp/json/json-forwards.h)
 endif()
 
 # The tensor library is added separately
@@ -483,12 +483,12 @@ add_dependencies(test_unit         gtest gtest_main test_controllers)
 
 
 if (HAVE_MPI) # Multi Node Version Tests
-    add_test(NAME test_unit         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_unit)
-    add_test(NAME test_basic_sial   COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_sial)
-    add_test(NAME test_sial         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_sial)
-    add_test(NAME test_basic_qm     COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_qm)
-    add_test(NAME test_qm           COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_qm)
-    add_test(NAME test_qm_frag      COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_qm)
+    add_test(NAME test_unit         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} ./test_unit)
+    add_test(NAME test_basic_sial   COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} ./test_basic_sial)
+    add_test(NAME test_sial         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} ./test_sial)
+    add_test(NAME test_basic_qm     COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} ./test_basic_qm)
+    add_test(NAME test_qm           COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} ./test_qm)
+    add_test(NAME test_qm_frag      COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} ./test_qm)
 else() # Single Node Version Tests
     add_test(NAME test_unit         COMMAND test_unit)
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)

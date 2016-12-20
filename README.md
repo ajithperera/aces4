@@ -63,7 +63,7 @@ To Compile & Test
 ### Using CMake
 In the root of the project, say:
 ```BASH
-git clone git@egit.ensco.com:IMPALA/sia.git
+git clone https://github.com/basanders/ufparlab_sia_private.git
 mkdir BUILD
 cd BUILD
 cmake ..
