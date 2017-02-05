@@ -114,8 +114,8 @@ c---------------------------------------------------------------------------
 C      if (nfrags .le. 1) then 
          energy = 0.0 
          do i = 1, ncenters 
-         do j = i, ncenters 
-            if (i .ne. j) then 
+         do j = 1, ncenters 
+            if (i .lt. j) then 
                dist = 0.0 
                do kcoord = 1, 3 
                   dist = dist + (coords(kcoord,i)-coords(kcoord,j))**2  
