@@ -1261,6 +1261,8 @@ import "scf_rhf_defs.sialx"
         ENDDO nu
       ENDPARDO p,i
 
+      sip_barrier 
+
       DO p
       DO i
          GET OVLP_TMP_A[p,i]
