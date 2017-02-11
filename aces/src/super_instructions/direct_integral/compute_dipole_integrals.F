@@ -147,7 +147,9 @@ c---------------------------------------------------------------------------
       call integer_scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr, [niscr])
 
-      int_length = size_0
+      int_length1 = extents_0(1)+offset_1 
+      int_length2 = extents_0(2)+offset_2 
+      int_length  = int_length1 * int_length2 
       
       call scratch_array(int_length, cptr_int)
       call c_f_pointer(cptr_int, fptr_int, [int_length])

@@ -1,0 +1,6318 @@
+import "lambda_uhf_defs.sialx"
+import "lambda_uhf_vars.sialx"
+import "diis_4index_lambda_uhf.sialx"
+
+#  Copyright (c) 2003-2010 University of Florida
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  The GNU General Public License is included in this distribution
+#  in the file COPYRIGHT.
+                           SIAL LAMBDA_UHF
+#                          ---------------
+#
+#
+     PROC READ_2EL
+#    ------------
+#
+     restore_persistent ca     "ca"
+     restore_persistent cb     "cb"
+     restore_persistent Fock_a "fock_a"
+     restore_persistent Fock_b "fock_b"
+     restore_persistent VSpipi "VSpipi"
+     restore_persistent Vaaii "Vaaii"
+     restore_persistent Viaai "Viaai"
+     restore_persistent Vaaai "Vaaai"
+     restore_persistent VSaaai "VSaaai"
+     restore_persistent VSbbbj "VSbbbj"
+     restore_persistent VSqjqj "VSqjqj"
+     restore_persistent Vbbjj "Vbbjj"
+     restore_persistent Vjbbj "Vjbbj"
+     restore_persistent Vbbii "Vbbii"
+     restore_persistent Vjbii "Vjbii"
+     restore_persistent Vbbai "Vbbai"
+     restore_persistent Vpiqj "Vpiqj"
+     restore_persistent Vaajj "Vaajj"
+     restore_persistent Viabj "Viabj"
+     restore_persistent Vaabj "Vaabj"
+     restore_persistent t1a_old  "t1a_old"
+     restore_persistent t1b_old  "t1b_old"
+     restore_persistent T2old_aa "T2old_aa"
+     restore_persistent T2old_ab "T2old_ab"
+     restore_persistent T2old_bb "T2old_bb"
+     server_barrier
+
+     ENDPROC READ_2EL
+#   ----------------
+
+     PROC WRITE_2EL
+#    -------------
+
+     set_persistent ca "ca"
+     set_persistent cb "cb"
+     set_persistent Fock_a "fock_a"
+     set_persistent Fock_b "fock_b"
+     set_persistent VSpipi "VSpipi"
+     set_persistent Vaaii "Vaaii"
+     set_persistent Viaai "Viaai"
+     set_persistent Vaaai "Vaaai"
+     set_persistent VSaaai "VSaaai"
+     set_persistent VSbbbj "VSbbbj"
+     set_persistent VSqjqj "VSqjqj"
+     set_persistent Vbbjj "Vbbjj"
+     set_persistent Vjbbj "Vjbbj"
+     set_persistent Vbbii "Vbbii"
+     set_persistent Vjbii "Vjbii"
+     set_persistent Vbbai "Vbbai"
+     set_persistent Vpiqj "Vpiqj"
+     set_persistent Vaajj "Vaajj"
+     set_persistent Viabj "Viabj"
+     set_persistent Vaabj "Vaabj"
+     set_persistent t1a_old  "t1a_old"
+     set_persistent t1b_old  "t1b_old"
+     set_persistent T2old_aa "T2old_aa"
+     set_persistent T2old_ab "T2old_ab"
+     set_persistent T2old_bb "T2old_bb"
+     set_persistent l1a_old  "l1a_old"
+     set_persistent l1b_old  "l1b_old"
+     set_persistent L2old_aa "L2old_aa"
+     set_persistent L2old_ab "L2old_ab"
+     set_persistent L2old_bb "L2old_bb"
+     server_barrier
+
+     ENDPROC WRITE_2EL
+#    ----------------
+#
+      PROC TAUAA 
+#     ----------
+#
+      PARDO a, i, a1, i1
+#
+            REQUEST T2old_aa[a,i,a1,i1] 
+            GET t1a_old[a1,i1]
+            GET t1a_old[a1,i]
+            GET t1a_old[a,i1]
+            GET t1a_old[a,i]
+#
+            tai[a1,i1]                 = t1a_old[a1,i1]
+            tmp1_aiai[a,i,a1,i1]       = t1a_old[a,i]^tai[a1,i1]
+            tai[a1,i]                  = t1a_old[a1,i]
+            tmp2_aiai[a,i,a1,i1]       = t1a_old[a,i1]^tai[a1,i]
+            tmp1_aiai[a,i,a1,i1]      -= tmp2_aiai[a,i,a1,i1]
+#
+            tmp3_aiai[a,i,a1,i1]       = tmp1_aiai[a,i,a1,i1]
+            tmp3_aiai[a,i,a1,i1]      += T2old_aa[a,i,a1,i1]
+            PREPARE Tau_aa[a,i,a1,i1]  = tmp3_aiai[a,i,a1,i1]
+#
+            tmp1_aiai[a,i,a1,i1]      *= 0.5
+            tmp1_aiai[a,i,a1,i1]      += T2old_aa[a,i,a1,i1]
+            PREPARE Taup_aa[a,i,a1,i1] = tmp1_aiai[a,i,a1,i1]
+#
+      ENDPARDO a, i, a1, i1
+#
+      ENDPROC TAUAA
+#     -------------
+#
+      PROC TAUBB
+#     ----------
+#
+      PARDO b, j, b1, j1
+#
+            REQUEST T2old_bb[b,j,b1,j1]
+            GET t1b_old[b1,j1]
+            GET t1b_old[b1,j]
+            GET t1b_old[b,j1]
+            GET t1b_old[b,j]
+#
+            tbj[b1,j1]                 = t1b_old[b1,j1]
+            tmp1_bjbj[b,j,b1,j1]       = t1b_old[b,j]^tbj[b1,j1]
+            tbj[b1,j]                  = t1b_old[b1,j]
+            tmp2_bjbj[b,j,b1,j1]       = t1b_old[b,j1]^tbj[b1,j]
+            tmp1_bjbj[b,j,b1,j1]      -= tmp2_bjbj[b,j,b1,j1]
+#
+            tmp3_bjbj[b,j,b1,j1]       = tmp1_bjbj[b,j,b1,j1]
+            tmp3_bjbj[b,j,b1,j1]      += T2old_bb[b,j,b1,j1]
+            PREPARE Tau_bb[b,j,b1,j1]  = tmp3_bjbj[b,j,b1,j1]
+#
+            tmp1_bjbj[b,j,b1,j1]      *= 0.5
+            tmp1_bjbj[b,j,b1,j1]      += T2old_bb[b,j,b1,j1]
+            PREPARE Taup_bb[b,j,b1,j1] = tmp1_bjbj[b,j,b1,j1]
+#
+      ENDPARDO b, j, b1, j1
+#
+      ENDPROC TAUBB
+#     -------------
+
+      PROC TAUAB
+#     ----------
+#
+      PARDO a, i, b, j
+#
+            REQUEST T2old_ab[a,i,b,j]
+            GET t1a_old[a,i]
+            GET t1b_old[b,j]
+#
+            tmp1_aibj[a,i,b,j]       = t1a_old[a,i]^t1b_old[b,j]
+            tmp2_aibj[a,i,b,j]       = tmp1_aibj[a,i,b,j]
+            tmp2_aibj[a,i,b,j]      *= 0.5
+#
+            tmp1_aibj[a,i,b,j]      += T2old_ab[a,i,b,j]
+            tmp2_aibj[a,i,b,j]      += T2old_ab[a,i,b,j]
+            PREPARE Tau_ab[a,i,b,j]  = tmp1_aibj[a,i,b,j]
+            PREPARE Taup_ab[a,i,b,j] = tmp2_aibj[a,i,b,j]
+#
+      ENDPARDO a, i, b, j
+#
+      ENDPROC TAUAB
+#     -------------
+#
+      PROC TAU
+#     -------- 
+#
+           CALL TAUAA
+           CALL TAUBB
+           CALL TAUAB
+#
+      ENDPROC TAU
+#     ----------- 
+#
+      PROC F1AEA
+#     ----------
+#
+#     Local arrays used:
+#     ------------------ 
+
+      PARDO a, a1 #
+#
+            Tae_a[a,a1] = 0.0
+#
+            DO i 
+#
+               GET t1a_old[a,i] 
+               GET Fme_a[i,a1] 
+#
+               Taa[a,a1]    = t1a_old[a,i]*Fme_a[i,a1]  
+               Taa[a,a1]   *= 0.5  
+               Tae_a[a,a1] -=  Taa[a,a1]  
+#
+               DO a2 
+#
+                  REQUEST VSaaai[a1,a,a2,i] 
+                  GET t1a_old[a2,i] 
+#
+                  Taa[a,a1]    = VSaaai[a1,a,a2,i]*t1a_old[a2,i]  
+                  Tae_a[a,a1] +=  Taa[a,a1]  
+#
+#                 Initialize W1eafm_aa Intermediate. 
+#                 ---------------------------------- 
+                  PREPARE W1eafm_aa[a1,a,a2,i] = VSaaai[a1,a,a2,i]
+#
+               ENDDO a2 
+#
+            ENDDO i 
+#
+            DO j 
+            DO b 
+#
+               REQUEST Vaabj[a1,a,b,j] 
+               GET t1b_old[b,j] 
+#
+               Taa[a,a1]    = Vaabj[a1,a,b,j]*t1b_old[b,j] 
+               Tae_a[a,a1] +=  Taa[a,a1]  
+#
+#              Initialize the W1eafm_ab intermediate. 
+#              -------------------------------------- 
+               PREPARE W1eafm_ab[a1,a,b,j] = Vaabj[a1,a,b,j] 
+#
+            ENDDO b 
+            ENDDO j 
+#
+            PUT F1ae_a[a,a1] += Tae_a[a,a1] 
+#
+      ENDPARDO a, a1 
+#
+      PARDO i, i1, a2  
+#
+            allocate L1aiai[*,i,a2,i1] 
+#
+            DO a 
+#
+               REQUEST Taup_aa[a,i,a2,i1] 
+               L1aiai[a,i,a2,i1] = Taup_aa[a,i,a2,i1] 
+#
+            ENDDO a 
+#
+            DO a1 
+#
+               REQUEST VSpipi[a1,i1,a2,i] 
+#
+               DO a 
+#
+                  Taa[a,a1]         = L1aiai[a,i,a2,i1]*VSpipi[a1,i1,a2,i] 
+                  Taa[a,a1]        *= 0.5 
+                  PUT F1ae_a[a,a1] +=  Taa[a,a1]  
+#
+               ENDDO a 
+#
+            ENDDO a1 
+#
+            deallocate L1aiai[*,i,a2,i1] 
+#
+      ENDPARDO i, i1, a2  
+#
+      PARDO i, j, b 
+#
+            allocate L1aibj[*,i,b,j] 
+#
+            DO a1 
+#
+               REQUEST Vpiqj[a1,i,b,j]   
+               L1aibj[a1,i,b,j] = Vpiqj[a1,i,b,j] 
+#
+            ENDDO a1 
+#
+            DO a 
+#
+               REQUEST Taup_ab[a,i,b,j]   
+#
+               DO a1   
+#
+                  Taa[a,a1]         = Taup_ab[a,i,b,j]*L1aibj[a1,i,b,j] 
+                  Taa[a,a1]        *= -1.0  
+                  PUT F1ae_a[a,a1] += Taa[a,a1] 
+#
+               ENDDO a1  
+#
+            ENDDO a  
+#
+            deallocate L1aibj[*,i,b,j] 
+#
+      ENDPARDO i, j, b  
+#bgn_debug
+#      server_barrier 
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a1,a,b,j
+#      request W1eafm_ab[a1,a,b,j]
+#      tmp = W1eafm_ab[a1,a,b,j] * W1eafm_ab[a1,a,b,j]
+#      suma += tmp
+#      endpardo a1,a,b,j
+#      sip_barrier
+#      collective sumaa+=suma
+#      print "checksum of W1eafm_ab1"
+#      print sumaa
+#      sip_barrier
+#      suma=0.0
+#      pardo a, a1
+#      get F1ae_a[a,a1] 
+#      tmp = F1ae_a[a,a1]  * F1ae_a[a,a1] 
+#      suma += tmp
+#      endpardo a, a1
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+#
+      ENDPROC F1AEA
+#     -------------
+#
+      PROC F1AEB
+#     ----------
+#
+#     Local arrays used:
+#     ------------------ 
+#
+      PARDO b, b1 
+#
+            Tae_b[b,b1] = 0.0
+#
+            DO j 
+#
+               GET t1b_old[b,j] 
+               GET Fme_b[j,b1] 
+#
+               TTbb[b,b1]    = t1b_old[b,j]*Fme_b[j,b1]  
+               TTbb[b,b1]   *= 0.5  
+               Tae_b[b,b1] -=  TTbb[b,b1]  
+#
+               DO b2 
+#
+                  REQUEST VSbbbj[b1,b,b2,j] 
+                  GET t1b_old[b2,j] 
+#
+                  TTbb[b,b1]    = VSbbbj[b1,b,b2,j]*t1b_old[b2,j] 
+                  Tae_b[b,b1] +=  TTbb[b,b1]  
+#
+#                 Initialize W1eafm_bb Intermediate. 
+#                 ---------------------------------- 
+                  PREPARE W1eafm_bb[b1,b,b2,j] = VSbbbj[b1,b,b2,j]
+#
+               ENDDO b2 
+#
+            ENDDO j 
+#
+            DO i 
+            DO a 
+#
+               REQUEST Vbbai[b1,b,a,i] 
+               GET t1a_old[a,i] 
+#
+               TTbb[b,b1]    = Vbbai[b1,b,a,i]*t1a_old[a,i] 
+               Tae_b[b,b1] +=  TTbb[b,b1]  
+#
+#              Initialize the W1eafm_ba intermediate. 
+#              -------------------------------------- 
+               PREPARE W1eafm_ba[b1,b,a,i] = Vbbai[b1,b,a,i] 
+#
+            ENDDO a 
+            ENDDO i 
+#
+            PUT F1ae_b[b,b1] += Tae_b[b,b1] 
+#
+      ENDPARDO b, b1 
+#
+      PARDO j, j1, b2  
+#
+            allocate L1bjbj[*,j1,b2,j] 
+#
+            DO b1 
+#
+               REQUEST              VSqjqj[b1,j1,b2,j] 
+               L1bjbj[b1,j1,b2,j] = VSqjqj[b1,j1,b2,j] 
+#
+            ENDDO b1 
+#
+            DO b 
+#
+               REQUEST Taup_bb[b,j,b2,j1] 
+#
+               DO b1 
+#
+                  TTbb[b,b1]         = Taup_bb[b,j,b2,j1]*L1bjbj[b1,j1,b2,j] 
+                  TTbb[b,b1]        *= 0.5 
+                  PUT F1ae_b[b,b1] +=  TTbb[b,b1]  
+#
+               ENDDO b1 
+#
+            ENDDO b 
+#
+            deallocate L1bjbj[*,j1,b2,j] 
+#
+      ENDPARDO j, j1, b2  
+#
+      PARDO i, j, a  
+#
+            allocate L2aibj[a,i,*,j] 
+#
+            DO b1 
+#
+               REQUEST Vpiqj[a,i,b1,j]  
+               L2aibj[a,i,b1,j] = Vpiqj[a,i,b1,j]
+#
+            ENDDO b1 
+#
+            DO b  
+#
+               REQUEST Taup_ab[a,i,b,j] 
+#
+               DO b1  
+#
+                  TTbb[b,b1]         = Taup_ab[a,i,b,j]*L2aibj[a,i,b1,j] 
+                  TTbb[b,b1]        *= -1.0  
+                  PUT F1ae_b[b,b1] += TTbb[b,b1] 
+#
+               ENDDO b1  
+#
+            ENDDO b 
+#
+            deallocate L2aibj[a,i,*,j] 
+#
+      ENDPARDO i, j, a  
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo b1,b,a,i
+#      request W1eafm_ba[b1,b,a,i]
+#      tmp = W1eafm_ba[b1,b,a,i] * W1eafm_ba[b1,b,a,i]
+#      suma += tmp
+#      endpardo b1,b,a,i
+#      sip_barrier
+#      collective sumaa+=suma
+#      print "checksum of W1eafm_ba1"
+#      print sumaa
+#      sip_barrier
+#      sumb=0.0
+#      pardo b, b1
+#      get F1ae_b[b,b1] 
+#      tmp = F1ae_b[b,b1]  * F1ae_b[b,b1]
+#      sumb += tmp
+#      endpardo b, b1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      ENDPROC F1AEB
+#     -------------
+#
+      PROC F1AE
+#     --------
+         CALL F1AEA 
+         CALL F1AEB 
+      ENDPROC F1AE
+#     ------------ 
+#
+      PROC FMEA
+#     ----------
+#
+      PARDO i, a, i1, a1  
+#
+            REQUEST VSpipi[a,i,a1,i1] 
+            GET t1a_old[a1,i1] 
+#
+            Tia[i,a]        = VSpipi[a,i,a1,i1]*t1a_old[a1,i1] 
+            PUT Fme_a[i,a] += Tia[i,a] 
+#
+      ENDPARDO i, a, i1, a1  
+#
+      PARDO i, a, j, b  
+#
+            REQUEST Vpiqj[a,i,b,j]   
+            GET t1b_old[b,j] 
+#
+            Tia[i,a]        = Vpiqj[a,i,b,j]*t1b_old[b,j] 
+            PUT Fme_a[i,a] += Tia[i,a] 
+#
+      ENDPARDO i, a, j, b  
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      pardo a, i
+#      get Fme_a[i,a]
+#      tmp = Fme_a[i,a] * Fme_a[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+# 
+      ENDPROC FMEA
+#     -------------
+#
+      PROC FMEB
+#     ----------
+#
+      PARDO j, b, j1, b1  
+#
+            REQUEST VSqjqj[b,j,b1,j1] 
+            GET t1b_old[b1,j1] 
+#
+            Tjb[j,b]        = VSqjqj[b,j,b1,j1]*t1b_old[b1,j1] 
+            PUT Fme_b[j,b] += Tjb[j,b] 
+#
+      ENDPARDO j, b, j1, b1  
+#
+      PARDO j, b, i, a  
+# 
+            REQUEST Vpiqj[a,i,b,j]   
+            GET t1a_old[a,i] 
+#
+            Tjb[j,b]        = Vpiqj[a,i,b,j]*t1a_old[a,i] 
+            PUT Fme_b[j,b] += Tjb[j,b] 
+#
+      ENDPARDO j, b, i, a  
+#bgn_debug
+#      sip_barrier 
+#      sumb=0.0
+#      pardo b, j
+#      get   Fme_b[j,b] 
+#      tmp =  Fme_b[j,b] *  Fme_b[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+# 
+      ENDPROC FMEB
+#     -------------
+#
+      PROC FME
+#     ----------
+         CALL FMEA
+         CALL FMEB
+      ENDPROC FME
+#     ----------- 
+#
+      PROC F1MIA
+#     ----------
+#
+#     Local arrays used:
+#     ------------------ 
+#
+      PARDO i1, i, a    
+#
+            GET t1a_old[a,i] 
+            GET Fme_a[i1,a] 
+#
+            Tii[i1,i]         = Fme_a[i1,a]*t1a_old[a,i] 
+            Tii[i1,i]        *= 0.5 
+            PUT F1mi_a[i1,i] += Tii[i1,i] 
+#
+            DO i2 
+#
+               REQUEST VSpipi[a,i2,i,i1] 
+               GET t1a_old[a,i2] 
+#
+               Tii[i1,i]         = VSpipi[a,i2,i,i1]*t1a_old[a,i2] 
+               PUT F1mi_a[i1,i] += Tii[i1,i] 
+#
+            ENDDO i2 
+#
+      ENDPARDO i1, i, a  
+#
+      PARDO a, a2, i2  
+#
+            allocate L2aiai[a2,*,a,i2] 
+#
+            DO i1 
+#
+               REQUEST              VSpipi[a2,i1,a,i2] 
+               L2aiai[a2,i1,a,i2] = VSpipi[a2,i1,a,i2] 
+#
+            ENDDO i1 
+#
+            DO i 
+#
+               REQUEST Taup_aa[a2,i,a,i2] 
+#
+               DO i1  
+#
+                  Tii[i1,i]         = L2aiai[a2,i1,a,i2]*Taup_aa[a2,i,a,i2] 
+                  Tii[i1,i]        *= 0.5 
+                  PUT F1mi_a[i1,i] += Tii[i1,i] 
+#
+               ENDDO i1  
+#
+            ENDDO i 
+#
+            deallocate L2aiai[a2,*,a,i2] 
+#
+      ENDPARDO a, a2, i2  
+#
+      PARDO i1, i, j, b  
+#
+            REQUEST Vpiqj[i,i1,b,j] 
+            GET     t1b_old[b,j] 
+#
+            Tii[i1,i]         = Vpiqj[i,i1,b,j]*t1b_old[b,j] 
+            PUT F1mi_a[i1,i] += Tii[i1,i] 
+#
+      ENDPARDO i1, i, j, b  
+# 
+      PARDO a, b, j   
+#
+            allocate L3aibj[a,*,b,j] 
+#
+            DO i1 
+# 
+               REQUEST            Vpiqj[a,i1,b,j]  
+               L3aibj[a,i1,b,j] = Vpiqj[a,i1,b,j] 
+#
+            ENDDO i1 
+#
+            DO i 
+#
+               REQUEST Taup_ab[a,i,b,j] 
+#
+               DO i1 
+#
+                  Tii[i1,i]         = Taup_ab[a,i,b,j]*L3aibj[a,i1,b,j] 
+                  PUT F1mi_a[i1,i] += Tii[i1,i] 
+#
+               ENDDO i1 
+#
+            ENDDO i 
+#
+            deallocate L3aibj[a,*,b,j] 
+#
+      ENDPARDO a, b, j  
+# 
+      ENDPROC F1MIA
+#     -------------
+#
+      PROC F1MIB
+#     ----------
+#     Local arrays used:
+#     ------------------ 
+#
+      PARDO j1, j, b  
+#
+            GET t1b_old[b,j] 
+            GET Fme_b[j1,b] 
+#
+            Tjj[j1,j]         = Fme_b[j1,b]*t1b_old[b,j] 
+            Tjj[j1,j]        *= 0.5 
+            PUT F1mi_b[j1,j] += Tjj[j1,j] 
+#
+            DO j2 
+#
+               REQUEST VSqjqj[b,j2,j,j1] 
+               GET t1b_old[b,j2] 
+#
+               Tjj[j1,j]         = VSqjqj[b,j2,j,j1]*t1b_old[b,j2] 
+               PUT F1mi_b[j1,j] += Tjj[j1,j] 
+#
+            ENDDO j2 
+#
+      ENDPARDO j1, j, b  
+#
+      PARDO b, b2, j2  
+#
+            allocate L2bjbj[b2,*,b,j2] 
+#
+            DO j1 
+#
+               REQUEST              VSqjqj[b2,j1,b,j2] 
+               L2bjbj[b2,j1,b,j2] = VSqjqj[b2,j1,b,j2] 
+#
+            ENDDO j1 
+#
+            DO j 
+#
+               REQUEST Taup_bb[b2,j,b,j2] 
+#
+               DO j1  
+#
+                  Tjj[j1,j]         = L2bjbj[b2,j1,b,j2]*Taup_bb[b2,j,b,j2] 
+                  Tjj[j1,j]        *= 0.5 
+                  PUT F1mi_b[j1,j] += Tjj[j1,j] 
+#
+               ENDDO j1  
+#
+            ENDDO j 
+#
+            deallocate L2bjbj[b2,*,b,j2] 
+#
+      ENDPARDO b, b2, j2  
+#
+      PARDO j1, j, i, a  
+#
+            REQUEST Vpiqj[a,i,j,j1] 
+            GET t1a_old[a,i] 
+#
+            Tjj[j1,j]         = Vpiqj[a,i,j,j1]*t1a_old[a,i] 
+            PUT F1mi_b[j1,j] += Tjj[j1,j] 
+#
+      ENDPARDO j1, j, i, a  
+#
+      PARDO a, b, i   
+#
+            allocate L4aibj[a,i,b,*] 
+#
+            DO j1 
+#
+               REQUEST            Vpiqj[a,i,b,j1] 
+               L4aibj[a,i,b,j1] = Vpiqj[a,i,b,j1] 
+#
+            ENDDO j1 
+#
+            DO j  
+#
+               REQUEST Taup_ab[a,i,b,j]
+# 
+               DO j1 
+#
+                  Tjj[j1,j]         = Taup_ab[a,i,b,j]*L4aibj[a,i,b,j1] 
+                  PUT F1mi_b[j1,j] += Tjj[j1,j] 
+#
+               ENDDO j1 
+#
+            ENDDO j 
+#
+            deallocate L4aibj[a,i,b,*] 
+#
+      ENDPARDO a, b, i  
+#
+      ENDPROC F1MIB
+#     -------------
+#
+      PROC F1MI 
+#     ----------
+         CALL F1MIA 
+         CALL F1MIB 
+      ENDPROC F1MI 
+#     ------------ 
+#
+      PROC GAEA
+#     --------- 
+#
+#     local arrays used:
+#     ------------------ 
+
+      PARDO a, a1
+             PUT Gae_a[a,a1] =0.0
+      ENDPARDO a, a1
+      sip_barrier 
+
+      PARDO i, i1, a2 
+#
+            allocate L3aiai[*,i1,a2,i]  
+#
+            DO a1  
+#
+               REQUEST              T2old_aa[a1,i1,a2,i] 
+               L3aiai[a1,i1,a2,i] = T2old_aa[a1,i1,a2,i]   
+#
+            ENDDO a1  
+#
+            DO a  
+#
+               REQUEST L2old_aa[i1,a,i,a2]    
+#
+               DO a1  
+#
+                  T1aa[a,a1]       = L2old_aa[i1,a,i,a2]*L3aiai[a1,i1,a2,i]  
+                  T1aa[a,a1]      *= -0.5 
+                  PUT Gae_a[a,a1] += T1aa[a,a1] 
+#
+               ENDDO a1  
+#
+            ENDDO a  
+#
+            deallocate L3aiai[*,i1,a2,i]  
+#
+      ENDPARDO i, i1, a2     
+#
+      PARDO i, j, b 
+#
+            allocate L5aibj[*,i,b,j]  
+#
+            DO a1 
+#
+               REQUEST            T2old_ab[a1,i,b,j] 
+               L5aibj[a1,i,b,j] = T2old_ab[a1,i,b,j] 
+#
+            ENDDO a1 
+#
+            DO a 
+#
+               REQUEST L2old_ab[i,a,j,b]  
+#
+               DO a1  
+#
+                  Taa[a,a1]        = L2old_ab[i,a,j,b]*L5aibj[a1,i,b,j]  
+                  Taa[a,a1]       *= -1.0  
+                  PUT Gae_a[a,a1] += Taa[a,a1] 
+#
+               ENDDO a1  
+#
+            ENDDO a 
+# 
+            deallocate L5aibj[*,i,b,j]  
+#
+      ENDPARDO i, j, b    
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a, a1
+#      get Gae_a[a,a1]
+#      tmp = Gae_a[a,a1] * Gae_a[a,a1]
+#      suma += tmp
+#      endpardo a, a1
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+#
+      ENDPROC GAEA
+#     ------------ 
+#
+      PROC GAEB
+#     --------- 
+#
+#     local arrays used:
+#     ------------------ 
+#
+      PARDO b, b1
+             PUT Gae_b[b,b1] = 0.0
+      ENDPARDO b, b1
+      sip_barrier 
+
+      PARDO j, j1, b2 
+#
+            allocate L3bjbj[*,j1,b2,j]  
+#
+            DO b1  
+#
+               REQUEST              T2old_bb[b1,j1,b2,j] 
+               L3bjbj[b1,j1,b2,j] = T2old_bb[b1,j1,b2,j]   
+#
+            ENDDO b1  
+#
+            DO b  
+#
+               REQUEST L2old_bb[j1,b,j,b2]   
+#
+               DO b1  
+#
+                  T1bb[b,b1]       = L2old_bb[j1,b,j,b2]*L3bjbj[b1,j1,b2,j]  
+                  T1bb[b,b1]      *= -0.5 
+                  PUT Gae_b[b,b1] += T1bb[b,b1] 
+#
+               ENDDO b1  
+#
+            ENDDO b  
+#
+            deallocate L3bjbj[*,j1,b2,j]  
+#
+      ENDPARDO j, j1, b2     
+#
+      PARDO j, i, a  
+#
+            allocate L6aibj[a,i,*,j]  
+#
+            DO b1 
+#
+               REQUEST            T2old_ab[a,i,b1,j] 
+               L6aibj[a,i,b1,j] = T2old_ab[a,i,b1,j] 
+#
+            ENDDO b1 
+#
+            DO b 
+#
+               REQUEST L2old_ab[i,a,j,b] 
+#
+               DO b1  
+#
+                  TTbb[b,b1]        = L2old_ab[i,a,j,b]*L6aibj[a,i,b1,j]  
+                  TTbb[b,b1]       *= -1.0  
+                  PUT Gae_b[b,b1] += TTbb[b,b1] 
+#
+               ENDDO b1  
+#
+            ENDDO b 
+# 
+            deallocate L6aibj[a,i,*,j]  
+#
+      ENDPARDO j, i, a    
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      pardo b, b1
+#      get   Gae_b[b,b1]
+#      tmp =  Gae_b[b,b1] * Gae_b[b,b1]
+#      sumb += tmp
+#      endpardo b,b1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      ENDPROC GAEB
+#     ------------ 
+#
+      PROC GAE 
+#     -------- 
+         CALL GAEA 
+         CALL GAEB 
+      ENDPROC GAE 
+#     ----------- 
+#
+      PROC GMIA 
+#     --------- 
+#
+#     local arrays used: 
+#     ------------------ 
+#
+      PARDO i1, i 
+            PUT Gmi_a[i1,i] = 0.0 
+      ENDPARDO i1, i 
+      sip_barrier 
+#
+      PARDO a, a1, i2  
+#
+            allocate L4aiai[a,*,a1,i2] 
+#
+            DO i1 
+#
+               REQUEST T2old_aa[a,i1,a1,i2] 
+               L4aiai[a,i1,a1,i2] = T2old_aa[a,i1,a1,i2] 
+#
+            ENDDO i1 
+#
+            DO i 
+#
+               REQUEST L2old_aa[i,a,i2,a1] 
+#
+               DO i1  
+#
+                  Tii[i1,i]        = L4aiai[a,i1,a1,i2]*L2old_aa[i,a,i2,a1]   
+                  Tii[i1,i]       *= 0.5  
+                  PUT Gmi_a[i1,i] += Tii[i1,i] 
+#               
+               ENDDO i1  
+#
+            ENDDO i 
+#
+            deallocate L4aiai[a,*,a1,i2] 
+#
+      ENDPARDO a, a1, i2  
+#
+      PARDO a, b, j  
+#
+            allocate L7aibj[a,*,b,j] 
+#
+            DO i1 
+#
+               REQUEST            T2old_ab[a,i1,b,j] 
+               L7aibj[a,i1,b,j] = T2old_ab[a,i1,b,j]  
+#
+            ENDDO i1 
+#
+            DO i 
+#
+               REQUEST L2old_ab[i,a,j,b]   
+#
+               DO i1 
+#
+                  Tii[i1,i]        = L7aibj[a,i1,b,j]*L2old_ab[i,a,j,b]   
+                  PUT Gmi_a[i1,i] += Tii[i1,i] 
+#               
+               ENDDO i1 
+#
+            ENDDO i 
+#
+            deallocate L7aibj[a,*,b,j] 
+#
+      ENDPARDO a, b, j  
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo i, i1
+#      get   Gmi_a[i,i1]
+#      tmp =  Gmi_a[i,i1] * Gmi_a[i,i1]
+#      suma += tmp
+#      endpardo i, i1
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+#
+      ENDPROC GMIA 
+#     ------------ 
+#
+      PROC GMIB 
+#     --------- 
+#
+#     local arrays used:
+#     ------------------ 
+#
+      PARDO j1, j 
+          PUT Gmi_b[j1,j] = 0.0 
+      ENDPARDO j1, j 
+      sip_barrier 
+#
+      PARDO b, b1, j2  
+#
+            allocate L4bjbj[b,*,b1,j2] 
+#
+            DO j1 
+#
+              REQUEST              T2old_bb[b,j1,b1,j2] 
+              L4bjbj[b,j1,b1,j2] = T2old_bb[b,j1,b1,j2] 
+#
+            ENDDO j1 
+#
+            DO j 
+#
+               REQUEST L2old_bb[j,b,j2,b1] 
+#
+               DO j1 
+#
+                  Tjj[j1,j]        = L4bjbj[b,j1,b1,j2]*L2old_bb[j,b,j2,b1]   
+                  Tjj[j1,j]       *= 0.5  
+                  PUT Gmi_b[j1,j] += Tjj[j1,j] 
+#               
+               ENDDO j1 
+#
+            ENDDO j 
+#
+            deallocate L4bjbj[b,*,b1,j2] 
+#
+      ENDPARDO b, b1, j2  
+#
+      PARDO b, a, i  
+#
+            allocate L5aiai[a,i,b,*] 
+#
+            DO j1 
+#
+               REQUEST T2old_ab[a,i,b,j1]   
+               L5aiai[a,i,b,j1] = T2old_ab[a,i,b,j1] 
+#
+            ENDDO j1 
+#
+            DO j 
+#
+               REQUEST L2old_ab[i,a,j,b]   
+#
+               DO j1 
+#
+                  Tjj[j1,j]        = L5aiai[a,i,b,j1]*L2old_ab[i,a,j,b]   
+                  PUT Gmi_b[j1,j] += Tjj[j1,j] 
+#               
+               ENDDO j1 
+#
+            ENDDO j 
+#
+            deallocate L5aiai[a,i,b,*] 
+#
+      ENDPARDO b, a, i  
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      pardo j, j1
+#      get   Gmi_b[j,j1]
+#      tmp =  Gmi_b[j,j1] * Gmi_b[j,j1]
+#      sumb += tmp
+#      endpardo j, j1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      ENDPROC GMIB 
+#     ------------ 
+#
+      PROC GMI 
+#     -------- 
+         CALL GMIA 
+         CALL GMIB 
+      ENDPROC GMI 
+#     ----------- 
+#
+# 
+      PROC W1minjAA 
+#     ------------- 
+#
+      PARDO i2, i, i3, i1 
+#
+            REQUEST                      VSpipi[i2,i,i3,i1] 
+            Tiiii[i2,i,i3,i1]          = VSpipi[i2,i,i3,i1]  
+            PUT W1minj_aa[i2,i,i3,i1] += Tiiii[i2,i,i3,i1] 
+#
+      ENDPARDO i2, i, i3, i1 
+#
+      PARDO i2, i, i3, i1 
+#
+            Tiiii[i2,i,i3,i1] = 0.0 
+#
+            DO a 
+#
+               REQUEST               VSpipi[a,i3,i,i2]  
+               GET                   t1a_old[a,i1] 
+               T1iiii[i2,i,i3,i1]  = VSpipi[a,i3,i,i2]*t1a_old[a,i1] 
+               Tiiii[i2,i,i3,i1]  += T1iiii[i2,i,i3,i1] 
+#
+            ENDDO a 
+#
+            PUT W1minj_aa[i2,i,i3,i1] += Tiiii[i2,i,i3,i1] 
+#
+      ENDPARDO i2, i, i3, i1 
+#
+      PARDO i2, i, i3, i1 
+#
+            Tiiii[i2,i,i3,i1] = 0.0 
+#
+            DO a 
+#
+               REQUEST               VSpipi[a,i3,i1,i2]  
+               GET                   t1a_old[a,i]
+               T2iiii[i2,i,i3,i1]  = VSpipi[a,i3,i1,i2]*t1a_old[a,i] 
+               Tiiii[i2,i,i3,i1]  -= T2iiii[i2,i,i3,i1] 
+#
+            ENDDO a 
+#
+            PUT W1minj_aa[i2,i,i3,i1] += Tiiii[i2,i,i3,i1] 
+#
+      ENDPARDO i2, i, i3, i1 
+#
+      PARDO i, i1, a, a1 
+#
+            REQUEST Tau_aa[a,i,a1,i1] 
+#
+            DO i2  
+            DO i3  
+#
+               REQUEST                      VSpipi[a,i2,a1,i3] 
+               Tiiii[i2,i,i3,i1]          = VSpipi[a,i2,a1,i3]*Tau_aa[a,i,a1,i1]
+               Tiiii[i2,i,i3,i1]         *= 0.5
+               PUT W1minj_aa[i2,i,i3,i1] += Tiiii[i2,i,i3,i1] 
+#
+            ENDDO i3  
+            ENDDO i2  
+#
+      ENDPARDO i, i1, a, a1 
+#
+      ENDPROC W1minjAA 
+#     ---------------- 
+#
+      PROC W1minjBB 
+#     ------------- 
+#
+      PARDO j2, j, j3, j1 
+#
+            REQUEST                      VSqjqj[j2,j,j3,j1] 
+            Tjjjj[j2,j,j3,j1]          = VSqjqj[j2,j,j3,j1]  
+            PUT W1minj_bb[j2,j,j3,j1] += Tjjjj[j2,j,j3,j1] 
+#
+      ENDPARDO j2, j, j3, j1 
+#
+      PARDO j2, j, j3, j1 
+#
+            Tjjjj[j2,j,j3,j1] = 0.0 
+#
+            DO b 
+#
+               REQUEST               VSqjqj[b,j3,j,j2]  
+               GET                   t1b_old[b,j1] 
+               T1jjjj[j2,j,j3,j1]  = VSqjqj[b,j3,j,j2]*t1b_old[b,j1] 
+               Tjjjj[j2,j,j3,j1]  += T1jjjj[j2,j,j3,j1] 
+#
+            ENDDO b 
+#
+            PUT W1minj_bb[j2,j,j3,j1] += Tjjjj[j2,j,j3,j1] 
+#
+      ENDPARDO j2, j, j3, j1 
+#
+      PARDO j2, j, j3, j1 
+#
+            Tjjjj[j2,j,j3,j1] = 0.0 
+#
+            DO b 
+#
+               REQUEST               VSqjqj[b,j3,j1,j2] 
+               GET                   t1b_old[b,j]
+               T2jjjj[j2,j,j3,j1]  = VSqjqj[b,j3,j1,j2]*t1b_old[b,j] 
+               Tjjjj[j2,j,j3,j1]  -= T2jjjj[j2,j,j3,j1] 
+#
+            ENDDO b 
+#
+            PUT W1minj_bb[j2,j,j3,j1] += Tjjjj[j2,j,j3,j1] 
+#
+      ENDPARDO j2, j, j3, j1 
+#
+      PARDO j, j1, b, b1 
+#
+            REQUEST Tau_bb[b,j,b1,j1]  
+#
+            DO j2  
+            DO j3  
+#
+               REQUEST                      VSqjqj[b,j2,b1,j3] 
+               Tjjjj[j2,j,j3,j1]          = VSqjqj[b,j2,b1,j3]*Tau_bb[b,j,b1,j1]
+               Tjjjj[j2,j,j3,j1]         *= 0.5
+               PUT W1minj_bb[j2,j,j3,j1] += Tjjjj[j2,j,j3,j1] 
+#
+            ENDDO j3  
+            ENDDO j2  
+#
+      ENDPARDO j, j1, b, b1 
+#
+      ENDPROC W1minjBB 
+#     ---------------- 
+#
+# 
+      PROC W1minjAB 
+#     ------------- 
+#
+      PARDO i, i1, j, j1 
+#
+            REQUEST                     Vpiqj[i1,i,j1,j] 
+            Tiijj[i1,i,j1,j]          = Vpiqj[i1,i,j1,j] 
+            PUT W1minj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]  
+#
+      ENDPARDO i, i1, j, j1 
+#
+      PARDO j, i, i1, j1 
+#
+            Tiijj[i1,i,j1,j] = 0.0  
+#
+            DO b  
+#
+               REQUEST             Vpiqj[i,i1,b,j1] 
+               GET                 t1b_old[b,j] 
+               T1iijj[i1,i,j1,j] = Vpiqj[i,i1,b,j1]*t1b_old[b,j] 
+               Tiijj[i1,i,j1,j] += T1iijj[i1,i,j1,j] 
+#
+            ENDDO b   
+#
+            PUT W1minj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]  
+#
+      ENDPARDO j, i, i1, j1 
+#
+      PARDO i, i1, j, j1 
+#
+            Tiijj[i1,i,j1,j] = 0.0  
+#
+            DO a 
+#
+               REQUEST             Vpiqj[a,i1,j,j1] 
+               GET                 t1a_old[a,i] 
+               T1iijj[i1,i,j1,j] = Vpiqj[a,i1,j,j1]*t1a_old[a,i] 
+               Tiijj[i1,i,j1,j] += T1iijj[i1,i,j1,j] 
+#
+            ENDDO a 
+#
+            PUT W1minj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]  
+#
+      ENDPARDO i, i1, j, j1 
+#
+      PARDO i, j, a, b  
+#
+            REQUEST Tau_ab[a,i,b,j] 
+#
+            DO i1  
+            DO j1  
+#
+               REQUEST                     Vpiqj[a,i1,b,j1] 
+               Tiijj[i1,i,j1,j]          = Tau_ab[a,i,b,j]*Vpiqj[a,i1,b,j1] 
+               PUT W1minj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]  
+#
+            ENDDO j1  
+            ENDDO i1  
+#
+      ENDPARDO i, j, a, b  
+#
+      ENDPROC W1minjAB 
+#     ---------------- 
+#
+      PROC W1MINJ 
+#     ----------- 
+#
+           PARDO i2, i, i3, i1
+                 Tiiii[i2,i,i3,i1] = 0.0
+                 PUT W1minj_aa[i2,i,i3,i1] = Tiiii[i2,i,i3,i1]
+           ENDPARDO i2, i, i3, i1
+ 
+           PARDO j2, j, j3, j1
+                 Tjjjj[j2,j,j3,j1] = 0.0
+                 PUT W1minj_bb[j2,j,j3,j1] = Tjjjj[j2,j,j3,j1]
+           ENDPARDO j2, j, j3, j1
+
+           PARDO i, i1, j, j1
+                 Tiijj[i1,i,j1,j] = 0.0
+                 PUT W1minj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]
+           ENDPARDO i, i1, j, j1   
+           sip_barrier
+#
+           CALL W1minjAA 
+           CALL W1minjAB 
+           CALL W1minjBB 
+#
+      ENDPROC W1MINJ 
+#     -------------- 
+#
+# In the procedures W1MEBJAA, W1MEBJBB, W1MEBJAB, and W1MEBJBA these  
+# intermediates are formed as temporary arrarys. The contribution to the 
+# outout arrays is computed directly from these temporary arrays so 
+# that the array is never stored.   
+#
+      PROC W1MEBJAA_S  
+#     ---------------
+#
+      PARDO i, a, i1, a1  
+#
+            REQUEST             Viaai[i1,a1,a,i]
+            REQUEST             Vaaii[a,a1,i1,i] 
+#
+            Tiaai[i1,a1,a,i]  = Vaaii[a,a1,i1,i] 
+            Tiaai[i1,a1,a,i] -= Viaai[i1,a1,a,i] 
+            Tiaai[i1,a1,a,i] *= -1.0 
+#
+            DO i2  
+#
+               REQUEST              VSpipi[a1,i1,i,i2] 
+               GET                  t1a_old[a,i2] 
+#
+               T1iaai[i1,a1,a,i]  = VSpipi[a1,i1,i,i2]*t1a_old[a,i2]  
+               Tiaai[i1,a1,a,i]  -= T1iaai[i1,a1,a,i]  
+#
+            ENDDO i2  
+#
+            DO a2  
+#
+               REQUEST VSaaai[a2,a,a1,i1]   
+               GET t1a_old[a2,i] 
+#
+               T1iaai[i1,a1,a,i]  = VSaaai[a2,a,a1,i1]*t1a_old[a2,i] 
+               Tiaai[i1,a1,a,i]  += T1iaai[i1,a1,a,i]  
+#
+               DO i2 
+#
+                  REQUEST VSpipi[a2,i2,a1,i1] 
+                  REQUEST T2old_aa[a2,i,a,i2] 
+                  GET t1a_old[a,i2] 
+#
+                  Taiai[a1,i2,a2,i1]  = VSpipi[a2,i2,a1,i1] 
+                  tai[a,i2]           = t1a_old[a,i2] 
+                  T1aiai[a2,i,a,i2]   = t1a_old[a2,i]^tai[a,i2] 
+                  T1aiai[a2,i,a,i2]  += T2old_aa[a2,i,a,i2] 
+                  T1iaai[i1,a1,a,i]   = T1aiai[a2,i,a,i2]*Taiai[a1,i2,a2,i1] 
+                  Tiaai[i1,a1,a,i]   -= T1iaai[i1,a1,a,i]  
+#
+               ENDDO i2  
+#
+            ENDDO a2  
+#
+            DO b
+            DO j
+#
+               REQUEST Vpiqj[a1,i1,b,j] 
+               REQUEST T2old_ab[a,i,b,j] 
+#
+               T1iaai[i1,a1,a,i]  = Vpiqj[a1,i1,b,j]*T2old_ab[a,i,b,j]
+               Tiaai[i1,a1,a,i]  += T1iaai[i1,a1,a,i]
+#
+            ENDDO j
+            ENDDO b
+#
+            PREPARE W1MEBJ_AA[i1,a1,a,i] = Tiaai[i1,a1,a,i]  
+# 
+      ENDPARDO i, a, i1, a1  
+#
+      ENDPROC W1MEBJAA_S  
+#     ------------------
+#
+      PROC W1MEBJAA 
+#     ----------------
+# 
+      PARDO i1, a1, a, i 
+#
+            REQUEST W1MEBJ_AA[i1,a1,a,i] 
+#
+# Compute contribution to L1a_new  
+# ------------------------------- 
+#
+            GET l1a_old[i,a]
+            Tia[i1,a1]          = W1MEBJ_AA[i1,a1,a,i]*l1a_old[i,a]
+            PUT l1a_new[i1,a1] += Tia[i1,a1]
+#
+# Compute contributions to L2new_aa  
+# ---------------------------------  
+#
+            DO i2
+            DO a2
+#
+               REQUEST L2old_aa[i2,a2,i,a] 
+#
+               T1iaia[i2,a2,i1,a1]        = L2old_aa[i2,a2,i,a]*W1MEBJ_AA[i1,a1,a,i]
+               T2iaia[i2,a1,i1,a2]        = T1iaia[i2,a2,i1,a1]
+               T2iaia[i2,a1,i1,a2]       *= -1.0  
+               T3iaia[i1,a2,i2,a1]        = T1iaia[i2,a2,i1,a1]
+               T3iaia[i1,a2,i2,a1]       *= -1.0  
+               T4iaia[i1,a1,i2,a2]        = T1iaia[i2,a2,i1,a1]
+#
+               PREPARE L2new_aa[i2,a2,i1,a1] += T1iaia[i2,a2,i1,a1] 
+               PREPARE L2new_aa[i2,a1,i1,a2] += T2iaia[i2,a1,i1,a2] 
+               PREPARE L2new_aa[i1,a2,i2,a1] += T3iaia[i1,a2,i2,a1]  
+               PREPARE L2new_aa[i1,a1,i2,a2] += T4iaia[i1,a1,i2,a2]  
+#
+            ENDDO a2
+            ENDDO i2
+#
+# Compute contributions to L2new_ab 
+# --------------------------------- 
+#
+            DO j
+            DO b
+#
+               REQUEST L2old_ab[i,a,j,b] 
+               T1iajb[i1,a1,j,b]      = L2old_ab[i,a,j,b]*W1MEBJ_AA[i1,a1,a,i]
+               PREPARE L2new_ab[i1,a1,j,b] += T1iajb[i1,a1,j,b]
+#
+            ENDDO b
+            ENDDO j
+#
+      ENDPARDO i1, a1, a, i 
+#
+      ENDPROC W1MEBJAA 
+#     ----------------
+#
+      PROC W1MEBJBB_S  
+#     ---------------
+#
+      PARDO j, b, j1, b1  
+#
+            REQUEST Vjbbj[j1,b1,b,j] 
+            REQUEST Vbbjj[b,b1,j1,j] 
+#
+            Tjbbj[j1,b1,b,j]  = Vbbjj[b,b1,j1,j] 
+            Tjbbj[j1,b1,b,j] -= Vjbbj[j1,b1,b,j] 
+            Tjbbj[j1,b1,b,j] *= -1.0 
+#
+            DO b2  
+#
+               REQUEST VSbbbj[b2,b,b1,j1] 
+               GET t1b_old[b2,j] 
+#
+               T1jbbj[j1,b1,b,j]  = VSbbbj[b2,b,b1,j1]*t1b_old[b2,j] 
+               Tjbbj[j1,b1,b,j]  += T1jbbj[j1,b1,b,j]  
+#
+            ENDDO b2  
+#
+            DO j2 
+#
+               REQUEST VSqjqj[b1,j1,j,j2] 
+               GET t1b_old[b,j2] 
+#
+               T1jbbj[j1,b1,b,j]  = VSqjqj[b1,j1,j,j2]*t1b_old[b,j2]  
+               Tjbbj[j1,b1,b,j]  -= T1jbbj[j1,b1,b,j]  
+#
+               DO b2 
+#
+                  REQUEST VSqjqj[b2,j2,b1,j1] 
+                  REQUEST T2old_bb[b2,j,b,j2] 
+                  GET t1b_old[b2,j] 
+#
+                  tbj[b2,j]           = t1b_old[b2,j] 
+                  T1bjbj[b2,j,b,j2]   = t1b_old[b,j2]^tbj[b2,j] 
+                  T1bjbj[b2,j,b,j2]  += t2old_bb[b2,j,b,j2] 
+                  T1jbbj[j1,b1,b,j]   = T1bjbj[b2,j,b,j2]*VSqjqj[b2,j2,b1,j1] 
+                  Tjbbj[j1,b1,b,j]   -= T1jbbj[j1,b1,b,j]  
+#
+               ENDDO b2  
+#
+            ENDDO j2  
+#
+            DO a
+            DO i
+#
+               REQUEST Vpiqj[a,i,b1,j1] 
+               REQUEST T2old_ab[a,i,b,j]
+#
+               T1jbbj[j1,b1,b,j]  = Vpiqj[a,i,b1,j1]*T2old_ab[a,i,b,j]
+               Tjbbj[j1,b1,b,j]  += T1jbbj[j1,b1,b,j]
+#
+            ENDDO i
+            ENDDO a
+#
+            PREPARE W1MEBJ_BB[j1,b1,b,j] = Tjbbj[j1,b1,b,j]  
+#
+      ENDPARDO j, b, j1, b1  
+#
+      ENDPROC W1MEBJBB_S  
+#     ------------------
+#
+      PROC W1MEBJBB  
+#     -------------
+#
+      PARDO j1, b1, b, j 
+#
+            REQUEST W1MEBJ_BB[j1,b1,b,j] 
+#
+# Compute contribution to L1b_new  
+# ------------------------------- 
+#
+            GET l1b_old[j,b]
+#
+            Tjb[j1,b1]          = W1MEBJ_BB[j1,b1,b,j]*l1b_old[j,b]
+            PUT l1b_new[j1,b1] += Tjb[j1,b1]
+#
+# Compute contributions to L2new_bb  
+# ---------------------------------  
+#
+            DO j2
+            DO b2
+#
+               REQUEST L2old_bb[j2,b2,j,b] 
+#
+               T1jbjb[j2,b2,j1,b1]  = L2old_bb[j2,b2,j,b]*W1MEBJ_BB[j1,b1,b,j]
+               T2jbjb[j2,b1,j1,b2]  = T1jbjb[j2,b2,j1,b1]
+               T2jbjb[j2,b1,j1,b2] *= -1.0  
+               T3jbjb[j1,b2,j2,b1]  = T1jbjb[j2,b2,j1,b1]
+               T3jbjb[j1,b2,j2,b1] *= -1.0  
+               T4jbjb[j1,b1,j2,b2]  = T1jbjb[j2,b2,j1,b1]
+#
+               PREPARE L2new_bb[j2,b2,j1,b1] += T1jbjb[j2,b2,j1,b1] 
+               PREPARE L2new_bb[j2,b1,j1,b2] += T2jbjb[j2,b1,j1,b2] 
+               PREPARE L2new_bb[j1,b2,j2,b1] += T3jbjb[j1,b2,j2,b1]  
+               PREPARE L2new_bb[j1,b1,j2,b2] += T4jbjb[j1,b1,j2,b2]  
+#
+            ENDDO b2
+            ENDDO j2
+#
+# Compute contributions to L2new_ab 
+# --------------------------------- 
+#
+            DO i
+            DO a
+#
+               REQUEST L2old_ab[i,a,j,b] 
+#
+               T1iajb[i,a,j1,b1]            = L2old_ab[i,a,j,b]*W1MEBJ_BB[j1,b1,b,j]
+               PREPARE L2new_ab[i,a,j1,b1] += T1iajb[i,a,j1,b1]
+#
+            ENDDO a
+            ENDDO i
+#
+      ENDPARDO j1, b1, b, j 
+#
+      ENDPROC W1MEBJBB 
+#     ---------------
+#
+      PROC W1MEBJAB_S 
+#     ---------------
+#
+      PARDO j, i, a, b 
+#
+            REQUEST          Viabj[i,a,b,j] 
+            Tiabj[i,a,b,j] = Viabj[i,a,b,j] 
+#
+            DO b1 
+#
+               REQUEST Vbbai[b1,b,a,i]   
+               GET t1b_old[b1,j] 
+#
+               T1iabj[i,a,b,j] = Vbbai[b1,b,a,i]*t1b_old[b1,j] 
+               Tiabj[i,a,b,j] += T1iabj[i,a,b,j] 
+#
+            ENDDO b1 
+#
+            DO j1 
+#
+               REQUEST Vpiqj[a,i,j,j1]   
+               GET t1b_old[b,j1] 
+#
+               T1iabj[i,a,b,j] = Vpiqj[a,i,j,j1]*t1b_old[b,j1] 
+               Tiabj[i,a,b,j] -= T1iabj[i,a,b,j] 
+#
+               DO b1 
+#
+                  REQUEST t2old_bb[b1,j,b,j1] 
+                  REQUEST Vpiqj[a,i,b1,j1]    
+                  GET t1b_old[b1,j] 
+# 
+                  tbj[b,j1]          = t1b_old[b,j1] 
+                  T2bjbj[b1,j,b,j1]  = t1b_old[b1,j]^tbj[b,j1] 
+                  T2bjbj[b1,j,b,j1] += T2old_bb[b1,j,b,j1] 
+                  T1iabj[i,a,b,j]    = T2bjbj[b1,j,b,j1]*Vpiqj[a,i,b1,j1] 
+                  Tiabj[i,a,b,j]    -= T1iabj[i,a,b,j] 
+#
+               ENDDO b1 
+#
+            ENDDO j1 
+#
+            DO a1
+            DO i1
+#
+               REQUEST T2old_ab[a1,i1,b,j] 
+               REQUEST VSpipi[a1,i1,a,i]   
+#
+               T1iabj[i,a,b,j] = T2old_ab[a1,i1,b,j]*VSpipi[a1,i1,a,i]
+               Tiabj[i,a,b,j] += T1iabj[i,a,b,j]
+#
+            ENDDO i1
+            ENDDO a1
+#
+            PREPARE W1MEBJ_AB[i,a,b,j] = Tiabj[i,a,b,j]  
+#
+      ENDPARDO j, i, a, b 
+#
+      ENDPROC W1MEBJAB_S  
+#     ------------------
+#
+#
+      PROC W1MEBJAB 
+#     ----------------
+#
+      PARDO i, a, b, j 
+#
+            REQUEST W1MEBJ_AB[i,a,b,j] 
+#
+# Compute contribution to l1a_new 
+# ------------------------------- 
+#
+            GET l1b_old[j,b]
+            T1ia[i,a]         = W1MEBJ_AB[i,a,b,j]*l1b_old[j,b]
+            PUT l1a_new[i,a] += T1ia[i,a] 
+#
+# Compute contributions to L2new_aa 
+# --------------------------------- 
+#
+            DO i1  
+            DO a1  
+#
+               REQUEST L2old_ab[i1,a1,j,b] 
+#
+               T1iaia[i1,a1,i,a]  = L2old_ab[i1,a1,j,b]*W1MEBJ_AB[i,a,b,j]
+               T2iaia[i1,a,i,a1]  = T1iaia[i1,a1,i,a]
+               T2iaia[i1,a,i,a1] *= -1.0  
+               T3iaia[i,a1,i1,a]  = T1iaia[i1,a1,i,a]
+               T3iaia[i,a1,i1,a] *= -1.0  
+               T4iaia[i,a,i1,a1]  = T1iaia[i1,a1,i,a]
+#
+               PREPARE L2new_aa[i1,a1,i,a] += T1iaia[i1,a1,i,a] 
+               PREPARE L2new_aa[i1,a,i,a1] += T2iaia[i1,a,i,a1] 
+               PREPARE L2new_aa[i,a1,i1,a] += T3iaia[i,a1,i1,a] 
+               PREPARE L2new_aa[i,a,i1,a1] += T4iaia[i,a,i1,a1] 
+#
+            ENDDO a1  
+            ENDDO i1  
+#
+# Compute contributions to L2new_ab 
+# --------------------------------- 
+#
+            DO j1
+            DO b1
+#
+               REQUEST L2old_bb[j,b,j1,b1] 
+#
+               T1iajb[i,a,j1,b1]            = L2old_bb[j,b,j1,b1]*W1MEBJ_AB[i,a,b,j]
+               PREPARE L2new_ab[i,a,j1,b1] += T1iajb[i,a,j1,b1]
+#
+            ENDDO b1
+            ENDDO j1
+#
+      ENDPARDO i, a, b, j 
+#
+      ENDPROC W1MEBJAB 
+#     ----------------
+#
+      PROC W1MEBJBA_S  
+#     ---------------
+#
+      PARDO i, a, j, b   
+# 
+            REQUEST          Viabj[i,a,b,j] 
+            Tjbai[j,b,a,i] = Viabj[i,a,b,j] 
+#
+            DO a1  
+#
+               REQUEST Vaabj[a1,a,b,j]   
+               GET t1a_old[a1,i] 
+#
+               T1jbai[j,b,a,i] = Vaabj[a1,a,b,j]*t1a_old[a1,i] 
+               Tjbai[j,b,a,i] += T1jbai[j,b,a,i] 
+#
+            ENDDO a1 
+#
+            DO i1 
+#
+               REQUEST Vpiqj[i,i1,b,j]   
+               GET t1a_old[a,i1] 
+#
+               T1jbai[j,b,a,i] = Vpiqj[i,i1,b,j]*t1a_old[a,i1] 
+               Tjbai[j,b,a,i] -= T1jbai[j,b,a,i] 
+#
+               DO a1 
+#
+                  REQUEST T2old_aa[a1,i,a,i1]   
+                  REQUEST Vpiqj[a1,i1,b,j]      
+                  GET t1a_old[a1,i] 
+# 
+                  tai[a,i1]          = t1a_old[a,i1] 
+                  T2aiai[a1,i,a,i1]  = t1a_old[a1,i]^tai[a,i1] 
+                  T2aiai[a1,i,a,i1] += T2old_aa[a1,i,a,i1] 
+                  T1jbai[j,b,a,i]    = Vpiqj[a1,i1,b,j]*T2aiai[a1,i,a,i1] 
+                  Tjbai[j,b,a,i]    -= T1jbai[j,b,a,i] 
+#
+               ENDDO a1 
+#
+            ENDDO i1 
+#
+            DO b1
+            DO j1
+#
+               REQUEST T2old_ab[a,i,b1,j1] 
+               REQUEST VSqjqj[b1,j1,b,j]    
+#
+               T1jbai[j,b,a,i] = T2old_ab[a,i,b1,j1]*VSqjqj[b1,j1,b,j]
+               Tjbai[j,b,a,i] += T1jbai[j,b,a,i]
+#
+            ENDDO j1
+            ENDDO b1
+#
+            PREPARE W1MEBJ_BA[j,b,a,i] = Tjbai[j,b,a,i]  
+#
+      ENDPARDO i, a, j, b  
+#
+      ENDPROC W1MEBJBA_S  
+#     ------------------
+#
+      PROC W1MEBJBA  
+#     -------------
+#
+      PARDO j, b, a, i  
+# 
+            REQUEST W1MEBJ_BA[j,b,a,i] 
+#
+# Compute contribution to l1b_new 
+# ------------------------------- 
+#
+            GET l1a_old[i,a]
+#
+            T1jb[j,b]         = W1MEBJ_BA[j,b,a,i]*l1a_old[i,a]
+            PUT l1b_new[j,b] += T1jb[j,b] 
+#
+# Compute contributions to L2new_bb 
+# --------------------------------- 
+#
+            DO j1  
+            DO b1  
+#
+               REQUEST L2old_ab[i,a,j1,b1] 
+#
+               T1jbjb[j1,b1,j,b]  = L2old_ab[i,a,j1,b1]*W1MEBJ_BA[j,b,a,i]
+               T2jbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
+               T2jbjb[j1,b,j,b1] *= -1.0  
+               T3jbjb[j,b1,j1,b]  = T1jbjb[j1,b1,j,b]
+               T3jbjb[j,b1,j1,b] *= -1.0  
+               T4jbjb[j,b,j1,b1]  = T1jbjb[j1,b1,j,b]
+#
+               PREPARE L2new_bb[j1,b1,j,b] += T1jbjb[j1,b1,j,b] 
+               PREPARE L2new_bb[j1,b,j,b1] += T2jbjb[j1,b,j,b1] 
+               PREPARE L2new_bb[j,b1,j1,b] += T3jbjb[j,b1,j1,b] 
+               PREPARE L2new_bb[j,b,j1,b1] += T4jbjb[j,b,j1,b1] 
+#
+            ENDDO b1  
+            ENDDO j1  
+#
+# Compute contributions to L2new_ab 
+# --------------------------------- 
+#
+            DO i1
+            DO a1
+#
+               REQUEST L2old_aa[i,a,i1,a1] 
+#
+               T1iajb[i1,a1,j,b]            = L2old_aa[i,a,i1,a1]*W1MEBJ_BA[j,b,a,i]  
+               PREPARE L2new_ab[i1,a1,j,b] += T1iajb[i1,a1,j,b]
+#
+            ENDDO a1
+            ENDDO i1
+#
+      ENDPARDO j, b, a, i 
+#
+      ENDPROC W1MEBJBA  
+#     ---------------
+#
+# Compute contributions from 'Wmjbe'. This needs to be checked 
+#
+      PROC W1MJBEab_S 
+#     ---------------
+#
+      PARDO i, i1, b1, b 
+#
+            REQUEST            Vbbii[b,b1,i1,i] 
+            Tiiqq[i1,i,b,b1] = Vbbii[b,b1,i1,i] 
+#
+            DO a1 
+#
+               REQUEST Vbbai[b1,b,a1,i1] 
+               GET t1a_old[a1,i] 
+#
+               T1iiqq[i1,i,b,b1] = Vbbai[b1,b,a1,i1]*t1a_old[a1,i]
+               Tiiqq[i1,i,b,b1] += T1iiqq[i1,i,b,b1] 
+#
+            ENDDO a1  
+#
+            DO j1 
+#
+               REQUEST Vpiqj[i,i1,b1,j1]   
+               GET t1b_old[b,j1] 
+# 
+               T1iiqq[i1,i,b,b1] = Vpiqj[i,i1,b1,j1]*t1b_old[b,j1] 
+               Tiiqq[i1,i,b,b1] -= T1iiqq[i1,i,b,b1] 
+#
+               DO a1 
+#
+                  REQUEST T2old_ab[a1,i,b,j1]   
+                  REQUEST Vpiqj[a1,i1,b1,j1]    
+                  GET t1a_old[a1,i] 
+#
+                  Taibj[a1,i,b,j1]   = t1a_old[a1,i]^t1b_old[b,j1] 
+                  T1aibj[a1,i,b,j1]  = T2old_ab[a1,i,b,j1]  
+                  T1aibj[a1,i,b,j1] += Taibj[a1,i,b,j1]  
+                  T1iiqq[i1,i,b,b1]  = T1aibj[a1,i,b,j1]*Vpiqj[a1,i1,b1,j1] 
+                  Tiiqq[i1,i,b,b1]  -= T1iiqq[i1,i,b,b1] 
+#
+               ENDDO a1 
+#
+            ENDDO j1 
+#
+            Tiiqq[i1,i,b,b1]            *= -1.0 
+            PREPARE W1mjbe_ab[i1,i,b,b1] = Tiiqq[i1,i,b,b1] 
+#
+      ENDPARDO i, i1, b1, b 
+#
+      ENDPROC W1MJBEab_S 
+#     --------------------
+#
+      PROC W1MJBEab
+#     -------------
+#
+      PARDO i1, b1, b, i 
+#
+            REQUEST W1mjbe_ab[i1,i,b,b1]  
+#
+# Compute the contribution to L2new_ab 
+# ------------------------------------ 
+#
+            DO j 
+            DO a
+#
+               REQUEST L2old_ab[i,a,j,b]  
+#
+               T1iajb[i1,a,j,b1]            = W1mjbe_ab[i1,i,b,b1]*L2old_ab[i,a,j,b]
+               PREPARE L2new_ab[i1,a,j,b1] += T1iajb[i1,a,j,b1] 
+#
+            ENDDO a
+            ENDDO j
+#
+      ENDPARDO i1, b1, b, i 
+#
+      ENDPROC W1MJBEab
+#     ---------------
+#
+      PROC W1MJBEba_S 
+#     ---------------
+#
+      PARDO j, j1, a1, a 
+#
+            REQUEST            Vaajj[a,a1,j1,j] 
+            Tjjpp[j1,j,a,a1] = Vaajj[a,a1,j1,j] 
+#
+            DO b1 
+#
+               REQUEST Vaabj[a1,a,b1,j1] 
+               GET t1b_old[b1,j] 
+#
+               T1jjpp[j1,j,a,a1] = Vaabj[a1,a,b1,j1]*t1b_old[b1,j]
+               Tjjpp[j1,j,a,a1] += T1jjpp[j1,j,a,a1] 
+#
+            ENDDO b1 
+#
+            DO i1 
+#
+               REQUEST Vpiqj[a1,i1,j,j1]   
+               GET t1a_old[a,i1] 
+#
+               T1jjpp[j1,j,a,a1] = Vpiqj[a1,i1,j,j1]*t1a_old[a,i1] 
+               Tjjpp[j1,j,a,a1] -= T1jjpp[j1,j,a,a1] 
+#
+               DO b1 
+#
+                  REQUEST T2old_ab[a,i1,b1,j] 
+                  REQUEST Vpiqj[a1,i1,b1,j1]    
+                  GET t1b_old[b1,j] 
+# 
+                  Taibj[a,i1,b1,j]   = t1b_old[b1,j]^t1a_old[a,i1] 
+                  T1aibj[a,i1,b1,j]  = T2old_ab[a,i1,b1,j]  
+                  T1aibj[a,i1,b1,j] += Taibj[a,i1,b1,j]  
+                  T1jjpp[j1,j,a,a1] = T1aibj[a,i1,b1,j]*Vpiqj[a1,i1,b1,j1] 
+                  Tjjpp[j1,j,a,a1] -= T1jjpp[j1,j,a,a1] 
+#
+               ENDDO b1 
+#
+            ENDDO i1 
+#
+            Tjjpp[j1,j,a,a1]            *= -1.0 
+            PREPARE W1mjbe_ba[j1,j,a,a1] = Tjjpp[j1,j,a,a1] 
+#
+      ENDPARDO j, j1, a1, a  
+#
+      ENDPROC W1MJBEba_S 
+#     ------------------
+#
+      PROC W1MJBEba
+#     -------------
+#
+      PARDO j1, a1, a, j 
+#
+            REQUEST W1mjbe_ba[j1,j,a,a1] 
+#
+# Compute the contribution to L2new_ab 
+# ------------------------------------ 
+#
+            DO i
+            DO b
+#
+               REQUEST L2old_ab[i,a,j,b]  
+#
+               T1iajb[i,a1,j1,b]            = L2old_ab[i,a,j,b]*W1mjbe_ba[j1,j,a,a1]
+               PREPARE L2new_ab[i,a1,j1,b] += T1iajb[i,a1,j1,b]  
+#
+            ENDDO b
+            ENDDO i
+#
+      ENDPARDO j1, a1, a, j 
+#
+      ENDPROC W1MJBEba
+#     ----------------
+#
+      PROC W1MEBJ_S  
+#     -------------
+# 
+           CALL W1MEBJAA_S 
+           CALL W1MEBJBB_S
+           CALL W1MEBJAB_S 
+           CALL W1MEBJBA_S 
+           CALL W1MJBEab_S 
+           CALL W1MJBEba_S 
+#
+      ENDPROC W1MEBJ_S  
+#     ----------------
+#
+      PROC W1MEBJ 
+#     -----------
+# 
+           CALL W1MEBJAA
+           CALL W1MEBJBB
+           CALL W1MEBJAB
+           CALL W1MEBJBA
+           CALL W1MJBEab
+           CALL W1MJBEba 
+#
+      ENDPROC W1MEBJ 
+#     --------------
+#
+      PROC W2MEBJAA 
+#     ------------- 
+#
+# First the 'bare' terms put into the arrays to initialize them. 
+# -------------------------------------------------------------- 
+#
+      PARDO i1, a1, a, i 
+#
+            REQUEST                        Viaai[i1,a1,a,i]
+            REQUEST                        Vaaii[a,a1,i1,i]
+            Tiaai[i1,a1,a,i]             = Vaaii[a,a1,i1,i]  
+            Tiaai[i1,a1,a,i]            -= Viaai[i1,a1,a,i]  
+            Tiaai[i1,a1,a,i]            *= -1.0  
+            PREPARE W2mebj_aa[i1,a1,a,i] = Tiaai[i1,a1,a,i] 
+#
+      ENDPARDO i1, a1, a, i 
+#
+      PARDO i, a, b, j 
+#
+            REQUEST                      Viabj[i,a,b,j] 
+            Tiabj[i,a,b,j]             = Viabj[i,a,b,j] 
+            PREPARE W2mebj_ab[i,a,b,j] = Tiabj[i,a,b,j]  
+#
+      ENDPARDO i, a, b, j 
+#
+      PARDO j, b, a, i 
+#
+            REQUEST                      Viabj[i,a,b,j] 
+            Tjbai[j,b,a,i]             = Viabj[i,a,b,j] 
+            PREPARE W2mebj_ba[j,b,a,i] = Tjbai[j,b,a,i]  
+#
+      ENDPARDO j, b, a, i 
+#
+      PARDO j1, b1, b, j 
+#
+            REQUEST                        Vjbbj[j1,b1,b,j] 
+            REQUEST                        Vbbjj[b,b1,j1,j] 
+            Tjbbj[j1,b1,b,j]             = Vbbjj[b,b1,j1,j]  
+            Tjbbj[j1,b1,b,j]            -= Vjbbj[j1,b1,b,j]  
+            Tjbbj[j1,b1,b,j]            *= -1.0  
+            PREPARE W2mebj_bb[j1,b1,b,j] = Tjbbj[j1,b1,b,j] 
+#
+      ENDPARDO j1, b1, b, j 
+#
+      PARDO i, i1, b, b1 
+#
+            REQUEST                        Vbbii[b,b1,i,i1]   
+            Tiibb[i,i1,b,b1]             = Vbbii[b,b1,i,i1] 
+            Tiibb[i,i1,b,b1]            *= -1.0 
+            PREPARE W2mjbe_ab[i,i1,b,b1] = Tiibb[i,i1,b,b1] 
+#
+      ENDPARDO i, i1, b, b1 
+#
+      PARDO j1, j, a, a1 
+#
+            REQUEST                        Vaajj[a,a1,j1,j] 
+            Tjjaa[j1,j,a,a1]             = Vaajj[a,a1,j1,j] 
+            Tjjaa[j1,j,a,a1]            *= -1.0 
+            PREPARE W2mjbe_ba[j1,j,a,a1] = Tjjaa[j1,j,a,a1] 
+#
+      ENDPARDO j1, j, a, a1 
+#
+      server_barrier 
+#
+# Done initializing intermediates to the 'bare' terms. 
+# ---------------------------------------------------- 
+#
+      PARDO i, a, a2, i2 
+#
+            REQUEST T2old_aa[a,i2,a2,i] 
+#
+            DO i1 
+            DO a1 
+#
+               REQUEST                         VSpipi[a1,i1,a2,i2] 
+               Tiaai[i1,a1,a,i]              = VSpipi[a1,i1,a2,i2]*T2old_aa[a,i2,a2,i] 
+               Tiaai[i1,a1,a,i]             *= -1.0  
+               PREPARE W2mebj_aa[i1,a1,a,i] += Tiaai[i1,a1,a,i] 
+#
+            ENDDO a1 
+            ENDDO i1 
+#
+      ENDPARDO i, a, a2, i2 
+#
+      PARDO a, i, b, j  
+#
+            REQUEST T2old_ab[a,i,b,j]
+#
+            DO i1 
+            DO a1 
+#
+               REQUEST                         Vpiqj[a1,i1,b,j] 
+               Tiaai[i1,a1,a,i]              = Vpiqj[a1,i1,b,j]*T2old_ab[a,i,b,j] 
+               PREPARE W2mebj_aa[i1,a1,a,i] += Tiaai[i1,a1,a,i] 
+#
+            ENDDO a1 
+            ENDDO i1 
+#
+      ENDPARDO a, i, b, j  
+#
+      ENDPROC W2MEBJAA 
+#     ---------------- 
+#
+      PROC W2MEBJAB 
+#     ------------- 
+#
+      PARDO b, j, a1, i1  
+#
+            REQUEST T2old_ab[a1,i1,b,j] 
+#
+            DO a 
+            DO i 
+#
+               REQUEST                       VSpipi[a,i,a1,i1]
+               Tiabj[i,a,b,j]              = VSpipi[a,i,a1,i1]*T2old_ab[a1,i1,b,j] 
+               PREPARE W2mebj_ab[i,a,b,j] += Tiabj[i,a,b,j]  
+#
+            ENDDO i 
+            ENDDO a 
+#
+      ENDPARDO b, j, a1, i1  
+#
+      PARDO b, j, b1, j1  
+#
+            REQUEST T2old_bb[b1,j1,b,j] 
+#
+            DO a 
+            DO i 
+#
+               REQUEST                       Vpiqj[a,i,b1,j1]   
+               Tiabj[i,a,b,j]              = Vpiqj[a,i,b1,j1]*T2old_bb[b1,j1,b,j] 
+               PREPARE W2mebj_ab[i,a,b,j] += Tiabj[i,a,b,j]  
+#
+            ENDDO i 
+            ENDDO a 
+#
+      ENDPARDO b, j, b1, j1  
+#
+      ENDPROC W2MEBJAB 
+#     ---------------- 
+#
+      PROC W2MEBJBA 
+#     ------------- 
+#
+      PARDO a, i, b1, j1  
+#
+            REQUEST T2old_ab[a,i,b1,j1] 
+#
+            DO b 
+            DO j 
+#
+               REQUEST                       VSqjqj[b,j,b1,j1] 
+               Tjbai[j,b,a,i]              = VSqjqj[b,j,b1,j1]*T2old_ab[a,i,b1,j1] 
+               PREPARE W2mebj_ba[j,b,a,i] += Tjbai[j,b,a,i]  
+#
+            ENDDO j 
+            ENDDO b 
+#
+      ENDPARDO a, i, b1, j1  
+#
+      PARDO a, i, a1, i1  
+#
+            REQUEST T2old_aa[a1,i1,a,i] 
+#
+            DO b 
+            DO j 
+#
+               REQUEST                       Vpiqj[a1,i1,b,j]   
+               Tjbai[j,b,a,i]              = Vpiqj[a1,i1,b,j]*T2old_aa[a1,i1,a,i] 
+               PREPARE W2mebj_ba[j,b,a,i] += Tjbai[j,b,a,i]  
+#
+            ENDDO j 
+            ENDDO b 
+#
+      ENDPARDO a, i, a1, i1  
+#
+      ENDPROC W2MEBJBA 
+#     ---------------- 
+#
+      PROC W2MEBJBB 
+#     ------------- 
+#
+      PARDO b, j, b2, j2  
+#
+            REQUEST T2old_bb[b,j2,b2,j]  
+#
+            DO j1 
+            DO b1 
+#
+               REQUEST                         VSqjqj[b1,j1,b2,j2] 
+               Tjbbj[j1,b1,b,j]              = VSqjqj[b1,j1,b2,j2]*T2old_bb[b,j2,b2,j] 
+               Tjbbj[j1,b1,b,j]             *= -1.0  
+               PREPARE W2mebj_bb[j1,b1,b,j] += Tjbbj[j1,b1,b,j] 
+#
+            ENDDO b1 
+            ENDDO j1 
+#
+      ENDPARDO b, j, b2, j2  
+#
+      PARDO b, j, a, i  
+
+            REQUEST T2old_ab[a,i,b,j] 
+#
+            DO j1 
+            DO b1 
+#
+               REQUEST                         Vpiqj[a,i,b1,j1]  
+               Tjbbj[j1,b1,b,j]              = Vpiqj[a,i,b1,j1]*T2old_ab[a,i,b,j] 
+               PREPARE W2mebj_bb[j1,b1,b,j] += Tjbbj[j1,b1,b,j] 
+#
+            ENDDO b1 
+            ENDDO j1 
+#
+      ENDPARDO b, j, a, i  
+#
+      ENDPROC W2MEBJBB 
+#     ---------------- 
+#
+      PROC W2MJBEAB
+#     ------------- 
+#
+      PARDO b, i1, a, j  
+#
+            REQUEST T2old_ab[a,i1,b,j] 
+#
+            DO i  
+            DO b1  
+#
+               REQUEST                         Vpiqj[a,i,b1,j] 
+               Tiibb[i,i1,b,b1]              = T2old_ab[a,i1,b,j]*Vpiqj[a,i,b1,j] 
+               PREPARE W2mjbe_ab[i,i1,b,b1] += Tiibb[i,i1,b,b1] 
+#
+            ENDDO b1 
+            ENDDO i 
+#
+      ENDPARDO b, i1, a, j  
+#
+      ENDPROC W2MJBEAB
+#     ---------------- 
+#
+      PROC W2MJBEBA
+#     ------------- 
+#
+      PARDO a, i, b, j  
+#
+            REQUEST T2old_ab[a,i,b,j] 
+
+            DO a1  
+            DO j1  
+#
+               REQUEST                         Vpiqj[a1,i,b,j1] 
+               Tjjaa[j1,j,a,a1]              = T2old_ab[a,i,b,j]*Vpiqj[a1,i,b,j1] 
+               PREPARE W2mjbe_ba[j1,j,a,a1] += Tjjaa[j1,j,a,a1] 
+#
+            ENDDO j1 
+            ENDDO a1  
+#
+      ENDPARDO a, i, b, j  
+#
+      ENDPROC W2MJBEBA
+#     ---------------- 
+#
+      PROC W2MEBJ 
+#     ----------- 
+           CALL W2MEBJAA
+           CALL W2MEBJAB
+           CALL W2MEBJBA
+           CALL W2MEBJBB
+#
+           CALL W2MJBEAB 
+           CALL W2MJBEBA  
+      ENDPROC W2MEBJ 
+#     -------------- 
+#
+      PROC W1IMENAA 
+#     ------------- 
+#
+      PARDO i, i1, a, i2 
+#
+            REQUEST             VSpipi[i,i1,a,i2] 
+            Tiiai[i,i1,a,i2]  = VSpipi[i,i1,a,i2] 
+            TSiiai[i,i2,a,i1] = 0.0  
+#
+            DO i3 
+#
+               GET W1minj_aa[i,i1,i3,i2]   
+               GET t1a_old[a,i3] 
+#   
+               T1iiai[i,i1,a,i2] = W1minj_aa[i,i1,i3,i2]*t1a_old[a,i3] 
+               Tiiai[i,i1,a,i2] -= T1iiai[i,i1,a,i2] 
+#
+            ENDDO i3 
+#
+            DO a1 
+#
+               REQUEST T2old_aa[a,i1,a1,i2] 
+               REQUEST W2mebj_aa[i,a1,a,i2]   
+               GET     Fme_a[i,a1] 
+               GET     t1a_old[a1,i1] 
+#
+               T1iiai[i,i1,a,i2]  = T2old_aa[a,i1,a1,i2]*Fme_a[i,a1] 
+               Tiiai[i,i1,a,i2]  -= T1iiai[i,i1,a,i2] 
+#
+               T1iiai[i,i1,a,i2]  = W2mebj_aa[i,a1,a,i2]*t1a_old[a1,i1]  
+               T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]  
+#
+               Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2] 
+               TSiiai[i,i2,a,i1] -= T2iiai[i,i2,a,i1] 
+#
+               DO a2 
+#
+                  REQUEST Tau_aa[a1,i1,a2,i2]   
+                  REQUEST VSaaai[a2,a,a1,i]    
+#
+                  T1iiai[i,i1,a,i2]  = Tau_aa[a1,i1,a2,i2]*VSaaai[a2,a,a1,i]
+                  T1iiai[i,i1,a,i2] *= 0.5  
+                  Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2] 
+#
+               ENDDO a2 
+#
+               DO i3 
+#
+                  REQUEST T2old_aa[a,i2,a1,i3]   
+                  REQUEST VSpipi[i1,i,a1,i3]    
+#
+                  T1iiai[i,i1,a,i2]   = VSpipi[i1,i,a1,i3]*T2old_aa[a,i2,a1,i3] 
+                  T2iiai[i,i2,a,i1]   = T1iiai[i,i1,a,i2] 
+                  Tiiai[i,i1,a,i2]   += T1iiai[i,i1,a,i2] 
+                  TSiiai[i,i2,a,i1]  -= T2iiai[i,i2,a,i1] 
+#
+               ENDDO i3 
+#
+            ENDDO a1 
+#
+            DO b 
+            DO j 
+#
+               REQUEST T2old_ab[a,i2,b,j]  
+               REQUEST Vpiqj[i1,i,b,j]    
+#
+               T1iiai[i,i1,a,i2]  = Vpiqj[i1,i,b,j]*T2old_ab[a,i2,b,j] 
+               Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2] 
+#
+               T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2] 
+               TSiiai[i,i2,a,i1] -= T2iiai[i,i2,a,i1] 
+#
+            ENDDO j 
+            ENDDO b 
+#
+            PREPARE W1imen_aa[i,i1,a,i2] += Tiiai[i,i1,a,i2] 
+            PREPARE W1imen_aa[i,i2,a,i1] += TSiiai[i,i2,a,i1] 
+#
+      ENDPARDO i, i1, a, i2 
+#
+      ENDPROC W1IMENAA 
+#     ---------------- 
+#
+      PROC W1IMENAB 
+#     ------------- 
+#
+      PARDO i, i1, b, j 
+#
+            REQUEST Vpiqj[i,i1,b,j]   
+            Tiibj[i,i1,b,j] = Vpiqj[i,i1,b,j]  
+#
+            DO a 
+#
+               REQUEST T2old_ab[a,i1,b,j] 
+               REQUEST W2mebj_ab[i,a,b,j]   
+               GET Fme_a[i,a] 
+               GET t1a_old[a,i1] 
+#
+               T1iibj[i,i1,b,j] = T2old_ab[a,i1,b,j]*Fme_a[i,a] 
+               Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j] 
+#
+               T1iibj[i,i1,b,j] = W2mebj_ab[i,a,b,j]*t1a_old[a,i1] 
+               Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j] 
+#
+               DO b1 
+#
+                  REQUEST Tau_ab[a,i1,b1,j]   
+                  REQUEST Vbbai[b1,b,a,i]     
+#
+                  T1iibj[i,i1,b,j] = Vbbai[b1,b,a,i]*Tau_ab[a,i1,b1,j] 
+                  Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j] 
+#
+               ENDDO b1 
+#
+               DO i2 
+#
+                  REQUEST T2old_ab[a,i2,b,j]   
+                  REQUEST VSpipi[i1,i,a,i2]   
+#
+                  T1iibj[i,i1,b,j] = VSpipi[i1,i,a,i2]*T2old_ab[a,i2,b,j]  
+                  Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j] 
+#
+               ENDDO i2 
+#
+               DO j1 
+#
+                  REQUEST T2old_ab[a,i1,b,j1]   
+                  REQUEST Vpiqj[a,i,j,j1]      
+#
+                  T1iibj[i,i1,b,j] = Vpiqj[a,i,j,j1]*T2old_ab[a,i1,b,j1]  
+                  Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j] 
+#
+               ENDDO j1 
+#
+            ENDDO a 
+#
+            DO j1 
+#
+               GET W1minj_ab[i,i1,j1,j]   
+               GET t1b_old[b,j1] 
+#
+               T1iibj[i,i1,b,j] = W1minj_ab[i,i1,j1,j]*t1b_old[b,j1]  
+               Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j] 
+#
+            ENDDO j1 
+#
+            DO b1 
+#
+               REQUEST W2mjbe_ab[i,i1,b,b1] 
+               GET t1b_old[b1,j] 
+#
+               T1iibj[i,i1,b,j] = W2mjbe_ab[i,i1,b,b1]*t1b_old[b1,j]  
+               Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j] 
+#
+               DO j2 
+#
+                  REQUEST T2old_bb[b1,j2,b,j]  
+                  REQUEST Vpiqj[i1,i,b1,j2]    
+#
+                  T1iibj[i,i1,b,j] = Vpiqj[i1,i,b1,j2]*T2old_bb[b1,j2,b,j]  
+                  Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j] 
+#
+               ENDDO j2 
+#
+            ENDDO b1 
+#
+            PREPARE W1imen_ab[i,i1,b,j] = Tiibj[i,i1,b,j] 
+#
+      ENDPARDO i, i1, b, j 
+#
+      ENDPROC W1IMENAB 
+#     ---------------- 
+#
+      PROC W1IMENBA 
+#     ------------- 
+#
+      PARDO j, j1, a, i 
+#
+            REQUEST Vpiqj[a,i,j,j1]   
+            Tjjai[j,j1,a,i] = Vpiqj[a,i,j,j1]  
+#
+            DO b 
+#
+               REQUEST T2old_ab[a,i,b,j1] 
+               REQUEST W2mebj_ba[j,b,a,i]   
+               GET Fme_b[j,b] 
+               GET t1b_old[b,j1] 
+#
+               T1jjai[j,j1,a,i] = T2old_ab[a,i,b,j1]*Fme_b[j,b] 
+               Tjjai[j,j1,a,i] += T1jjai[j,j1,a,i] 
+#
+               T1jjai[j,j1,a,i] = W2mebj_ba[j,b,a,i]*t1b_old[b,j1] 
+               Tjjai[j,j1,a,i] += T1jjai[j,j1,a,i] 
+#
+               DO a1 
+#
+                  REQUEST Tau_ab[a1,i,b,j1] 
+                  REQUEST Vaabj[a1,a,b,j]     
+#
+                  T1jjai[j,j1,a,i] = Vaabj[a1,a,b,j]*Tau_ab[a1,i,b,j1] 
+                  Tjjai[j,j1,a,i] += T1jjai[j,j1,a,i] 
+#
+               ENDDO a1 
+#
+               DO j2 
+#
+                  REQUEST T2old_ab[a,i,b,j2]  
+                  REQUEST VSqjqj[j1,j,b,j2]  
+#
+                  T1jjai[j,j1,a,i] = VSqjqj[j1,j,b,j2]*T2old_ab[a,i,b,j2]  
+                  Tjjai[j,j1,a,i] += T1jjai[j,j1,a,i] 
+#
+               ENDDO j2 
+#
+               DO i1 
+#
+                  REQUEST T2old_ab[a,i1,b,j1]  
+                  REQUEST Vpiqj[i,i1,b,j]     
+#
+                  T1jjai[j,j1,a,i] = T2old_ab[a,i1,b,j1]*Vpiqj[i,i1,b,j]  
+                  Tjjai[j,j1,a,i] -= T1jjai[j,j1,a,i] 
+#
+               ENDDO i1 
+#
+            ENDDO b 
+#
+            DO i1 
+#
+               GET W1minj_ab[i1,i,j,j1] 
+               GET t1a_old[a,i1] 
+#
+               T1jjai[j,j1,a,i] = W1minj_ab[i1,i,j,j1]*t1a_old[a,i1]  
+               Tjjai[j,j1,a,i] -= T1jjai[j,j1,a,i] 
+#
+            ENDDO i1 
+#
+            DO a1  
+#
+               REQUEST W2mjbe_ba[j,j1,a,a1] 
+               GET t1a_old[a1,i] 
+#
+               T1jjai[j,j1,a,i] = W2mjbe_ba[j,j1,a,a1]*t1a_old[a1,i]  
+               Tjjai[j,j1,a,i] -= T1jjai[j,j1,a,i] 
+#
+               DO i1 
+#
+                  REQUEST T2old_aa[a1,i1,a,i] 
+                  REQUEST Vpiqj[a1,i1,j1,j]   
+#
+                  T1jjai[j,j1,a,i] = Vpiqj[a1,i1,j1,j]*T2old_aa[a1,i1,a,i]  
+                  Tjjai[j,j1,a,i] += T1jjai[j,j1,a,i] 
+#
+               ENDDO i1 
+#
+            ENDDO a1 
+#
+            PREPARE W1imen_ba[j,j1,a,i] = Tjjai[j,j1,a,i] 
+#
+      ENDPARDO j, j1, a, i 
+#
+      ENDPROC W1IMENBA 
+#     ---------------- 
+#
+      PROC W1IMENBB 
+#     ------------- 
+#
+      PARDO j, j1, b, j2 
+#
+            REQUEST VSqjqj[j,j1,b,j2] 
+            Tjjbj[j,j1,b,j2]  = VSqjqj[j,j1,b,j2] 
+            TSjjbj[j,j2,b,j1] = 0.0  
+#
+            DO j3  
+#
+               GET W1minj_bb[j,j1,j3,j2] 
+               GET t1b_old[b,j3] 
+#   
+               T1jjbj[j,j1,b,j2] = W1minj_bb[j,j1,j3,j2]*t1b_old[b,j3] 
+               Tjjbj[j,j1,b,j2] -= T1jjbj[j,j1,b,j2] 
+#
+            ENDDO j3 
+#
+            DO b1 
+#
+               REQUEST T2old_bb[b,j1,b1,j2] 
+               REQUEST W2mebj_bb[j,b1,b,j2] 
+               GET Fme_b[j,b1] 
+               GET t1b_old[b1,j1] 
+#
+               T1jjbj[j,j1,b,j2]  = T2old_bb[b,j1,b1,j2]*Fme_b[j,b1] 
+               Tjjbj[j,j1,b,j2]  -= T1jjbj[j,j1,b,j2] 
+#
+               T1jjbj[j,j1,b,j2]  = W2mebj_bb[j,b1,b,j2]*t1b_old[b1,j1]  
+               T2jjbj[j,j2,b,j1]  = T1jjbj[j,j1,b,j2] 
+#
+               Tjjbj[j,j1,b,j2]  += T1jjbj[j,j1,b,j2] 
+               TSjjbj[j,j2,b,j1] -= T2jjbj[j,j2,b,j1] 
+#
+               DO b2 
+#
+                  REQUEST Tau_bb[b1,j1,b2,j2] 
+                  REQUEST VSbbbj[b2,b,b1,j]   
+#
+                  T1jjbj[j,j1,b,j2]  = Tau_bb[b1,j1,b2,j2]*VSbbbj[b2,b,b1,j]
+                  T1jjbj[j,j1,b,j2] *= 0.5  
+                  Tjjbj[j,j1,b,j2]  += T1jjbj[j,j1,b,j2] 
+#
+               ENDDO b2 
+#
+               DO j3 
+#
+                  REQUEST T2old_bb[b,j2,b1,j3] 
+                  REQUEST VSqjqj[j1,j,b1,j3]    
+#
+                  T1jjbj[j,j1,b,j2]  = VSqjqj[j1,j,b1,j3]*T2old_bb[b,j2,b1,j3] 
+                  Tjjbj[j,j1,b,j2]  += T1jjbj[j,j1,b,j2] 
+#
+                  T2jjbj[j,j2,b,j1]  = T1jjbj[j,j1,b,j2] 
+                  TSjjbj[j,j2,b,j1] -= T2jjbj[j,j2,b,j1] 
+#
+               ENDDO j3 
+#
+            ENDDO b1 
+#
+            DO a 
+            DO i 
+#
+               REQUEST T2old_ab[a,i,b,j2] 
+               REQUEST Vpiqj[a,i,j1,j]     
+#
+               T1jjbj[j,j1,b,j2]  = Vpiqj[a,i,j1,j]*T2old_ab[a,i,b,j2] 
+               T2jjbj[j,j2,b,j1]  = T1jjbj[j,j1,b,j2] 
+#
+               Tjjbj[j,j1,b,j2]   += T1jjbj[j,j1,b,j2] 
+               TSjjbj[j,j2,b,j1]  -= T2jjbj[j,j2,b,j1] 
+#
+            ENDDO i 
+            ENDDO a 
+#
+            PREPARE W1imen_bb[j,j1,b,j2] += Tjjbj[j,j1,b,j2] 
+            PREPARE W1imen_bb[j,j2,b,j1] += TSjjbj[j,j2,b,j1] 
+#
+      ENDPARDO j, j1, b, j2 
+#
+      ENDPROC W1IMENBB 
+#     ---------------- 
+#
+      PROC W1IMEN 
+#     ----------- 
+#
+         CALL W1IMENAA
+         CALL W1IMENAB 
+         CALL W1IMENBA 
+         CALL W1IMENBB
+#
+      ENDPROC W1IMEN 
+#     -------------- 
+#
+      PROC W1EAFMAA_S  
+#     --------------- 
+#
+      PARDO a1, a, a2, i 
+#
+# Compute (a1,a,a1,i) and (a2,a,a1,i) block of intermediate 
+# --------------------------------------------------------- 
+#
+            Tpppp[a1,a,a2,i]  = 0.0  
+            TSpppp[a2,a,a1,i] = 0.0  
+#
+            DO i1 
+#
+               REQUEST              T2old_aa[a1,i,a2,i1] 
+               REQUEST              W2mebj_aa[i1,a,a2,i] 
+               GET                  Fme_a[i1,a] 
+               GET                  t1a_old[a1,i1] 
+#
+               T1pppp[a1,a,a2,i]  = T2old_aa[a1,i,a2,i1]*Fme_a[i1,a]  
+               Tpppp[a1,a,a2,i]  += T1pppp[a1,a,a2,i] 
+#
+               T1pppp[a1,a,a2,i]  = W2mebj_aa[i1,a,a2,i]*t1a_old[a1,i1]  
+               T2pppp[a2,a,a1,i]  = T1pppp[a1,a,a2,i]  
+# 
+               Tpppp[a1,a,a2,i]  -= T1pppp[a1,a,a2,i] 
+               TSpppp[a2,a,a1,i] += T2pppp[a2,a,a1,i] 
+#
+            ENDDO i1 
+#
+            PREPARE W1eafm_aa[a1,a,a2,i] +=  Tpppp[a1,a,a2,i] 
+            PREPARE W1eafm_aa[a2,a,a1,i] += TSpppp[a2,a,a1,i] 
+#
+      ENDPARDO a1, a, a2, i 
+#
+      PARDO a1, a2, i1, i2  
+#
+            REQUEST Tau_aa[a1,i1,a2,i2] 
+#
+            DO a 
+            DO i 
+#
+               REQUEST                         VSpipi[a,i1,i,i2]   
+               T1pppp[a1,a,a2,i]             = Tau_aa[a1,i1,a2,i2]*VSpipi[a,i1,i,i2]  
+               T1pppp[a1,a,a2,i]            *= 0.5  
+               PREPARE W1eafm_aa[a1,a,a2,i] +=  T1pppp[a1,a,a2,i] 
+#
+            ENDDO i 
+            ENDDO a 
+#
+      ENDPARDO a1, a2, i1, i2  
+#
+      DO a 
+      DO a1 
+
+         PARDO a3, i2 
+               REQUEST                  VSaaai[a,a1,a3,i2] 
+               PUT DSaaai[a,a1,a3,i2] = VSaaai[a,a1,a3,i2] 
+         ENDPARDO a3, i2 
+         sip_barrier 
+#
+         PARDO a2, i, a3, i2  
+               REQUEST                     T2old_aa[a3,i2,a2,i] 
+               GET                         DSaaai[a,a1,a3,i2] 
+               T1pppp[a1,a,a2,i]         = DSaaai[a,a1,a3,i2]*T2old_aa[a3,i2,a2,i] 
+               PUT D1eafm_aa[a1,a,a2,i] += T1pppp[a1,a,a2,i] 
+#
+               T2pppp[a2,a,a1,i]         = T1pppp[a1,a,a2,i]  
+               T2pppp[a2,a,a1,i]        *= -1.0  
+               PUT D2eafm_aa[a2,a,a1,i] += T2pppp[a2,a,a1,i] 
+         ENDPARDO a2, i, a3, i2  
+#
+         PARDO b, j, a3, i2  
+               REQUEST                    T2old_ab[a3,i2,b,j] 
+               GET                        DSaaai[a,a1,a3,i2] 
+               Tppqq[a1,a,b,j]          = DSaaai[a,a1,a3,i2]*T2old_ab[a3,i2,b,j] 
+               PUT D1eafm_ab[a1,a,b,j] += Tppqq[a1,a,b,j]
+         ENDPARDO b, j, a3, i2  
+         sip_barrier 
+#
+         PARDO a2, i 
+               GET                             D1eafm_aa[a1,a,a2,i] 
+               GET                             D2eafm_aa[a2,a,a1,i] 
+               PREPARE W1eafm_aa[a1,a,a2,i] += D1eafm_aa[a1,a,a2,i]
+               PREPARE W1eafm_aa[a2,a,a1,i] += D2eafm_aa[a2,a,a1,i]  
+         ENDPARDO a2, i 
+#
+         PARDO b, j 
+               GET                            D1eafm_ab[a1,a,b,j] 
+               PREPARE W1eafm_ab[a1,a,b,j] += D1eafm_ab[a1,a,b,j]  
+         ENDPARDO b, j 
+
+         server_barrier 
+         pardo a2,i
+             put D1eafm_aa[a1,a,a2,i] = 0.0
+             put D2eafm_aa[a1,a,a2,i] = 0.0
+         endpardo a2,i
+         PARDO b, j
+               PUT D1eafm_ab[a1,a,b,j] = 0.0
+         ENDPARDO b, j
+         sip_barrier
+#
+      ENDDO a1 
+      ENDDO a 
+#
+      pardo a1,a,a2,i
+            put D1eafm_aa[a1,a,a2,i] = 0.0
+      endpardo a1,a,a2,i
+      pardo a1,a,b,j
+            PUT D1eafm_ab[a1,a,b,j] = 0.0
+      endpardo a1,a,b,j
+      sip_barrier 
+
+      DO a1  
+      DO a  
+         PARDO b, j 
+               REQUEST               Vaabj[a,a1,b,j] 
+               PUT Daabj[a,a1,b,j] = Vaabj[a,a1,b,j] 
+         ENDPARDO b, j 
+         sip_barrier 
+#
+         PARDO a2, i, b, j 
+               REQUEST                     T2old_ab[a2,i,b,j] 
+               GET                         Daabj[a,a1,b,j] 
+               Tpppp[a1,a,a2,i]          = Daabj[a,a1,b,j]*T2old_ab[a2,i,b,j]
+               Tpppp[a1,a,a2,i]         *= 2.0  
+               PUT D1eafm_aa[a1,a,a2,i] +=  Tpppp[a1,a,a2,i] 
+         ENDPARDO a2, i, b, j 
+#
+         PARDO b1, j1, b, j  
+               REQUEST                      T2old_bb[b1,j1,b,j] 
+               GET                          Daabj[a,a1,b,j] 
+               Tppqq[a1,a,b1,j1]          = Daabj[a,a1,b,j]*T2old_bb[b1,j1,b,j]
+               PUT D1eafm_ab[a1,a,b1,j1] += Tppqq[a1,a,b1,j1] 
+         ENDPARDO b1, j1, b, j  
+#
+         PARDO b1, i, b, j 
+               REQUEST                     T2old_ab[a,i,b1,j] 
+               GET                         Daabj[a,a1,b,j] 
+               Tqqpp[b1,b,a1,i]          = T2old_ab[a,i,b1,j]*Daabj[a,a1,b,j] 
+               Tqqpp[b1,b,a1,i]         *= -1.0  
+               PUT D1eafm_ba[b1,b,a1,i] += Tqqpp[b1,b,a1,i] 
+         ENDPARDO b1, i, b, j 
+         sip_barrier 
+#
+         PARDO a2, i 
+               GET                             D1eafm_aa[a1,a,a2,i] 
+               PREPARE W1eafm_aa[a1,a,a2,i] += D1eafm_aa[a1,a,a2,i] 
+         ENDPARDO a2, i 
+#
+         PARDO b1, j1  
+               GET                              D1eafm_ab[a1,a,b1,j1] 
+               PREPARE W1eafm_ab[a1,a,b1,j1] += D1eafm_ab[a1,a,b1,j1]  
+         ENDPARDO b1, j1  
+         server_barrier 
+
+         PARDO a2, i
+               PUT D1eafm_aa[a1,a,a2,i] = 0.0
+         ENDPARDO a2, i
+         PARDO b1, j1
+               PUT D1eafm_ab[a1,a,b1,j1] = 0.0
+         ENDPARDO b1, j1
+         sip_barrier 
+#
+      ENDDO a  
+#
+         PARDO b, b1, i 
+               GET                             D1eafm_ba[b1,b,a1,i] 
+               PREPARE W1eafm_ba[b1,b,a1,i] += D1eafm_ba[b1,b,a1,i]  
+         ENDPARDO b, b1, i 
+         server_barrier 
+
+         PARDO b, b1, i
+               PUT D1eafm_ba[b1,b,a1,i] = 0.0
+         ENDPARDO b, b1, i 
+         sip_barrier 
+
+      ENDDO a1  
+
+#bgn_debug
+#      server_barrier
+#      suma = 0.0
+#      sumaa = 0.0
+#      pardo a1, a, a2, i
+#      request W1eafm_aa[a1,a,a2,i]
+#      tmp =  W1eafm_aa[a1,a,a2,i]  *  W1eafm_aa[a1,a,a2,i]
+#      suma +=tmp
+#      endpardo a1, a, a2, i
+#      server_barrier
+#      collective sumaa += suma
+#      print sumaa
+#      suma = 0.0
+#      sumaa = 0.0
+#      pardo a1,a, b1, j1
+#      request W1eafm_ab[a1,a,b1,j1]
+#      tmp =  W1eafm_ab[a1,a,b1,j1]  * W1eafm_ab[a1,a,b1,j1]
+#      suma +=tmp
+#      endpardo a1,a, b1, j1
+#      server_barrier
+#      collective sumaa += suma
+#      print sumaa
+#      suma = 0.0
+#      sumaa = 0.0
+#      pardo b1,b,a1,i
+#      request W1eafm_ba[b1,b,a1,i]
+#      tmp = W1eafm_ba[b1,b,a1,i] * W1eafm_ba[b1,b,a1,i]
+#      suma +=tmp
+#      endpardo b1,b,a1,i
+#      server_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+#
+      ENDPROC W1EAFMAA_S  
+#     ------------------
+#
+      PROC W1EAFMAA  
+#     ------------- 
+#
+# Done contributions involving integrals with three virtuals.
+# -----------------------------------------------------------
+#
+      PARDO i, a1, a2   
+#
+            allocate LLaa[*,a1,i,a2] 
+#
+            DO i1 
+               REQUEST            L2old_aa[i1,a1,i,a2] 
+               LLaa[i1,a1,i,a2] = L2old_aa[i1,a1,i,a2] 
+            ENDDO i1 
+#
+            DO a 
+#
+               REQUEST            W1eafm_aa[a1,a,a2,i] 
+               tpppp[a1,i,a2,a] = W1eafm_aa[a1,a,a2,i] 
+#
+# Compute contribution to l1a_new 
+# ------------------------------- 
+#
+               DO i1 
+#
+                 #REQUEST              L2old_aa[i1,a1,i,a2] 
+                  T1ia[i1,a]         = LLaa[i1,a1,i,a2]*tpppp[a1,i,a2,a]  
+                  T1ia[i1,a]        *= 0.5
+                  PUT l1a_new[i1,a] += T1ia[i1,a] 
+#
+            ENDDO i1 
+#
+            ENDDO a 
+#
+            deallocate LLaa[*,a1,i,a2] 
+#
+      ENDPARDO i, a1, a2 
+#
+# Done contributions involving integrals with three virtuals.
+# -----------------------------------------------------------
+#
+      ENDPROC W1EAFMAA 
+#     ---------------- 
+#
+      PROC W1EAFMAB_S 
+#     --------------- 
+#
+# Compute (a1,a,b,j) block of intermediate 
+# ---------------------------------------- 
+#
+      PARDO a, a1, j, b 
+#
+            Tppqq[a1,a,b,j] = 0.0 
+#
+            DO i 
+#
+               REQUEST            T2old_ab[a1,i,b,j] 
+               REQUEST            W2mebj_ab[i,a,b,j]  
+               GET                Fme_a[i,a] 
+               GET                t1a_old[a1,i] 
+#
+               T1ppqq[a1,a,b,j] = T2old_ab[a1,i,b,j]*Fme_a[i,a]
+               Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
+#
+               T1ppqq[a1,a,b,j] = W2mebj_ab[i,a,b,j]*t1a_old[a1,i] 
+               Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
+#
+            ENDDO i 
+#
+            PREPARE W1eafm_ab[a1,a,b,j] += Tppqq[a1,a,b,j] 
+#
+      ENDPARDO a, a1, j, b 
+#
+      PARDO a, a1, j, j1  
+#
+            REQUEST W2mjbe_ba[j1,j,a1,a] 
+#
+            DO b 
+#
+               GET                            t1b_old[b,j1] 
+               Tppqq[a1,a,b,j]              = W2mjbe_ba[j1,j,a1,a]*t1b_old[b,j1] 
+               PREPARE W1eafm_ab[a1,a,b,j] += Tppqq[a1,a,b,j] 
+#
+            ENDDO b 
+#
+      ENDPARDO a, a1, j, j1 
+#
+      PARDO a1, b, j1, i 
+#
+            REQUEST Tau_ab[a1,i,b,j1] 
+#
+            DO a 
+            DO j 
+#   
+               REQUEST                        Vpiqj[a,i,j,j1] 
+               Tppqq[a1,a,b,j]              = Tau_ab[a1,i,b,j1]*Vpiqj[a,i,j,j1] 
+               PREPARE W1eafm_ab[a1,a,b,j] += Tppqq[a1,a,b,j] 
+#
+            ENDDO j 
+            ENDDO a 
+#
+      ENDPARDO a1, b, j1, i 
+      server_barrier 
+#
+      ENDPROC W1EAFMAB_S 
+#     ------------------ 
+#
+      PROC W1EAFMAB 
+#     ------------- 
+#
+# Compute contribution to l1a_new
+# -------------------------------
+#
+#bgn_debug
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a1,a,b,j
+#      request W1eafm_ab[a1,a,b,j]
+#      tmp = W1eafm_ab[a1,a,b,j] * W1eafm_ab[a1,a,b,j]
+#      suma += tmp
+#      endpardo a1,a,b,j
+#      sip_barrier 
+#      collective sumaa+=suma
+#      print "checksum of W1eafm_ab"
+#      print sumaa
+#bgn_debug
+     
+      
+      PARDO a1, j, b  
+#
+            allocate LLab[*,a1,j,b] 
+#
+            DO i
+               REQUEST          L2old_ab[i,a1,j,b] 
+               LLab[i,a1,j,b] = L2old_ab[i,a1,j,b] 
+            ENDDO i
+#
+            DO a 
+#
+               REQUEST           W1eafm_ab[a1,a,b,j]   
+               tpqqp[a1,j,b,a] = W1eafm_ab[a1,a,b,j] 
+#
+               DO i
+#
+                 #REQUEST             L2old_ab[i,a1,j,b b
+                  T1ia[i,a]         = LLab[i,a1,j,b]*tpqqp[a1,j,b,a]  
+                  PUT l1a_new[i,a] += T1ia[i,a]
+#
+               ENDDO i
+#
+            ENDDO a 
+#
+            deallocate LLab[*,a1,j,b] 
+#
+      ENDPARDO a1, j, b 
+#
+# Done contributions involving integrals with three virtuals.
+# -----------------------------------------------------------
+#
+      ENDPROC W1EAFMAB 
+#     ---------------- 
+#
+      PROC W1EAFMBA_S  
+#     --------------- 
+#
+      PARDO b, b1, a, i 
+#
+# Compute (b1,b,a,i) block of intermediate 
+# ---------------------------------------- 
+#
+            Tqqpp[b1,b,a,i] = 0.0 
+#
+            DO j 
+#
+               REQUEST T2old_ab[a,i,b1,j] 
+               REQUEST W2mebj_ba[j,b,a,i]   
+               GET Fme_b[j,b] 
+               GET t1b_old[b1,j] 
+#
+               T1qqpp[b1,b,a,i] = T2old_ab[a,i,b1,j]*Fme_b[j,b]
+               Tqqpp[b1,b,a,i] -= T1qqpp[b1,b,a,i]
+#
+               T1qqpp[b1,b,a,i] = W2mebj_ba[j,b,a,i]*t1b_old[b1,j] 
+               Tqqpp[b1,b,a,i] -= T1qqpp[b1,b,a,i]
+#
+            ENDDO j 
+#
+            PREPARE W1eafm_ba[b1,b,a,i] += Tqqpp[b1,b,a,i] 
+#
+      ENDPARDO b, b1, a, i  
+#
+      PARDO a, b1, i1, j  
+#
+            REQUEST Tau_ab[a,i1,b1,j] 
+#
+            DO b 
+            DO i 
+#   
+               REQUEST                        Vpiqj[i,i1,b,j] 
+               Tqqpp[b1,b,a,i]              = Tau_ab[a,i1,b1,j]*Vpiqj[i,i1,b,j] 
+               PREPARE W1eafm_ba[b1,b,a,i] += Tqqpp[b1,b,a,i] 
+#
+            ENDDO i 
+            ENDDO b 
+#
+      ENDPARDO a, b1, i1, j 
+#
+      PARDO i, i1, b, b1  
+#
+            REQUEST W2mjbe_ab[i1,i,b1,b]
+#
+            DO a 
+               GET                            t1a_old[a,i1] 
+               Tqqpp[b1,b,a,i]              = W2mjbe_ab[i1,i,b1,b]*t1a_old[a,i1] 
+               PREPARE W1eafm_ba[b1,b,a,i] += Tqqpp[b1,b,a,i] 
+#
+            ENDDO a 
+#
+      ENDPARDO i, i1, b, b1 
+      server_barrier 
+#
+      ENDPROC W1EAFMBA_S  
+#     ------------------ 
+#
+# Compute contribution to l1b_new 
+# ------------------------------- 
+#
+      PROC W1EAFMBA 
+#     ------------- 
+#
+#bgn_debug
+#      suma=0.0
+#      sumaa=0.0
+#      pardo b1,b,a,i
+#      request W1eafm_ba[b1,b,a,i]
+#      tmp = W1eafm_ba[b1,b,a,i] * W1eafm_ba[b1,b,a,i]
+#      suma += tmp
+#      endpardo b1,b,a,i
+#      sip_barrier
+#      collective sumaa+=suma
+#      print "checksum of W1eafm_ba"
+#      print sumaa
+##bgn_debug
+
+      PARDO b1, i, a   
+#
+            allocate LLba[i,a,*,b1] 
+#
+            DO j
+               REQUEST          L2old_ab[i,a,j,b1] 
+               LLba[i,a,j,b1] = L2old_ab[i,a,j,b1] 
+            ENDDO j
+#
+            DO b 
+#
+               REQUEST           W1eafm_ba[b1,b,a,i] 
+               tqppq[b1,i,a,b] = W1eafm_ba[b1,b,a,i] 
+#
+               DO j
+#
+                  T1jb[j,b]         = LLba[i,a,j,b1]*tqppq[b1,i,a,b]  
+                  PUT l1b_new[j,b] += T1jb[j,b]
+#
+               ENDDO j
+#
+            ENDDO b 
+#
+            deallocate LLba[i,a,*,b1] 
+#
+      ENDPARDO b1, i, a  
+#
+      ENDPROC W1EAFMBA 
+#     ---------------- 
+#
+      PROC W1EAFMBB_S  
+#     --------------- 
+
+      PARDO b1, b, b2, j 
+#
+# Compute (b1,b,b1,j) and (b2,b,b1,j) block of intermediate 
+# --------------------------------------------------------- 
+#
+            Tqqqq[b1,b,b2,j]  = 0.0  
+            TSqqqq[b2,b,b1,j] = 0.0  
+#
+            DO j1 
+#
+               REQUEST              T2old_bb[b1,j,b2,j1] 
+               REQUEST              W2mebj_bb[j1,b,b2,j] 
+               GET                  Fme_b[j1,b] 
+               GET                  t1b_old[b1,j1] 
+#
+               T1qqqq[b1,b,b2,j]  = T2old_bb[b1,j,b2,j1]*Fme_b[j1,b]  
+               Tqqqq[b1,b,b2,j]  += T1qqqq[b1,b,b2,j] 
+#
+               T1qqqq[b1,b,b2,j]  = W2mebj_bb[j1,b,b2,j]*t1b_old[b1,j1]  
+               T2qqqq[b2,b,b1,j]  = T1qqqq[b1,b,b2,j]  
+# 
+                Tqqqq[b1,b,b2,j] -= T1qqqq[b1,b,b2,j] 
+               TSqqqq[b2,b,b1,j] += T2qqqq[b2,b,b1,j] 
+#
+            ENDDO j1 
+#
+            PREPARE W1eafm_bb[b1,b,b2,j] +=  Tqqqq[b1,b,b2,j] 
+            PREPARE W1eafm_bb[b2,b,b1,j] += TSqqqq[b2,b,b1,j] 
+#
+      ENDPARDO b1, b, b2, j 
+#bgn_debug
+#      server_barrier
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo b1,b,b2,j
+#      request W1eafm_bb[b1,b,b2,j]
+#      tmp =   W1eafm_bb[b1,b,b2,j] *  W1eafm_bb[b1,b,b2,j]
+#      sumb +=tmp
+#      endpardo b1,b,b2,j
+#      server_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      PARDO j, b, b1, b2  
+#
+            Tqqqq[b1,b,b2,j]  = 0.0  
+#
+            DO j1 
+            DO j2 
+#
+               REQUEST Tau_bb[b1,j1,b2,j2]   
+               REQUEST VSqjqj[b,j1,j,j2]     
+#
+               T1qqqq[b1,b,b2,j]  = Tau_bb[b1,j1,b2,j2]*VSqjqj[b,j1,j,j2]  
+               T1qqqq[b1,b,b2,j] *= 0.5  
+               Tqqqq[b1,b,b2,j]  += T1qqqq[b1,b,b2,j] 
+#
+            ENDDO j2 
+            ENDDO j1 
+#
+            PREPARE W1eafm_bb[b1,b,b2,j] +=  Tqqqq[b1,b,b2,j] 
+#
+      ENDPARDO j, b, b1, b2  
+#bgn_debug
+      server_barrier
+      sumb = 0.0
+      sumbb = 0.0
+      pardo b1,b,b2,j
+      request W1eafm_bb[b1,b,b2,j]
+      tmp =   W1eafm_bb[b1,b,b2,j] *  W1eafm_bb[b1,b,b2,j]
+      sumb +=tmp
+      endpardo b1,b,b2,j
+      server_barrier
+      collective sumbb += sumb
+      print sumbb
+#end_debug
+#
+      DO b
+      DO b1
+
+         PARDO b3, j2
+            REQUEST                  VSbbbj[b,b1,b3,j2] 
+            PUT DSbbbj[b,b1,b3,j2] = VSbbbj[b,b1,b3,j2]
+         ENDPARDO b3, j2
+         sip_barrier
+#
+         PARDO b2, j, b3, j2
+               REQUEST                     T2old_bb[b3,j2,b2,j] 
+               GET                         DSbbbj[b,b1,b3,j2]
+               T1qqqq[b1,b,b2,j]         = DSbbbj[b,b1,b3,j2]*T2old_bb[b3,j2,b2,j]
+               PUT D1eafm_bb[b1,b,b2,j] += T1qqqq[b1,b,b2,j]
+#
+               T2qqqq[b2,b,b1,j]         = T1qqqq[b1,b,b2,j]
+               T2qqqq[b2,b,b1,j]        *= -1.0
+               PUT D2eafm_bb[b2,b,b1,j] += T2qqqq[b2,b,b1,j]
+         ENDPARDO b2, j, b3, j2
+#
+         PARDO a, i, b3, j2
+               REQUEST                    T2old_ab[a,i,b3,j2] 
+               GET                        DSbbbj[b,b1,b3,j2]
+               Tqqpp[b1,b,a,i]          = DSbbbj[b,b1,b3,j2]*T2old_ab[a,i,b3,j2]
+               PUT D2eafm_ba[b1,b,a,i] += Tqqpp[b1,b,a,i]
+         ENDPARDO a, i, b3, j2
+         sip_barrier
+#
+         PARDO b2, j
+               GET                             D1eafm_bb[b1,b,b2,j]
+               PREPARE W1eafm_bb[b1,b,b2,j] += D1eafm_bb[b1,b,b2,j]
+         ENDPARDO b2, j
+#
+         PARDO b2, j
+               GET                             D2eafm_bb[b2,b,b1,j]
+               PREPARE W1eafm_bb[b2,b,b1,j] += D2eafm_bb[b2,b,b1,j]
+         ENDPARDO b2, j
+#
+         PARDO a, i
+               GET                            D2eafm_ba[b1,b,a,i]
+               PREPARE W1eafm_ba[b1,b,a,i] += D2eafm_ba[b1,b,a,i]
+         ENDPARDO a, i
+         server_barrier
+
+         PARDO b2, j
+               PUT D1eafm_bb[b2,b,b1,j] = 0.0
+               PUT D2eafm_bb[b2,b,b1,j] = 0.0
+         ENDPARDO b2, j
+         PARDO  a, i
+               PUT D2eafm_ba[b1,b,a,i] = 0.0
+         ENDPARDO  a, i 
+         sip_barrier 
+              
+      ENDDO b1
+      ENDDO b
+
+#bgn_debug
+#      server_barrier
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo b1,b,b2,j
+#      request W1eafm_bb[b1,b,b2,j]
+#      tmp =   W1eafm_bb[b1,b,b2,j] *  W1eafm_bb[b1,b,b2,j]
+#      sumb +=tmp
+#      endpardo b1,b,b2,j
+#      server_barrier
+#      collective sumbb += sumb
+#      print sumb
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo  b,b1,a,i
+#      request Vbbai[b,b1,a,i]
+#      tmp = Vbbai[b,b1,a,i] * Vbbai[b,b1,a,i] 
+#      sumb +=tmp
+#      endpardo  b,b1,a,i
+#      server_barrier 
+#      collective sumbb += sumb
+#      print sumbb
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo  a,i,b,j
+#      request T2old_ab[a,i,b,j]
+#      tmp = T2old_ab[a,i,b,j] * T2old_ab[a,i,b,j]
+#      sumb +=tmp
+#      endpardo a,i,b,j
+#      server_barrier 
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      PARDO b1,b,b2,j
+            PUT D1eafm_bb[b1,b,b2,j] = 0.0
+      ENDPARDO b1,b,b2,j
+      PARDO b1,b,a,i
+            PUT D2eafm_ba[b1,b,a,i] = 0.0
+      ENDPARDO b1,b,a,i
+      sip_barrier 
+
+      DO b1
+      DO b
+
+         PARDO a, i
+               REQUEST               Vbbai[b,b1,a,i] 
+               PUT Dbbai[b,b1,a,i] = Vbbai[b,b1,a,i]
+         ENDPARDO a, i
+         sip_barrier
+#
+         PARDO b2, j, a, i
+#
+               REQUEST                     T2old_ab[a,i,b2,j] 
+               GET                         Dbbai[b,b1,a,i]
+               Tqqqq[b1,b,b2,j]          = Dbbai[b,b1,a,i]*T2old_ab[a,i,b2,j]
+               Tqqqq[b1,b,b2,j]         *= 2.0
+               PUT D1eafm_bb[b1,b,b2,j] += Tqqqq[b1,b,b2,j]
+#
+         ENDPARDO b2, j, a, i
+#
+         PARDO a1, i1, a, i
+#
+               REQUEST                      T2old_aa[a1,i1,a,i] 
+               GET                          Dbbai[b,b1,a,i]
+               Tqqpp[b1,b,a1,i1]          = Dbbai[b,b1,a,i]*T2old_aa[a1,i1,a,i]
+               PUT D1eafm_ba[b1,b,a1,i1] += Tqqpp[b1,b,a1,i1]
+#
+         ENDPARDO a1, i1, a, i
+#
+         PARDO a1, j, a, i
+#
+               REQUEST                     T2old_ab[a1,i,b,j] 
+               GET                         Dbbai[b,b1,a,i]
+               Tppqq[a1,a,b1,j]          = T2old_ab[a1,i,b,j]*Dbbai[b,b1,a,i]
+               Tppqq[a1,a,b1,j]         *= -1.0
+               PUT D3eafm_ab[a1,a,b1,j] += Tppqq[a1,a,b1,j]
+#
+         ENDPARDO a1, j, a, i
+         sip_barrier
+#
+         PARDO b2, j
+               GET                             D1eafm_bb[b1,b,b2,j]
+               PREPARE W1eafm_bb[b1,b,b2,j] += D1eafm_bb[b1,b,b2,j]
+         ENDPARDO b2, j
+#
+         PARDO a1, i1
+               GET                              D1eafm_ba[b1,b,a1,i1]
+               PREPARE W1eafm_ba[b1,b,a1,i1] += D1eafm_ba[b1,b,a1,i1]
+         ENDPARDO a1, i1
+         server_barrier
+
+         PARDO b2, j
+               PUT D1eafm_bb[b1,b,b2,j] = 0.0
+         ENDPARDO b2, j
+         PARDO  a, i
+               PUT D1eafm_ba[b1,b,a,i] = 0.0
+         ENDPARDO  a, i
+         sip_barrier
+#
+      ENDDO b
+#
+         PARDO a, a1, j
+               GET                             D3eafm_ab[a1,a,b1,j]
+               PREPARE W1eafm_ab[a1,a,b1,j] += D3eafm_ab[a1,a,b1,j]
+         ENDPARDO a, a1, j
+         server_barrier
+        
+         PARDO a, a1, j
+               PUT D3eafm_ab[a1,a,b1,j] = 0.0
+         ENDPARDO a, a1, j
+         sip_barrier 
+         
+      ENDDO b1
+
+#bgn_debug
+#      server_barrier
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo b1,b,b2,j
+#      request W1eafm_bb[b1,b,b2,j]
+#      tmp =   W1eafm_bb[b1,b,b2,j] *  W1eafm_bb[b1,b,b2,j]
+#      sumb +=tmp
+#      endpardo b1,b,b2,j
+#      server_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo b1,b,a1,i1
+#      request W1eafm_ba[b1,b,a1,i1]
+#      tmp =  W1eafm_ba[b1,b,a1,i1]  * W1eafm_ba[b1,b,a1,i1]
+#      sumb +=tmp
+#      endpardo b1,b,a1,i1
+#      server_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#      sumb = 0.0
+#      sumbb = 0.0
+#      pardo a1,a,b1,j
+#      request W1eafm_ab[a1,a,b1,j]
+#      tmp = W1eafm_ab[a1,a,b1,j] * W1eafm_ab[a1,a,b1,j]
+#      sumb +=tmp
+#      endpardo a1,a,b1,j
+#      server_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      ENDPROC W1EAFMBB_S  
+#     ------------------ 
+#
+      PROC W1EAFMBB  
+#     ------------- 
+#
+      PARDO b1, b2, j   
+#
+            allocate LLbb[*,b1,j,b2] 
+#
+            DO j1 
+               REQUEST            L2old_bb[j1,b1,j,b2] 
+               LLbb[j1,b1,j,b2] = L2old_bb[j1,b1,j,b2] 
+            ENDDO j1 
+#
+            DO b 
+#
+               REQUEST            W1eafm_bb[b1,b,b2,j]  
+               tqqqq[b1,j,b2,b] = W1eafm_bb[b1,b,b2,j] 
+#
+# Compute contribution to l1b_new 
+# ------------------------------- 
+#
+               DO j1 
+#
+                  T1jb[j1,b]         = LLbb[j1,b1,j,b2]*tqqqq[b1,j,b2,b] 
+                  T1jb[j1,b]        *= 0.5
+                  PUT l1b_new[j1,b] += T1jb[j1,b]
+#
+               ENDDO j1 
+#
+            ENDDO b 
+#
+            deallocate LLbb[*,b1,j,b2] 
+#
+      ENDPARDO b1, b2, j 
+#
+      ENDPROC W1EAFMBB 
+#     ---------------- 
+#
+      PROC W1EAFM_S  
+#     -------------  
+# 
+         CALL W1EAFMAA_S 
+         CALL W1EAFMAB_S 
+         CALL W1EAFMBB_S 
+         CALL W1EAFMBA_S
+#
+      ENDPROC W1EAFM_S 
+#     ---------------- 
+#
+      PROC W1EAFM 
+#     -----------  
+# 
+         CALL W1EAFMAA
+         CALL W1EAFMBB
+         CALL W1EAFMAB
+         CALL W1EAFMBA
+#
+      ENDPROC W1EAFM 
+#     -------------- 
+#
+      PROC L1ANEW 
+#     ----------- 
+#
+#     local arrays used: 
+#     ------------------ 
+# 
+      PARDO a, i  
+#
+            GET                 Fme_a[i,a]
+            Tia[i,a]          = Fme_a[i,a] 
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO a, i
+# 
+      PARDO i, a, a1  
+#
+            GET                 l1a_old[i,a1]
+            GET                 F1ae_a[a1,a]
+            Tia[i,a]          = l1a_old[i,a1]*F1ae_a[a1,a]
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO i, a, a1  
+# 
+      PARDO i, a, a1, a2  
+#
+            REQUEST             VSaaai[a2,a1,a,i] 
+            GET                 Gae_a[a1,a2]
+            Tia[i,a]          = VSaaai[a2,a1,a,i]*Gae_a[a1,a2]
+            Tia[i,a]         *= -1.0  
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO i, a, a1, a2  
+# 
+      PARDO i, a, i1 
+#
+            GET                 l1a_old[i1,a]
+            GET                 F1mi_a[i,i1]
+            Tia[i,a]          = l1a_old[i1,a]*F1mi_a[i,i1]
+            Tia[i,a]         *= -1.0  
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO i, a, i1  
+# 
+      PARDO a, i, i1, i2   
+#
+            REQUEST             VSpipi[a,i,i1,i2] 
+            GET                 Gmi_a[i2,i1]
+            Tia[i,a]          = VSpipi[a,i,i1,i2]*Gmi_a[i2,i1]
+            Tia[i,a]         *= -1.0  
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO a, i, i1, i2 
+# 
+      PARDO a, i, j, j1   
+#
+            REQUEST             Vpiqj[a,i,j,j1] 
+            GET                 Gmi_b[j1,j]
+            Tia[i,a]          = Vpiqj[a,i,j,j1]*Gmi_b[j1,j]
+            Tia[i,a]         *= -1.0  
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO a, i, j, j1 
+# 
+      PARDO a, i, b, b1  
+#
+            REQUEST             Vbbai[b1,b,a,i] 
+            GET                 Gae_b[b,b1]
+            Tia[i,a]          = Vbbai[b1,b,a,i]*Gae_b[b,b1]
+            Tia[i,a]         *= -1.0  
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO a, i, b, b1 
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a, i
+#      get l1a_new[i,a]
+#      tmp = l1a_new[i,a] * l1a_new[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+#
+      PARDO i1, a1, i2  
+#
+            allocate Liaia[i1,*,i2,a1] 
+#
+            DO a 
+#
+               REQUEST             L2old_aa[i1,a,i2,a1]  
+               Liaia[i1,a,i2,a1] = L2old_aa[i1,a,i2,a1] 
+#
+            ENDDO a 
+#
+            DO i
+#
+               REQUEST W1imen_aa[i,i1,a1,i2] 
+#
+               DO a
+#
+                  Tia[i,a]          = W1imen_aa[i,i1,a1,i2]*Liaia[i1,a,i2,a1]
+                  Tia[i,a]         *= -0.5
+                  PUT l1a_new[i,a] += Tia[i,a]
+#
+               ENDDO a
+#
+            ENDDO i
+#
+            deallocate Liaia[i1,*,i2,a1] 
+#
+      ENDPARDO i1, a1, i2  
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a, i
+#      get l1a_new[i,a]
+#      tmp = l1a_new[i,a] * l1a_new[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+#
+      PARDO j, b, i1  
+#
+            allocate Liajb[i1,*,j,b] 
+#
+            DO a 
+#
+               REQUEST           L2old_ab[i1,a,j,b]  
+               Liajb[i1,a,j,b] = L2old_ab[i1,a,j,b] 
+#
+            ENDDO a 
+#
+            DO i
+#
+               REQUEST W1imen_ab[i,i1,b,j] 
+#
+               DO a
+#
+                  Tia[i,a]          = W1imen_ab[i,i1,b,j]*Liajb[i1,a,j,b] 
+                  Tia[i,a]         *= -1.0
+                  PUT l1a_new[i,a] += Tia[i,a]
+#
+               ENDDO a
+#
+            ENDDO i
+#
+            deallocate Liajb[i1,*,j,b] 
+#
+      ENDPARDO j, b, i1  
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a, i
+#      get l1a_new[i,a]
+#      tmp = l1a_new[i,a] * l1a_new[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+#
+      PARDO a, i, a1, i1
+#
+            REQUEST             VSpipi[a,i,a1,i1] 
+            Taiai[a,i,a1,i1]  = VSpipi[a,i,a1,i1]
+#
+            T2ia[i1,a1] = 0.0
+#
+            DO a2
+#
+               GET Gae_a[a2,a1]
+               GET t1a_old[a2,i1]
+#
+               T3ia[i1,a1]  = Gae_a[a2,a1]*t1a_old[a2,i1]
+               T2ia[i1,a1] += T3ia[i1,a1]
+#
+            ENDDO a2
+#
+            DO i2
+#
+               GET Gmi_a[i1,i2]
+               GET t1a_old[a1,i2]
+#
+               T3ia[i1,a1]  = Gmi_a[i1,i2]*t1a_old[a1,i2]
+               T2ia[i1,a1] -= T3ia[i1,a1]
+#
+            ENDDO i2
+#
+            Tia[i,a]          = Taiai[a,i,a1,i1]*T2ia[i1,a1]
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO a, i, a1, i1
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a, i
+#      get l1a_new[i,a]
+#      tmp = l1a_new[i,a] * l1a_new[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+#
+      PARDO a, b, i, j
+#
+            REQUEST Vpiqj[a,i,b,j] 
+#
+            T2jb[j,b] = 0.0
+#
+            DO b1
+#
+               GET Gae_b[b1,b]
+               GET t1b_old[b1,j]
+#
+               T3jb[j,b]  = Gae_b[b1,b]*t1b_old[b1,j]
+               T2jb[j,b] += T3jb[j,b]
+#
+            ENDDO b1
+#
+            DO j1
+#
+               GET Gmi_b[j,j1]
+               GET t1b_old[b,j1]
+#
+               T3jb[j,b]  = Gmi_b[j,j1]*t1b_old[b,j1]
+               T2jb[j,b] -= T3jb[j,b]
+#
+            ENDDO j1
+#
+            Tia[i,a]          = Vpiqj[a,i,b,j]*T2jb[j,b]
+            PUT l1a_new[i,a] += Tia[i,a]
+#
+      ENDPARDO a, b, i, j
+#bgn_debug
+#      sip_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      pardo a, i
+#      get l1a_new[i,a]
+#      tmp = l1a_new[i,a] * l1a_new[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end_debug
+
+
+      ENDPROC L1ANEW 
+#     -------------- 
+#
+      PROC L1BNEW 
+#     ----------- 
+#
+      PARDO b, j 
+# 
+            GET                 Fme_b[j,b]
+            Tjb[j,b]          = Fme_b[j,b] 
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j
+#
+      PARDO b, j, j1  
+#
+            GET                 l1b_old[j1,b]
+            GET                 F1mi_b[j,j1]
+            Tjb[j,b]          = l1b_old[j1,b]*F1mi_b[j,j1]
+            Tjb[j,b]         *= -1.0  
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, j1 
+#
+      PARDO b, j, j1, j2   
+#
+            REQUEST             VSqjqj[b,j,j1,j2] 
+            GET                 Gmi_b[j2,j1]
+            Tjb[j,b]          = VSqjqj[b,j,j1,j2]*Gmi_b[j2,j1]
+            Tjb[j,b]         *= -1.0  
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, j1, j2   
+
+     PARDO j, b, b1
+#
+            GET                 l1b_old[j,b1]
+            GET                 F1ae_b[b1,b]
+            Tjb[j,b]          = l1b_old[j,b1]*F1ae_b[b1,b]
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO j, b, b1
+#
+      PARDO b, j, b1, b2
+#
+            REQUEST             VSbbbj[b2,b1,b,j]
+            GET                 Gae_b[b1,b2]
+            Tjb[j,b]          = VSbbbj[b2,b1,b,j]*Gae_b[b1,b2]
+            Tjb[j,b]         *= -1.0
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, b1, b2
+#
+      PARDO b, j, i, i1
+#
+            REQUEST             Vpiqj[i,i1,b,j]
+            GET                 Gmi_a[i1,i]
+            Tjb[j,b]          = Vpiqj[i,i1,b,j]*Gmi_a[i1,i]
+            Tjb[j,b]         *= -1.0
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, i, i1
+
+     PARDO b, j, a, a1
+#
+            REQUEST             Vaabj[a1,a,b,j]
+            GET                 Gae_a[a,a1]
+            Tjb[j,b]          = Vaabj[a1,a,b,j]*Gae_a[a,a1]
+            Tjb[j,b]         *= -1.0
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, j, a, a1
+
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      pardo b, j
+#      get l1b_new[j,b]
+#      tmp = l1b_new[j,b] * l1b_new[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      PARDO b, b1, j1, j2 
+#
+            REQUEST L2old_bb[j1,b,j2,b1]   
+#
+            DO j
+#
+               REQUEST             W1imen_bb[j,j1,b1,j2] 
+               Tjb[j,b]          = W1imen_bb[j,j1,b1,j2]*L2old_bb[j1,b,j2,b1]
+               Tjb[j,b]         *= -0.5
+               PUT l1b_new[j,b] += Tjb[j,b]
+#
+            ENDDO j
+#
+      ENDPARDO b, b1, j1, j2  
+
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      pardo b, j
+#      get l1b_new[j,b]
+#      tmp = l1b_new[j,b] * l1b_new[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      PARDO b, j1, a, i  
+#
+            REQUEST L2old_ab[i,a,j1,b] 
+#
+            DO j
+#
+               REQUEST             W1imen_ba[j,j1,a,i] 
+               Tjb[j,b]          = W1imen_ba[j,j1,a,i]*L2old_ab[i,a,j1,b]
+               Tjb[j,b]         *= -1.0  
+               PUT l1b_new[j,b] += Tjb[j,b]
+#
+            ENDDO j
+#
+      ENDPARDO b, j1, a, i  
+
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      pardo b, j
+#      get l1b_new[j,b]
+#      tmp = l1b_new[j,b] * l1b_new[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      PARDO b, b1, j, j1
+#
+            REQUEST VSqjqj[b,j,b1,j1] 
+            Tbjbj[b,j1,b1,j] = VSqjqj[b,j,b1,j1]
+#
+            T2jb[j1,b1] = 0.0
+#
+            DO b2
+#
+               GET Gae_b[b2,b1]
+               GET t1b_old[b2,j1]
+#
+               T3jb[j1,b1]  = Gae_b[b2,b1]*t1b_old[b2,j1]
+               T2jb[j1,b1] += T3jb[j1,b1]
+#
+            ENDDO b2
+#
+            DO j2
+#
+               GET Gmi_b[j1,j2]
+               GET t1b_old[b1,j2]
+#
+               T3jb[j1,b1]  = Gmi_b[j1,j2]*t1b_old[b1,j2]
+               T2jb[j1,b1] -= T3jb[j1,b1]
+#
+            ENDDO j2
+#
+            Tjb[j,b] = Tbjbj[b,j1,b1,j]*T2jb[j1,b1]
+#
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, b1, j, j1
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      pardo b, j
+#      get l1b_new[j,b]
+#      tmp = l1b_new[j,b] * l1b_new[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+#
+      PARDO b, a, j, i
+#
+            REQUEST Vpiqj[a,i,b,j]
+            T2ia[i,a] = 0.0
+#
+            DO a1
+#
+               GET Gae_a[a1,a]
+               GET t1a_old[a1,i]
+#
+               T3ia[i,a]  = Gae_a[a1,a]*t1a_old[a1,i]
+               T2ia[i,a] += T3ia[i,a]
+#
+            ENDDO a1
+#
+            DO i1
+#
+               GET Gmi_a[i,i1]
+               GET t1a_old[a,i1]
+#
+               T3ia[i,a]  = Gmi_a[i,i1]*t1a_old[a,i1]
+               T2ia[i,a] -= T3ia[i,a]
+#
+            ENDDO i1
+#
+            Tjb[j,b] = Vpiqj[a,i,b,j]*T2ia[i,a]
+#
+            PUT l1b_new[j,b] += Tjb[j,b]
+#
+      ENDPARDO b, a, j, i
+
+#bgn_debug
+#      sip_barrier
+#      sumb=0.0
+#     sumbb=0.0
+#      pardo b, j
+#      get l1b_new[j,b]
+#      tmp = l1b_new[j,b] * l1b_new[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+
+      ENDPROC L1BNEW 
+#     -------------- 
+#
+#
+      PROC L2NEWAA 
+#     ------------ 
+#
+      PARDO a, a1, a2, i1 
+#
+            REQUEST VSaaai[a,a2,a1,i1]  
+#
+            DO i
+#
+               GET                            l1a_old[i,a2]
+               Tiaia[i,a,i1,a1]             = VSaaai[a,a2,a1,i1]*l1a_old[i,a2]
+               T3iaia[i1,a,i,a1]            = Tiaia[i,a,i1,a1]
+               T3iaia[i1,a,i,a1]           *= -1.0  
+               PREPARE L2new_aa[i,a,i1,a1] +=  Tiaia[i,a,i1,a1]
+               PREPARE L2new_aa[i1,a,i,a1] += T3iaia[i1,a,i,a1]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, a2, i1
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa =0.0
+#      PARDO a, i, a1, i1
+#      request l2new_aa[i,a,i1,a1]
+#      tmp =  l2new_aa[i,a,i1,a1] *  l2new_aa[i,a,i1,a1]
+#      suma += tmp
+#      endpardo a, i, a1, i1
+#      sip_barrier
+#      collective sumaa += suma
+#      print sumaa
+#end-debug
+
+#
+      PARDO i, a1, a, i1 
+#
+            REQUEST             VSpipi[a,i,a1,i1] 
+            GET                 l1a_old[i,a]
+            GET                 Fme_a[i1,a1]
+#
+            Tiaia[i,a,i1,a1]  = VSpipi[a,i,a1,i1]
+            T2iaia[i,a1,i1,a] = 0.0
+            T3iaia[i1,a,i,a1] = 0.0
+            T4iaia[i1,a1,i,a] = 0.0
+#
+            DO a2
+#
+               REQUEST              L2old_aa[i,a,i1,a2] 
+               REQUEST              VSpipi[a,i,a2,i1]     
+               GET                  Gae_a[a1,a2]
+               GET                  F1ae_a[a2,a1]
+#
+               T1iaia[i,a,i1,a1]  = L2old_aa[i,a,i1,a2]*F1ae_a[a2,a1]
+               Tiaia[i,a,i1,a1]  += T1iaia[i,a,i1,a1]
+#
+               TXiaia[i,a1,i1,a]  = T1iaia[i,a,i1,a1]
+               T2iaia[i,a1,i1,a] -= TXiaia[i,a1,i1,a]
+#
+               Taa[a2,a1]         = Gae_a[a1,a2]
+#
+               DO i2
+#
+                  GET            l1a_old[i2,a1]
+                  GET           t1a_old[a2,i2]
+
+                  T1aa[a2,a1] = t1a_old[a2,i2]*l1a_old[i2,a1]
+                  Taa[a2,a1] -= T1aa[a2,a1]
+#
+               ENDDO i2
+#
+               T1iaia[i,a,i1,a1]  = VSpipi[a,i,a2,i1]*Taa[a2,a1]
+               Tiaia[i,a,i1,a1]  += T1iaia[i,a,i1,a1]
+#
+               TXiaia[i,a1,i1,a]  = T1iaia[i,a,i1,a1]
+               T2iaia[i,a1,i1,a] -= TXiaia[i,a1,i1,a]
+#
+            ENDDO a2
+#
+            T1iaia[i,a,i1,a1]  = l1a_old[i,a]^Fme_a[i1,a1]
+            Tiaia[i,a,i1,a1]  += T1iaia[i,a,i1,a1]
+#
+            TXiaia[i,a1,i1,a]  = T1iaia[i,a,i1,a1]
+            T2iaia[i,a1,i1,a] -= TXiaia[i,a1,i1,a]
+#
+            TXiaia[i1,a,i,a1]  = T1iaia[i,a,i1,a1]
+            T3iaia[i1,a,i,a1] -= TXiaia[i1,a,i,a1]
+#
+            TXiaia[i1,a1,i,a]  = T1iaia[i,a,i1,a1]
+            T4iaia[i1,a1,i,a] += TXiaia[i1,a1,i,a]
+#
+            PREPARE L2new_aa[i,a,i1,a1] +=  Tiaia[i,a,i1,a1]
+            PREPARE L2new_aa[i,a1,i1,a] += T2iaia[i,a1,i1,a]
+            PREPARE L2new_aa[i1,a,i,a1] += T3iaia[i1,a,i,a1]
+            PREPARE L2new_aa[i1,a1,i,a] += T4iaia[i1,a1,i,a]
+#
+      ENDPARDO i, a1, a, i1
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa =0.0
+#      PARDO a, i, a1, i1
+#      request l2new_aa[i,a,i1,a1]
+#      tmp =  l2new_aa[i,a,i1,a1] *  l2new_aa[i,a,i1,a1]
+#      suma += tmp
+#      endpardo a, i, a1, i1   
+#      sip_barrier 
+#      collective sumaa += suma
+#      print sumaa 
+#end-debug
+
+#
+      PARDO i1, i, a, a1
+#
+            Tiaia[i,a,i1,a1]  = 0.0  
+            T2iaia[i,a1,i1,a] = 0.0
+            T3iaia[i1,a,i,a1] = 0.0
+#
+            DO i2
+#
+               REQUEST L2old_aa[i,a,i2,a1] 
+               REQUEST VSpipi[i2,i,a1,i1]  
+               REQUEST VSpipi[a,i,a1,i2]     
+               GET Gmi_a[i2,i1]
+               GET F1mi_a[i1,i2]
+               GET l1a_old[i2,a]
+#
+               T1iaia[i,a,i1,a1]  = L2old_aa[i,a,i2,a1]*F1mi_a[i1,i2]
+               T1iaia[i,a,i1,a1] *= -1.0
+#
+               Tii[i1,i2]         = Gmi_a[i2,i1]
+               Tiaia[i,a,i1,a1]  += T1iaia[i,a,i1,a1]
+#
+               TXiaia[i1,a,i,a1]  = T1iaia[i,a,i1,a1]
+               T3iaia[i1,a,i,a1] -= TXiaia[i1,a,i,a1]
+#
+               T1iaia[i,a,i1,a1]  = VSpipi[i2,i,a1,i1]*l1a_old[i2,a]
+               Tiaia[i,a,i1,a1]  -= T1iaia[i,a,i1,a1]
+#
+               TXiaia[i,a1,i1,a]  = T1iaia[i,a,i1,a1]
+               T2iaia[i,a1,i1,a] += TXiaia[i,a1,i1,a]
+#
+               DO a2
+#
+                  GET l1a_old[i1,a2]
+                  GET t1a_old[a2,i2]
+#
+                  T1ii[i1,i2] = l1a_old[i1,a2]*t1a_old[a2,i2]
+                  Tii[i1,i2] += T1ii[i1,i2]
+#
+               ENDDO a2
+#
+               T1iaia[i,a,i1,a1]  = VSpipi[a,i,a1,i2]*Tii[i1,i2]
+               Tiaia[i,a,i1,a1]  -= T1iaia[i,a,i1,a1]
+#
+               TXiaia[i1,a,i,a1]  = T1iaia[i,a,i1,a1]
+               T3iaia[i1,a,i,a1] += TXiaia[i1,a,i,a1]
+#
+               DO i3
+#
+                  REQUEST L2old_aa[i2,a,i3,a1]  
+                  GET     W1minj_aa[i,i2,i1,i3] 
+#
+                  T1iaia[i,a,i1,a1]  = W1minj_aa[i,i2,i1,i3]*L2old_aa[i2,a,i3,a1]
+                  T1iaia[i,a,i1,a1] *= 0.5
+                  Tiaia[i,a,i1,a1]  += T1iaia[i,a,i1,a1]
+#
+               ENDDO i3
+#
+            ENDDO i2
+#
+            PREPARE L2new_aa[i,a,i1,a1] +=  Tiaia[i,a,i1,a1]
+            PREPARE L2new_aa[i,a1,i1,a] += T2iaia[i,a1,i1,a]
+            PREPARE L2new_aa[i1,a,i,a1] += T3iaia[i1,a,i,a1]
+#
+      ENDPARDO i1, i, a, a1
+# 
+      ENDPROC L2NEWAA 
+#     --------------- 
+#
+      PROC L2NEWAB 
+#     ------------ 
+#
+      PARDO i, j, a, b  
+#
+            REQUEST            Vpiqj[a,i,b,j] 
+            GET                l1a_old[i,a]
+            GET                Fme_b[j,b]
+            GET                l1b_old[j,b]
+            GET                Fme_a[i,a]
+#
+            Tiajb[i,a,j,b]   = Vpiqj[a,i,b,j]
+#
+            T1iajb[i,a,j,b]  = l1a_old[i,a]^Fme_b[j,b]
+            Tiajb[i,a,j,b]  += T1iajb[i,a,j,b]
+#
+            T1iajb[i,a,j,b]  = Fme_a[i,a]^l1b_old[j,b]
+            Tiajb[i,a,j,b]  += T1iajb[i,a,j,b]
+#
+            DO i1 
+            DO j1
+#
+               REQUEST           L2old_ab[i1,a,j1,b]  
+               GET               W1minj_ab[i,i1,j,j1] 
+#
+               T1iajb[i,a,j,b] = L2old_ab[i1,a,j1,b]* W1minj_ab[i,i1,j,j1]
+               Tiajb[i,a,j,b] += T1iajb[i,a,j,b] 
+#
+            ENDDO j1
+            ENDDO i1
+#
+            PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+      ENDPARDO i, j, a, b  
+#
+      PARDO a, i, b, b1  
+#
+            REQUEST Vbbai[b,b1,a,i] 
+#
+            DO j
+#
+               GET                          l1b_old[j,b1]
+               Tiajb[i,a,j,b]             = Vbbai[b,b1,a,i]*l1b_old[j,b1]
+               PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+            ENDDO j
+#
+      ENDPARDO a, i, b, b1 
+#
+      PARDO b, j, a, i  
+#
+            Tiajb[i,a,j,b] = 0.0  
+#
+            DO b1
+#
+               REQUEST           L2old_ab[i,a,j,b1] 
+               REQUEST           Vpiqj[a,i,b1,j]     
+               GET               Gae_b[b,b1]
+               GET               F1ae_b[b1,b]
+               GET               l1b_old[j,b1]
+#
+               TTbb[b1,b]       = Gae_b[b,b1]
+               T1iajb[i,a,j,b] = L2old_ab[i,a,j,b1]*F1ae_b[b1,b]
+               Tiajb[i,a,j,b] += T1iajb[i,a,j,b]
+#
+               DO j1
+#
+                  GET          l1b_old[j1,b]
+                  GET          t1b_old[b1,j1]
+#
+                  T1bb[b1,b] = t1b_old[b1,j1]*l1b_old[j1,b]
+                  TTbb[b1,b] -= T1bb[b1,b]
+#
+               ENDDO j1
+#
+               T1iajb[i,a,j,b] = Vpiqj[a,i,b1,j]*TTbb[b1,b]
+               Tiajb[i,a,j,b] += T1iajb[i,a,j,b]
+#
+            ENDDO b1
+#
+            PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+      ENDPARDO b, j, a, i  
+#
+      PARDO a, a1, b, j 
+#
+            REQUEST Vaabj[a,a1,b,j]
+#
+            DO i
+#
+               GET                          l1a_old[i,a1]
+               Tiajb[i,a,j,b]             = Vaabj[a,a1,b,j]*l1a_old[i,a1]
+               PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, b, j 
+#
+      PARDO a, i, b, j 
+#
+            Tiajb[i,a,j,b] = 0.0  
+#
+            DO a1
+#
+               REQUEST           L2old_ab[i,a1,j,b] 
+               REQUEST           Vpiqj[a1,i,b,j] 
+               GET               Gae_a[a,a1]
+               GET               F1ae_a[a1,a]
+#
+               Taa[a1,a]       = Gae_a[a,a1]
+               T1iajb[i,a,j,b] = L2old_ab[i,a1,j,b]*F1ae_a[a1,a]
+               Tiajb[i,a,j,b] += T1iajb[i,a,j,b]
+#
+               DO i1
+#
+                  GET          l1a_old[i1,a]
+                  GET          t1a_old[a1,i1]
+#
+                  T1aa[a1,a] = t1a_old[a1,i1]*l1a_old[i1,a]
+                  Taa[a1,a] -= T1aa[a1,a]
+#
+               ENDDO i1
+#
+               T1iajb[i,a,j,b] = Vpiqj[a1,i,b,j]*Taa[a1,a]
+               Tiajb[i,a,j,b] += T1iajb[i,a,j,b]
+#
+            ENDDO a1
+#
+            PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+      ENDPARDO a, i, b, j 
+#
+      PARDO j, a, i, b  
+#
+            Tiajb[i,a,j,b] = 0.0  
+#
+            DO j1
+#
+               REQUEST           L2old_ab[i,a,j1,b] 
+               REQUEST           Vpiqj[a,i,j1,j]     
+               REQUEST           Vpiqj[a,i,b,j1] 
+               GET               Gmi_b[j1,j]
+               GET               F1mi_b[j,j1]
+               GET               l1b_old[j1,b]
+#
+               Tjj[j,j1]       = Gmi_b[j1,j]
+               T1iajb[i,a,j,b] = L2old_ab[i,a,j1,b]*F1mi_b[j,j1]
+               Tiajb[i,a,j,b] -= T1iajb[i,a,j,b]
+#
+               T1iajb[i,a,j,b] = Vpiqj[a,i,j1,j]*l1b_old[j1,b]
+               Tiajb[i,a,j,b] -= T1iajb[i,a,j,b]
+#
+               DO b1
+#
+                  GET          l1b_old[j,b1]
+                  GET          t1b_old[b1,j1]
+#
+                  T1jj[j,j1] = l1b_old[j,b1]*t1b_old[b1,j1]
+                  Tjj[j,j1] += T1jj[j,j1]
+#
+               ENDDO b1
+#
+               T1iajb[i,a,j,b] = Vpiqj[a,i,b,j1]*Tjj[j,j1]
+               Tiajb[i,a,j,b] -= T1iajb[i,a,j,b]
+#
+            ENDDO j1
+#
+            PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+      ENDPARDO j, a, i, b  
+#
+      PARDO i, a, b, j 
+#
+            Tiajb[i,a,j,b] = 0.0  
+#
+            DO i1
+#
+               REQUEST           L2old_ab[i1,a,j,b] 
+               REQUEST           Vpiqj[i1,i,b,j]     
+               REQUEST           Vpiqj[a,i1,b,j]     
+               GET               Gmi_a[i1,i]
+               GET               F1mi_a[i,i1]
+               GET               l1a_old[i1,a]
+#
+               Tii[i,i1]       = Gmi_a[i1,i]
+               T1iajb[i,a,j,b] = L2old_ab[i1,a,j,b]*F1mi_a[i,i1]
+               Tiajb[i,a,j,b] -= T1iajb[i,a,j,b]
+#
+               T1iajb[i,a,j,b] = Vpiqj[i1,i,b,j]*l1a_old[i1,a]
+               Tiajb[i,a,j,b] -= T1iajb[i,a,j,b]
+#
+               DO a1
+#
+                  GET          l1a_old[i,a1]
+                  GET          t1a_old[a1,i1]
+#
+                  T1ii[i,i1] = l1a_old[i,a1]*t1a_old[a1,i1]
+                  Tii[i,i1] += T1ii[i,i1]
+#
+               ENDDO a1
+#
+               T1iajb[i,a,j,b] = Vpiqj[a,i1,b,j]*Tii[i,i1]
+               Tiajb[i,a,j,b] -= T1iajb[i,a,j,b]
+#
+            ENDDO i1
+#
+            PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+      ENDPARDO i, a, b, j 
+#
+      ENDPROC L2NEWAB 
+#     --------------- 
+#
+      PROC L2NEWBB 
+#     ------------ 
+#
+      PARDO b, b1, b2, j1 
+#
+            REQUEST VSbbbj[b,b2,b1,j1]  
+#
+            DO j
+#
+               GET                            l1b_old[j,b2]
+               Tjbjb[j,b,j1,b1]             = VSbbbj[b,b2,b1,j1]*l1b_old[j,b2]
+               T3jbjb[j1,b,j,b1]            = Tjbjb[j,b,j1,b1]
+               T3jbjb[j1,b,j,b1]           *= -1.0  
+               PREPARE L2new_bb[j,b,j1,b1] +=  Tjbjb[j,b,j1,b1]
+               PREPARE L2new_bb[j1,b,j,b1] += T3jbjb[j1,b,j,b1]
+#
+            ENDDO j
+#
+      ENDPARDO b, b1, b2, j1
+#bgn_debug
+#      server_barrier
+#      sumb=0.0
+#      sumbb=0.0
+#      PARDO b, j, b1, j1
+#      request l2new_bb[j,b,j1,b1]
+#      tmp =  l2new_bb[j,b,j1,b1] *  l2new_bb[j,b,j1,b1]
+#      sumb += tmp
+#      endpardo b,j,b1,j1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb
+#end_debug
+
+#
+      PARDO b, j, j1, b1  
+#
+            REQUEST             VSqjqj[b1,j1,b,j]
+            GET                 l1b_old[j1,b1]
+            GET                 Fme_b[j,b]
+#
+            Tjbjb[j1,b1,j,b]  = VSqjqj[b1,j1,b,j] 
+            T2jbjb[j,b1,j1,b] = 0.0  
+            T3jbjb[j1,b,j,b1] = 0.0  
+            T4jbjb[j,b,j1,b1] = 0.0  
+#
+            DO b2
+#
+               REQUEST              L2old_bb[j1,b1,j,b2] 
+               REQUEST              VSqjqj[b1,j1,b2,j]   
+               GET                  Gae_b[b,b2]
+               GET                  F1ae_b[b2,b]
+               GET                  l1b_old[j1,b2]
+#
+               T1jbjb[j1,b1,j,b]  = L2old_bb[j1,b1,j,b2]*F1ae_b[b2,b]
+               Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
+#
+               TTbb[b2,b]          = Gae_b[b,b2]
+               TXjbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
+               T3jbjb[j1,b,j,b1] -= TXjbjb[j1,b,j,b1]
+#
+               DO j2
+#
+                  GET          l1b_old[j2,b]
+                  GET          t1b_old[b2,j2]
+#
+                  T1bb[b2,b] = t1b_old[b2,j2]*l1b_old[j2,b]
+                  TTbb[b2,b] -= T1bb[b2,b]
+#
+               ENDDO j2
+#
+               T1jbjb[j1,b1,j,b]  = VSqjqj[b1,j1,b2,j]*TTbb[b2,b]
+               Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
+#
+               TXjbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
+               T3jbjb[j1,b,j,b1] -= TXjbjb[j1,b,j,b1]
+#
+            ENDDO b2
+#
+            T1jbjb[j1,b1,j,b]  = l1b_old[j1,b1]^Fme_b[j,b]
+            Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
+#
+            TXjbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
+            T3jbjb[j1,b,j,b1] -= TXjbjb[j1,b,j,b1]
+#
+            TXjbjb[j,b1,j1,b]  = T1jbjb[j1,b1,j,b]
+            T2jbjb[j,b1,j1,b] -= TXjbjb[j,b1,j1,b]
+#
+            TXjbjb[j,b,j1,b1]  = T1jbjb[j1,b1,j,b]
+            T4jbjb[j,b,j1,b1] += TXjbjb[j,b,j1,b1]
+#
+            PREPARE L2NEW_bb[j1,b1,j,b] +=  Tjbjb[j1,b1,j,b]
+            PREPARE L2NEW_bb[j,b1,j1,b] += T2jbjb[j,b1,j1,b]
+            PREPARE L2NEW_bb[j1,b,j,b1] += T3jbjb[j1,b,j,b1]
+            PREPARE L2NEW_bb[j,b,j1,b1] += T4jbjb[j,b,j1,b1]
+#
+      ENDPARDO b, j, j1, b1 
+#bgn_debug
+#      server_barrier 
+#      sumb=0.0
+#      sumbb=0.0
+#      PARDO b, j, b1, j1
+#      request l2new_bb[j,b,j1,b1]
+#      tmp =  l2new_bb[j,b,j1,b1] *  l2new_bb[j,b,j1,b1]
+#      sumb += tmp
+#      endpardo b,j,b1,j1
+#      sip_barrier
+#      collective sumbb += sumb
+#      print sumbb  
+#end_debug
+
+# 
+      PARDO j, b1, b, j1  
+#
+            Tjbjb[j1,b1,j,b]  = 0.0  
+            T2jbjb[j,b1,j1,b] = 0.0  
+            T3jbjb[j1,b,j,b1] = 0.0  
+#
+            DO j2
+#
+               REQUEST              L2old_bb[j1,b1,j2,b] 
+               REQUEST              VSqjqj[j2,j1,b,j]     
+               REQUEST              VSqjqj[b1,j1,b,j2]     
+               GET                  Gmi_b[j2,j]
+               GET                  F1mi_b[j,j2]
+               GET                  l1b_old[j2,b1]
+#
+               T1jbjb[j1,b1,j,b]  = L2old_bb[j1,b1,j2,b]*F1mi_b[j,j2]
+               T1jbjb[j1,b1,j,b] *= -1.0
+               Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
+#
+               Tjj[j,j2]          = Gmi_b[j2,j]
+               TXjbjb[j,b1,j1,b]  = T1jbjb[j1,b1,j,b]
+               T2jbjb[j,b1,j1,b] -= TXjbjb[j,b1,j1,b]
+#
+               T1jbjb[j1,b1,j,b]  = VSqjqj[j2,j1,b,j]*l1b_old[j2,b1]
+               Tjbjb[j1,b1,j,b]  -= T1jbjb[j1,b1,j,b]
+#
+               TXjbjb[j1,b,j,b1]  = T1jbjb[j1,b1,j,b]
+               T3jbjb[j1,b,j,b1] += TXjbjb[j1,b,j,b1]
+#
+               DO b2
+#
+                  GET          l1b_old[j,b2]
+                  GET          t1b_old[b2,j2]
+#
+                  T1jj[j,j2] = l1b_old[j,b2]*t1b_old[b2,j2]
+                  Tjj[j,j2] += T1jj[j,j2]
+#
+               ENDDO b2
+#
+               T1jbjb[j1,b1,j,b]  = VSqjqj[b1,j1,b,j2]*Tjj[j,j2]
+               T1jbjb[j1,b1,j,b] *= -1.0
+               Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
+#
+               TXjbjb[j,b1,j1,b]  = T1jbjb[j1,b1,j,b]
+               T2jbjb[j,b1,j1,b] -= TXjbjb[j,b1,j1,b]
+#
+               DO j3
+#
+                  REQUEST              L2old_bb[j2,b1,j3,b] 
+                  GET                  W1minj_bb[j1,j2,j,j3] 
+#
+                  T1jbjb[j1,b1,j,b]  = L2old_bb[j2,b1,j3,b]*W1minj_bb[j1,j2,j,j3]
+                  T1jbjb[j1,b1,j,b] *= 0.5
+                  Tjbjb[j1,b1,j,b]  += T1jbjb[j1,b1,j,b]
+#
+               ENDDO j3
+#
+            ENDDO j2
+#
+            PREPARE L2NEW_bb[j1,b1,j,b] +=  Tjbjb[j1,b1,j,b]
+            PREPARE L2NEW_bb[j,b1,j1,b] += T2jbjb[j,b1,j1,b]
+            PREPARE L2NEW_bb[j1,b,j,b1] += T3jbjb[j1,b,j,b1]
+#
+      ENDPARDO j, b1, b, j1  
+# 
+      ENDPROC L2NEWBB 
+#     --------------- 
+#
+#    ------------------------------------------------------------------------
+#
+      PROC UPDATEL2
+#     -------------
+#
+      PARDO a, a1, i, i1
+#
+            REQUEST                    L2old_aa[i,a,i1,a1] 
+            REQUEST                    L2new_aa[i,a,i1,a1] 
+            Tiaia[i,a,i1,a1]         = L2new_aa[i,a,i1,a1]
+            T1iaia[i,a,i1,a1]        = L2old_aa[i,a,i1,a1]
+            execute energy_denominator Tiaia[i,a,i1,a1] fock_a fock_a AAAA
+            t1iaia[i,a,i1,a1] += tiaia[i,a,i1,a1]
+            t1iaia[i,a,i1,a1] *= -1.0
+#
+            if kiter < diis_order
+               PREPARE eiaia[i,a,i1,a1,kiter] = T1iaia[i,a,i1,a1]
+            endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PREPARE eiaia[i,a,i1,a1,jdiis] = T1iaia[i,a,i1,a1]
+                  endif
+               ENDDO jdiis
+            endif
+
+#
+      ENDPARDO a, a1, i, i1
+
+      PARDO b, b1, j, j1
+#
+            REQUEST                    L2old_bb[j,b,j1,b1]  
+            REQUEST                    L2new_bb[j,b,j1,b1] 
+            Tjbjb[j,b,j1,b1]         = L2new_bb[j,b,j1,b1]
+            T1jbjb[j,b,j1,b1]        = L2old_bb[j,b,j1,b1]
+            execute energy_denominator Tjbjb[j,b,j1,b1] fock_b fock_b BBBB
+            t1jbjb[j,b,j1,b1] += tjbjb[j,b,j1,b1]
+            t1jbjb[j,b,j1,b1] *= -1.0
+#
+            if kiter < diis_order
+               PREPARE ejbjb[j,b,j1,b1,kiter] = T1jbjb[j,b,j1,b1]
+            endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PREPARE ejbjb[j,b,j1,b1,jdiis] = T1jbjb[j,b,j1,b1]
+                  endif
+               ENDDO jdiis
+            endif
+#
+      ENDPARDO b, b1, j, j1
+#
+      PARDO b, a, j, i
+#
+            REQUEST                    L2old_ab[i,a,j,b] 
+            REQUEST                    L2new_ab[i,a,j,b] 
+            Tiajb[i,a,j,b]           = L2new_ab[i,a,j,b]
+            T1iajb[i,a,j,b]          = L2old_ab[i,a,j,b]
+            execute energy_denominator Tiajb[i,a,j,b] fock_a fock_b ABAB
+            t1iajb[i,a,j,b]         += tiajb[i,a,j,b]
+            t1iajb[i,a,j,b]         *= -1.0
+#
+            if kiter < diis_order
+               PREPARE eiajb[i,a,j,b,kiter] = t1iajb[i,a,j,b]
+            endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PREPARE eiajb[i,a,j,b,jdiis] = t1iajb[i,a,j,b]
+                  endif
+               ENDDO jdiis
+            endif
+      ENDPARDO b, a, j, i
+
+      Server_barrier 
+
+      PARDO a, a1, i, i1
+#
+            REQUEST                     L2new_aa[i,a,i1,a1]
+            Tiaia[i,a,i1,a1]   = L2new_aa[i,a,i1,a1] 
+            Tiaia[i,a,i1,a1]  *= -1.0
+            execute energy_denominator Tiaia[i,a,i1,a1]  fock_a fock_a AAAA
+            PREPARE L2old_aa[i,a,i1,a1]  = Tiaia[i,a,i1,a1]
+#
+      ENDPARDO a, a1, i, i1
+
+      PARDO b, b1, j, j1
+#
+            REQUEST                     L2new_bb[j,b,j1,b1] 
+            Tjbjb[j,b,j1,b1]   = L2new_bb[j,b,j1,b1]
+            Tjbjb[j,b,j1,b1]  *= -1.0
+            execute energy_denominator Tjbjb[j,b,j1,b1] fock_b fock_b BBBB
+            PREPARE L2old_bb[j,b,j1,b1]  = Tjbjb[j,b,j1,b1]
+#
+      ENDPARDO b, b1, j, j1
+
+      PARDO b, a, j, i
+#
+            REQUEST                    L2new_ab[i,a,j,b]  
+            Tiajb[i,a,j,b]       = L2new_ab[i,a,j,b]
+            Tiajb[i,a,j,b]      *= -1.0 
+            execute energy_denominator Tiajb[i,a,j,b] fock_a fock_b ABAB
+            PREPARE L2old_ab[i,a,j,b]= Tiajb[i,a,j,b] 
+#
+      ENDPARDO b, a, j, i
+#
+      ENDPROC UPDATEL2
+#     ----------------
+#
+      PROC UPDATEL1
+#     -------------
+#
+      PARDO a, i 
+#
+            GET                        l1a_new[i,a]
+            GET                        l1a_old[i,a]
+            tia[i,a]                 = l1a_new[i,a] 
+            t1ia[i,a]                = l1a_old[i,a] 
+            execute energy_denominator tia[i,a] fock_a fock_a AAAA
+            t1ia[i,a]               += tia[i,a] 
+            t1ia[i,a]               *= -1.0
+
+            if kiter < diis_order
+               PUT eia[i,a,kiter] =  T1ia[i,a]
+            Endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PUT eia[i,a,jdiis] = T1ia[i,a]
+                     exit
+                   endif
+                ENDDO jdiis
+            endif
+#
+      ENDPARDO a, i 
+#
+      PARDO b, j 
+#
+            GET                        l1b_new[j,b]
+            GET                        l1b_old[j,b]
+            tjb[j,b]                 = l1b_new[j,b] 
+            t1jb[j,b]                = l1b_old[j,b] 
+            execute energy_denominator tjb[j,b] fock_b fock_b BBBB
+            t1jb[j,b]               += tjb[j,b] 
+            t1jb[j,b]               *= -1.0
+
+            if kiter < diis_order
+               PUT ejb[j,b,kiter] =  T1jb[j,b]
+            Endif
+
+            if kiter >= diis_order
+               DO jdiis
+                  if jdiis == diis_order
+                     PUT ejb[j,b,jdiis] = T1jb[j,b]
+                     exit
+                   endif
+                ENDDO jdiis
+            endif
+#
+      ENDPARDO b, j 
+#
+      sip_barrier
+
+      PARDO a, i
+#
+            GET                   l1a_new[i,a]
+            tia[i,a]           =  l1a_new[i,a]
+            tia[i,a]          *= -1.0
+            execute energy_denominator tia[i,a] fock_a fock_a AAAA
+            PUT l1a_old[i,a]         = tia[i,a]
+#
+      ENDPARDO a, i
+#
+      PARDO b, j
+#
+            GET                    l1b_new[j,b]
+            tjb[j,b]            =  l1b_new[j,b]
+            tjb[j,b]           *= -1.0
+            execute energy_denominator tjb[j,b] fock_b fock_b BBBB
+            PUT l1b_old[j,b]         = tjb[j,b]
+#
+      ENDPARDO b, j 
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      sumbb=0.0
+#      pardo a, i
+#      get l1a_old[i,a]
+#      tmp = l1a_old[i,a] * l1a_old[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sumb=0.0
+#      pardo b, j
+#      get l1b_old[j,b]
+#      tmp = l1b_old[j,b] * l1b_old[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumaa += suma
+#      collective sumbb += sumb
+#      print sumaa
+#      print sumbb
+##end_debug
+#
+      ENDPROC UPDATEL1
+#     ----------------
+#
+      PROC MOVEL2 
+#     ----------- 
+#
+      PARDO a, a1, i, i1
+#
+            REQUEST            L2old_aa[i,a,i1,a1] 
+            tiaia[i,a,i1,a1] = L2old_aa[i,a,i1,a1]
+
+            if kiter < diis_order
+               PREPARE diaia[i,a,i1,a1,kiter] = tiaia[i,a,i1,a1] 
+            endif
+
+            if kiter >= diis_order
+               DO kdiis
+                  if kdiis == (diis_order - 1)
+                     PREPARE diaia[i,a,i1,a1 ,kdiis] = tiaia[i,a,i1,a1] 
+                     exit
+                  endif
+               ENDDO kdiis
+            endif
+#
+      ENDPARDO a, a1, i, i1
+#
+      PARDO b, b1, j, j1
+#
+            REQUEST            L2old_bb[j,b,j1,b1] 
+            tjbjb[j,b,j1,b1] = L2old_bb[j,b,j1,b1]
+
+            if kiter < diis_order
+               PREPARE djbjb[j,b,j1,b1,kiter] =  Tjbjb[j,b,j1,b1]
+            endif
+
+            if kiter >= diis_order
+               DO kdiis
+                  if kdiis == (diis_order - 1)
+                     PREPARE djbjb[j,b,j1,b1,kdiis] =  tjbjb[j,b,j1,b1]
+                     exit
+                  endif
+               ENDDO kdiis
+            endif
+      ENDPARDO b, b1, j, j1
+#
+      PARDO a, b, i, j
+#
+            REQUEST          L2old_ab[i,a,j,b] 
+            tiajb[i,a,j,b] = L2old_ab[i,a,j,b]
+#
+            if kiter < diis_order
+               PREPARE diajb[i,a,j,b,kiter] = tiajb[i,a,j,b]
+            endif
+            if kiter >= diis_order
+               DO kdiis
+                  if kdiis == (diis_order - 1)
+                     PREPARE diajb[i,a,j,b,kdiis] = Tiajb[i,a,j,b]
+                  endif
+                ENDDO kdiis
+            endif
+#
+      ENDPARDO a, b, i, j
+#
+      ENDPROC MOVEL2 
+#     -------------- 
+#
+      PROC MOVEL1
+#     ------------
+#
+      PARDO a, i
+#
+            GET        l1a_old[i,a]
+            tia[i,a] = l1a_old[i,a]
+
+            if kiter < diis_order
+                PUT Dia[i,a,kiter] = Tia[i,a] 
+            endif
+
+            if kiter >= diis_order
+               DO kdiis
+                  if kdiis == (diis_order - 1)
+                     PUT Dia[i,a,kdiis] = Tia[i,a]
+                     exit
+                  endif
+               ENDDO kdiis
+            endif
+      ENDPARDO a, i
+#
+      PARDO b, j
+#
+            GET        l1b_old[j,b]
+            tjb[j,b] = l1b_old[j,b]
+#
+            if kiter < diis_order
+               PUT djb[j,b,kiter] = tjb[j,b] 
+            endif
+
+            if kiter >= diis_order
+               DO kdiis
+                  if kdiis == (diis_order - 1)
+                     PUT djb[j,b,kdiis] = tjb[j,b] 
+                  endif
+               ENDDO kdiis
+            endif
+
+      ENDPARDO b, j
+#
+      ENDPROC MOVEL1
+#     --------------
+#
+#
+     PROC LIGUESS
+#    ------------
+#
+     PARDO a, a1, i, i1
+#
+           REQUEST T2old_aa[a,i,a1,i1] 
+           Tiaia[i,a,i1,a1] = T2old_aa[a,i,a1,i1]
+           PREPARE L2old_aa[i,a,i1,a1] = Tiaia[i,a,i1,a1]
+           PREPARE D0iaia[i,a,i1,a1] = Tiaia[i,a,i1,a1] 
+#
+     ENDPARDO a, a1, i, i1
+#
+     PARDO b, b1, j, j1
+#
+           REQUEST T2old_bb[b,j,b1,j1] 
+           Tjbjb[j,b,j1,b1] = T2old_bb[b,j,b1,j1]
+           PREPARE L2old_bb[j,b,j1,b1] = Tjbjb[j,b,j1,b1]
+           PREPARE D0jbjb[j,b,j1,b1] = Tjbjb[j,b,j1,b1]
+#
+     ENDPARDO b, b1, j, j1
+#
+     PARDO b, a, j, i
+#
+           REQUEST T2old_ab[a,i,b,j] 
+           Tiajb[i,a,j,b] = T2old_ab[a,i,b,j]
+           PREPARE L2old_ab[i,a,j,b] = Tiajb[i,a,j,b]
+           PREPARE D0iajb[i,a,j,b] = Tiajb[i,a,j,b]
+#
+     ENDPARDO b, a, j, i
+#
+     PARDO a, i
+#
+           GET t1a_old[a,i]
+           tia[i,a] = t1a_old[a,i]
+           PUT l1a_old[i,a] = tia[i,a]
+           PREPARE D0ia[i,a] = tia[i,a]
+#
+     ENDPARDO a, i
+     PARDO b, j
+#
+           GET t1b_old[b,j]
+           tjb[j,b] = t1b_old[b,j]
+           PUT l1b_old[j,b] = tjb[j,b]
+           PREPARE D0jb[j,b] = tjb[j,b]
+#
+     ENDPARDO b, j 
+#
+     ENDPROC LIGUESS
+#    --------------
+#
+     PROC LOLDENERGY
+#    ----------------
+#
+     esuma   = 0.0
+     ecorraa = 0.0
+     PARDO a, a1, i, i1
+#
+           REQUEST VSpipi[a,i,a1,i1]   
+           REQUEST L2old_aa[i,a,i1,a1] 
+#
+           etemp = VSpipi[a,i,a1,i1]*L2old_aa[i,a,i1,a1]
+           etemp = 0.25*etemp
+           esuma += etemp
+#
+     ENDPARDO a, a1, i, i1
+#
+     esumb    = 0.0
+     ecorrbb = 0.0
+     PARDO b, b1, j, j1
+#
+           REQUEST VSqjqj[b,j,b1,j1]   
+           REQUEST L2old_bb[j,b,j1,b1] 
+#
+           etemp = VSqjqj[b,j,b1,j1]*L2old_bb[j,b,j1,b1]
+           etemp = 0.25*etemp
+           esumb += etemp
+#
+     ENDPARDO b, b1, j, j1
+#
+     ecorrab = 0.0
+     esumab  = 0.0
+     PARDO a, b, i, j
+#
+           REQUEST Vpiqj[a,i,b,j] 
+           REQUEST L2old_ab[i,a,j,b] 
+#
+           etemp = L2old_ab[i,a,j,b]*Vpiqj[a,i,b,j]
+           esumab += etemp
+#
+     ENDPARDO a, b, i, j
+#
+     server_barrier 
+     collective ecorraa += esuma
+     collective ecorrbb += esumb
+     collective ecorrab += esumab
+     ecorrT  = ecorraa + ecorrbb
+     ecorrT += ecorrab
+     sip_barrier 
+
+#bgn_debug
+     Print "AAAA, BBBB, ABAB correlation energy contributions"
+     print ecorraa
+     print ecorrbb
+     print ecorrab
+     Print "The pseudo correlation energy"
+     print ecorrT
+#end_debug
+#
+#
+     ENDPROC LOLDENERGY
+#    ------------------
+#
+# In this superprocedure the contributions to the lambda amplitude
+# equations from the W^{ef}_{ab} intermediate are computed. The
+# contributions are split into two pieces, those using;
+# 
+# 1. the V^{ab}_{cd} integrals --> PROC LLADDER  
+# 2. not using the V^{ab}_{cd} integrals
+#    a. L1 contributions       --> PROC L1WABCD 
+#    b. L2 contributions       --> PROC L2WABCD 
+#
+      PROC LLADDER 
+#     ------------ 
+#
+#     First zero-out intermediate arrays
+#     ----------------------------------
+#
+      PARDO mu, nu, i, i1
+            Tixix[i,mu,i1,nu]           = 0.0
+            PREPARE Z2aa[i,mu,i1,nu]    = Tixix[i,mu,i1,nu]
+            PREPARE L2AO_aa[i,mu,i1,nu] = Tixix[i,mu,i1,nu]
+      ENDPARDO mu, nu, i, i1
+#
+      PARDO mu, nu, j, j1
+            Tjxjx[j,mu,j1,nu]           = 0.0
+            PREPARE Z2bb[j,mu,j1,nu]    = Tjxjx[j,mu,j1,nu]
+            PREPARE L2AO_bb[j,mu,j1,nu] = Tjxjx[j,mu,j1,nu]
+      ENDPARDO mu, nu, j, j1
+#
+      PARDO mu, nu, i, j
+            Tixjx[i,mu,j,nu]           = 0.0
+            PREPARE Z2ab[i,mu,j,nu]    = Tixjx[i,mu,j,nu]
+            PREPARE L2AO_ab[i,mu,j,nu] = Tixjx[i,mu,j,nu]
+      ENDPARDO mu, nu, i, j
+      server_barrier
+#
+#
+#     Compute half back transformed 2-particle lambda arrays 
+#     ------------------------------------------------------ 
+#
+#     AA spin combination 
+#     ------------------- 
+#
+      PARDO a, a1, i, i1  
+#
+            REQUEST             L2old_aa[i1,a1,i,a] 
+            REQUEST             L2old_aa[i1,a,i,a1] 
+#
+            Tiaia[i1,a1,i,a]  = L2old_aa[i1,a1,i,a]
+            T1iaia[i1,a1,i,a] = L2old_aa[i1,a,i,a1]
+            Tiaia[i1,a1,i,a] -= T1iaia[i1,a1,i,a]
+# 
+            DO mu 
+#
+               Tiaix[i1,a1,i,mu] = Tiaia[i1,a1,i,a]*ca[mu,a]
+               Zaa[i,mu,i1,a1]   = Tiaix[i1,a1,i,mu]
+#
+               DO nu 
+#
+                  Tixix[i,mu,i1,nu]         = Zaa[i,mu,i1,a1]*ca[nu,a1] 
+                  PREPARE Z2aa[i,mu,i1,nu] += Tixix[i,mu,i1,nu]  
+#
+               ENDDO nu 
+#
+            ENDDO mu 
+#
+      ENDPARDO a, a1, i, i1  
+#
+#     BB spin combination 
+#     ------------------- 
+#
+      PARDO b, b1, j, j1  
+#
+            REQUEST             L2old_bb[j1,b1,j,b]  
+            REQUEST             L2old_bb[j1,b,j,b1]   
+#
+            Tjbjb[j1,b1,j,b]  = L2old_bb[j1,b1,j,b]
+            T1jbjb[j1,b1,j,b] = L2old_bb[j1,b,j,b1]
+            Tjbjb[j1,b1,j,b] -= T1jbjb[j1,b1,j,b] 
+# 
+            DO mu 
+#
+               Tjbjx[j1,b1,j,mu] = Tjbjb[j1,b1,j,b]*cb[mu,b]
+               Zbb[j,mu,j1,b1]   = Tjbjx[j1,b1,j,mu] 
+#
+               DO nu 
+#
+                  Tjxjx[j,mu,j1,nu]         = Zbb[j,mu,j1,b1]*cb[nu,b1] 
+                  PREPARE Z2bb[j,mu,j1,nu] += Tjxjx[j,mu,j1,nu]  
+#
+               ENDDO nu 
+#
+            ENDDO mu 
+#
+      ENDPARDO b, b1, j, j1  
+#
+#     AB spin combination 
+#     ------------------- 
+#
+      PARDO a, b, i, j  
+#
+            REQUEST L2old_ab[i,a,j,b]
+# 
+            DO mu 
+#
+               Zab[i,mu,j,b] = L2old_ab[i,a,j,b]*ca[mu,a] 
+#
+               DO nu 
+#
+                  Tixjx[i,mu,j,nu]         = Zab[i,mu,j,b]*cb[nu,b] 
+                  PREPARE Z2ab[i,mu,j,nu] += Tixjx[i,mu,j,nu]  
+#
+               ENDDO nu 
+#
+            ENDDO mu 
+#
+      ENDPARDO a, b, i, j  
+#
+      server_barrier 
+#
+#     Contract half transformed amplitudes with AO integrals 
+#     ------------------------------------------------------ 
+#     AA spin combination 
+#     ------------------- 
+# 
+      PARDO mu, nu, lambda, sigma
+#
+               execute compute_integral_batch aoint[lambda,mu,sigma,nu]
+#
+#              AB spin combination 
+#              ------------------- 
+# 
+               DO i
+               DO j
+#
+                  REQUEST                       Z2ab[i,lambda,j,sigma] 
+                  Yab[i,mu,j,nu]              = aoint[lambda,mu,sigma,nu]*Z2ab[i,lambda,j,sigma]
+                  PREPARE L2AO_ab[i,mu,j,nu] += Yab[i,mu,j,nu]
+#
+               ENDDO j
+               ENDDO i
+#
+               DO i
+               DO i1
+#
+                  IF i == i1 
+#
+                     REQUEST                        Z2aa[i,lambda,i1,sigma] 
+                     Yaa[i,mu,i1,nu]              = aoint[lambda,mu,sigma,nu]*Z2aa[i,lambda,i1,sigma]
+                     PREPARE L2AO_aa[i,mu,i1,nu] += Yaa[i,mu,i1,nu]
+#
+                  ENDIF # i == i1 
+#
+                  IF i < i1 
+#
+                     REQUEST                        Z2aa[i,lambda,i1,sigma] 
+                     Yaa[i,mu,i1,nu]              = aoint[lambda,mu,sigma,nu]*Z2aa[i,lambda,i1,sigma]
+                     PREPARE L2AO_aa[i,mu,i1,nu] += Yaa[i,mu,i1,nu]
+                     Tixix[i1,nu,i,mu]            = Yaa[i,mu,i1,nu] 
+                     PREPARE L2AO_aa[i1,nu,i,mu] += Tixix[i1,nu,i,mu]
+#
+                  ENDIF # i < i1 
+#
+              ENDDO i1
+              ENDDO i
+#
+#             BB spin combination 
+#             ------------------- 
+#
+              DO j
+              DO j1
+#
+                 IF j == j1 
+#
+                    REQUEST                        Z2bb[j,lambda,j1,sigma]  
+                    Ybb[j,mu,j1,nu]              = aoint[lambda,mu,sigma,nu]*Z2bb[j,lambda,j1,sigma]
+                    PREPARE L2AO_bb[j,mu,j1,nu] += Ybb[j,mu,j1,nu]
+#
+                 ENDIF # j == j1 
+#
+                 IF j < j1 
+#
+                    REQUEST                        Z2bb[j,lambda,j1,sigma]  
+                    Ybb[j,mu,j1,nu]              = aoint[lambda,mu,sigma,nu]*Z2bb[j,lambda,j1,sigma]
+                    PREPARE L2AO_bb[j,mu,j1,nu] += Ybb[j,mu,j1,nu]
+                    Tjxjx[j1,nu,j,mu]            = Ybb[j,mu,j1,nu] 
+                    PREPARE L2AO_bb[j1,nu,j,mu] += Tjxjx[j1,nu,j,mu]
+#
+                 ENDIF # j < j1 
+#
+              ENDDO j1
+              ENDDO j
+#
+      ENDPARDO mu, nu, lambda, sigma
+#
+#     Perform final two transformations of L2AO  
+#     ----------------------------------------- 
+# 
+      server_barrier  
+#
+#     AA spin combination 
+#     ------------------- 
+#
+      PARDO mu, nu, i, i1 
+#
+            REQUEST L2AO_aa[i,mu,i1,nu] 
+#
+            DO a
+#
+               Tiaix[i,a,i1,nu]  = L2AO_aa[i,mu,i1,nu]*ca[mu,a]
+#
+               DO a1
+#
+                  Tiaia[i,a,i1,a1]  = Tiaix[i,a,i1,nu]*ca[nu,a1]
+                  Tiaia[i,a,i1,a1] *= 0.5
+#
+#                 Update L2new 
+#                 ------------ 
+                  PREPARE L2new_aa[i,a,i1,a1] += Tiaia[i,a,i1,a1]
+#
+                  GET        t1a_old[a1,i1] 
+                  Tia[i,a] = Tiaia[i,a,i1,a1]*t1a_old[a1,i1] 
+#
+#                 Update L1new 
+#                 ------------ 
+                  PUT l1a_new[i,a] += Tia[i,a] 
+#
+               ENDDO a1
+#
+            ENDDO a
+#
+      ENDPARDO mu, nu, i, i1
+#
+#     BB spin combination 
+#     ------------------- 
+#
+      PARDO mu, nu, j, j1 
+#
+            REQUEST L2AO_bb[j,mu,j1,nu]  
+#
+            DO b
+#
+               Tjbjx[j,b,j1,nu]  = L2AO_bb[j,mu,j1,nu]*cb[mu,b]
+#
+               DO b1
+#
+                  Tjbjb[j,b,j1,b1]  = Tjbjx[j,b,j1,nu]*cb[nu,b1]
+                  Tjbjb[j,b,j1,b1] *= 0.5
+#
+#                 Update L2new 
+#                 ------------ 
+                  PREPARE L2new_bb[j,b,j1,b1] += Tjbjb[j,b,j1,b1]
+#
+                  GET        t1b_old[b1,j1] 
+                  Tjb[j,b] = Tjbjb[j,b,j1,b1]*t1b_old[b1,j1] 
+#
+#                 Update L1new 
+#                 ------------ 
+                  PUT l1b_new[j,b] += Tjb[j,b] 
+#
+               ENDDO b1
+#
+            ENDDO b
+#
+      ENDPARDO mu, nu, j, j1
+#
+#     AB spin combination 
+#     ------------------- 
+#
+      PARDO mu, nu, i, j 
+#
+            REQUEST L2AO_ab[i,mu,j,nu] 
+#
+            DO a
+#
+               Tiajx[i,a,j,nu]  = L2AO_ab[i,mu,j,nu]*ca[mu,a]
+#
+               DO b
+#
+                  Tiajb[i,a,j,b]  = Tiajx[i,a,j,nu]*cb[nu,b]
+#
+#                 Update L2new 
+#                 ------------ 
+                  PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b]
+#
+                  GET        t1b_old[b,j] 
+                  GET        t1a_old[a,i] 
+                  Tia[i,a] = Tiajb[i,a,j,b]*t1b_old[b,j] 
+                  Tjb[j,b] = Tiajb[i,a,j,b]*t1a_old[a,i] 
+#
+#                 Update L1new 
+#                 ------------ 
+                  PUT l1a_new[i,a] += Tia[i,a] 
+                  PUT l1b_new[j,b] += Tjb[j,b] 
+#
+               ENDDO b
+#
+            ENDDO a
+#
+      ENDPARDO mu, nu, i, j
+      server_barrier   
+#
+      ENDPROC LLADDER 
+#
+      PROC L2WABCDaa  
+#     --------------
+#
+#     AA spin combination 
+#     ------------------- 
+
+      PARDO i, i1, a, a1 
+# 
+            REQUEST L2old_aa[i,a,i1,a1] 
+#
+            DO i2  
+            DO i3  
+#
+              REQUEST                  Tau_aa[a,i2,a1,i3]  
+              Tiiii[i,i2,i1,i3]      = L2old_aa[i,a,i1,a1]*Tau_aa[a,i2,a1,i3] 
+              PUT Iiiii[i,i2,i1,i3] += Tiiii[i,i2,i1,i3] 
+#
+            ENDDO i3 
+            ENDDO i2
+#
+            DO i2 
+#
+               GET                      t1a_old[a,i2] 
+               Tiiia[i,i2,i1,a1]      = L2old_aa[i,a,i1,a1]*t1a_old[a,i2] 
+               PUT Iiiia[i,i2,i1,a1] += Tiiia[i,i2,i1,a1] 
+#
+            ENDDO i2 
+#
+      ENDPARDO i, i1, a, a1   
+#
+      sip_barrier 
+#
+      PARDO a, a1, a2, i2    
+#
+               REQUEST VSaaai[a1,a2,a,i2]
+#
+               DO i
+               DO i1 
+#
+                  GET                            Iiiia[i,i2,i1,a2] 
+                  Tiaia[i,a,i1,a1]             = Iiiia[i,i2,i1,a2]*VSaaai[a1,a2,a,i2] 
+                  Tiaia[i,a,i1,a1]            *= -1.0 # -0.5  
+                  PREPARE L2new_aa[i,a,i1,a1] += Tiaia[i,a,i1,a1]  
+#
+               ENDDO i1 
+               ENDDO i
+#
+      ENDPARDO a, a1, a2, i2  
+#
+      PARDO a, a1, i2, i3  
+#
+            REQUEST VSpipi[a,i2,a1,i3] 
+#
+             DO i 
+             DO i1  
+#
+               GET                            Iiiii[i,i2,i1,i3] 
+               Tiaia[i,a,i1,a1]             = Iiiii[i,i2,i1,i3]*VSpipi[a,i2,a1,i3] 
+               Tiaia[i,a,i1,a1]            *= 0.25  
+               PREPARE L2new_aa[i,a,i1,a1] += Tiaia[i,a,i1,a1] 
+#
+             ENDDO i1 
+             ENDDO i 
+#
+      ENDPARDO a, a1, i2, i3  
+      sip_barrier 
+#
+      ENDPROC L2WABCDaa  
+#     -----------------
+#
+      PROC L2WABCDbb  
+#     --------------
+#
+#     BB spin combination 
+#     ------------------- 
+#
+      pardo j,j1,j2,j3
+             put Xjjjj[j,j1,j2,j3] = 0.0
+      endpardo j,j1,j2,j3
+
+
+      PARDO j, j1, b, b1 
+# 
+            REQUEST L2old_bb[j,b,j1,b1] 
+#
+            DO j2  
+            DO j3  
+#
+              REQUEST                  Tau_bb[b,j2,b1,j3]  
+              Tjjjj[j,j2,j1,j3]      = L2old_bb[j,b,j1,b1]*Tau_bb[b,j2,b1,j3] 
+              PUT Ijjjj[j,j2,j1,j3] += Tjjjj[j,j2,j1,j3] 
+#
+            ENDDO j3 
+            ENDDO j2
+#
+            DO j2 
+#
+               GET                      t1b_old[b,j2] 
+               Tjjjb[j,j2,j1,b1]      = L2old_bb[j,b,j1,b1]*t1b_old[b,j2] 
+               PUT Ijjjb[j,j2,j1,b1] += Tjjjb[j,j2,j1,b1] 
+#
+            ENDDO j2 
+#
+      ENDPARDO j, j1, b, b1   
+#
+      sip_barrier 
+#
+      PARDO b, b1, b2, j2    
+#
+               REQUEST VSbbbj[b1,b2,b,j2] 
+#
+               DO j
+               DO j1 
+#
+                  GET                            Ijjjb[j,j2,j1,b2] 
+                  Tjbjb[j,b,j1,b1]             = Ijjjb[j,j2,j1,b2]*VSbbbj[b1,b2,b,j2] 
+                  Tjbjb[j,b,j1,b1]            *= -1.0 # -0.5  
+                  PREPARE L2new_bb[j,b,j1,b1] += Tjbjb[j,b,j1,b1]  
+#
+               ENDDO j1 
+               ENDDO j
+#
+      ENDPARDO b, b1, b2, j2  
+#
+      PARDO b, b1, j2, j3  
+#
+            REQUEST VSqjqj[b,j2,b1,j3] 
+#
+             DO j 
+             DO j1  
+#
+               GET                            Ijjjj[j,j2,j1,j3] 
+               Tjbjb[j,b,j1,b1]             = Ijjjj[j,j2,j1,j3]*VSqjqj[b,j2,b1,j3] 
+               Tjbjb[j,b,j1,b1]            *= 0.25  
+               PREPARE L2new_bb[j,b,j1,b1] += Tjbjb[j,b,j1,b1] 
+#
+             ENDDO j1 
+             ENDDO j 
+#
+      ENDPARDO b, b1, j2, j3  
+#
+      ENDPROC L2WABCDbb  
+#     ----------------
+#
+      PROC L2WABCDab  
+#     --------------
+#
+#     AB spin combination 
+#     ------------------- 
+#
+
+      PARDO i, j, a, b   
+#
+            REQUEST L2old_ab[i,a,j,b] 
+#
+            DO i1  
+            DO j1  
+#
+               REQUEST                 Tau_ab[a,i1,b,j1] 
+               Tiijj[i,i1,j,j1]      = L2old_ab[i,a,j,b]*Tau_ab[a,i1,b,j1] 
+               PUT Iiijj[i,i1,j,j1] += Tiijj[i,i1,j,j1] 
+#
+            ENDDO j1   
+            ENDDO i1 
+#
+            DO i1   
+#
+               GET                    t1a_old[a,i1] 
+               Tiijb[i,i1,j,b]      = L2old_ab[i,a,j,b]*t1a_old[a,i1]
+               PUT Iiijb[i,i1,j,b] += Tiijb[i,i1,j,b] 
+#
+            ENDDO i1   
+#
+            DO j1  
+#
+               GET                    t1b_old[b,j1] 
+               Tiajj[i,a,j,j1]      = L2old_ab[i,a,j,b]*t1b_old[b,j1] 
+               PUT Iiajj[i,a,j,j1] += Tiajj[i,a,j,j1] 
+#
+            ENDDO j1 
+#
+      ENDPARDO i, j, a, b 
+#
+      sip_barrier 
+#
+      PARDO a, b, i1, b1 
+#
+            REQUEST Vbbai[b,b1,a,i1] 
+#
+            DO i  
+            DO j  
+#
+               GET                          Iiijb[i,i1,j,b1]
+               Tiajb[i,a,j,b]             = Vbbai[b,b1,a,i1]*Iiijb[i,i1,j,b1] 
+               Tiajb[i,a,j,b]            *= -1.0   
+               PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b] 
+#
+            ENDDO j  
+            ENDDO i  
+#
+      ENDPARDO a, b, i1, b1 
+#
+      PARDO a, b, j1, a1 
+#
+            REQUEST Vaabj[a,a1,b,j1] 
+# 
+            DO i  
+            DO j  
+#
+               GET                          Iiajj[i,a1,j,j1] 
+               Tiajb[i,a,j,b]             = Iiajj[i,a1,j,j1]*Vaabj[a,a1,b,j1] 
+               Tiajb[i,a,j,b]            *= -1.0   
+               PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b] 
+# 
+            ENDDO j 
+            ENDDO i  
+#
+      ENDPARDO a, b, j1, a1 
+#
+      PARDO a, b, i1, j1 
+#
+            REQUEST Vpiqj[a,i1,b,j1] 
+#
+            DO i  
+            DO j  
+#
+               GET                          Iiijj[i,i1,j,j1]
+               Tiajb[i,a,j,b]             = Iiijj[i,i1,j,j1]*Vpiqj[a,i1,b,j1] 
+               PREPARE L2new_ab[i,a,j,b] += Tiajb[i,a,j,b] 
+#
+            ENDDO j  
+            ENDDO i  
+#
+      ENDPARDO a, b, i1, j1 
+#
+      ENDPROC L2WABCDab  
+#     ---------------- 
+# 
+      PROC L1WABCDa 
+#     -------------- 
+#
+#     First piece
+#     -----------
+#
+      pardo i,i1,i2,a
+            put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      sip_barrier 
+
+      PARDO i, i2, a1, a2
+#
+            REQUEST                  L2old_aa[i,a1,i2,a2] 
+            REQUEST                  L2old_aa[i,a2,i2,a1] 
+            tiaia[i,a1,i2,a2]      = L2old_aa[i,a1,i2,a2]
+            t1iaia[i,a1,i2,a2]     = L2old_aa[i,a2,i2,a1]
+            t1iaia[i,a1,i2,a2]    -= tiaia[i,a1,i2,a2]
+#
+            DO i3
+#
+               GET                      t1a_old[a1,i3]
+               tiiia[i,i3,i2,a2]      = t1iaia[i,a1,i2,a2]*t1a_old[a1,i3]
+               PUT Xiiia[i,i3,i2,a2] += tiiia[i,i3,i2,a2]
+#
+            ENDDO i3
+#
+      ENDPARDO i, i2, a1, a2
+      sip_barrier
+#
+      PARDO a, a2, a3, i3 
+#
+            REQUEST VSaaai[a3,a2,a,i3] 
+#
+            DO i
+            DO i2
+#
+               GET                 Xiiia[i,i3,i2,a2]
+               GET                 t1a_old[a3,i2]
+#
+               Tiaia[i,a,i2,a3]  = Xiiia[i,i3,i2,a2]*VSaaai[a3,a2,a,i3]
+               tia[i,a]          = Tiaia[i,a,i2,a3]*t1a_old[a3,i2]
+               tia[i,a]         *= 0.5
+               PUT l1a_new[i,a] += tia[i,a]
+#
+            ENDDO i2
+            ENDDO i
+#
+      ENDPARDO a, a2, a3, i3 
+      sip_barrier
+#
+# 'Fix' on 9/29/08 
+# ---------------- 
+#
+      pardo i,i1,i2,i3
+            put Xiiii[i,i1,i2,i3] = 0.0
+      endpardo i,i1,i2,i3
+      pardo i,i1,i2,a
+            put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      sip_barrier
+
+      PARDO i, i2, a1, a2  
+#
+            REQUEST L2old_aa[i,a1,i2,a2] 
+#
+            DO i3  
+            DO i4  
+#
+               REQUEST                  Tau_aa[a1,i3,a2,i4] 
+               Tiiii[i,i3,i2,i4]      = L2old_aa[i,a1,i2,a2]*Tau_aa[a1,i3,a2,i4]
+               PUT Xiiii[i,i3,i2,i4] += Tiiii[i,i3,i2,i4]
+#
+            ENDDO i4  
+            ENDDO i3  
+#
+      ENDPARDO i, i2, a1, a2  
+#
+      PARDO i3, a, i4, a3  
+#
+            REQUEST VSpipi[a,i3,a3,i4] 
+#
+            DO i2  
+#
+               GET                      t1a_old[a3,i2]
+               Tiiia[i4,i2,i3,a]      = VSpipi[a,i3,a3,i4]*t1a_old[a3,i2]
+               PUT Xiiia[i4,i2,i3,a] += Tiiia[i4,i2,i3,a]
+#
+            ENDDO i2  
+#
+      ENDPARDO i3, a, i4, a3 
+      sip_barrier 
+#
+      PARDO a, i2, i3, i4
+#
+            GET Xiiia[i4,i2,i3,a] 
+#
+            DO i
+#
+               GET                 Xiiii[i,i3,i2,i4] 
+               tia[i,a]          = Xiiii[i,i3,i2,i4]*Xiiia[i4,i2,i3,a]
+               tia[i,a]         *= 0.25
+               PUT l1a_new[i,a] += tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, i2, i3, i4
+#
+#     Second piece
+#     ------------
+#
+      pardo i,a,j,j1
+            put Xiajj[i,a,j,j1] = 0.0
+      endpardo i,a,j,j1
+      pardo i,i1,b,j
+            put Xiibj[i,i1,b,j] = 0.0
+      endpardo i,i1,b,j
+      pardo i,i1,i2,a
+            put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      pardo i,i1,i2,i3
+            put Xiiii[i,i1,i2,i3] = 0.0
+      endpardo i,i1,i2,i3
+      sip_barrier 
+
+      PARDO i, j2, a1, b1
+#
+            REQUEST L2old_ab[i,a1,j2,b1] 
+#
+            DO j1
+#
+               GET t1b_old[b1,j1]
+#
+               Tiajj[i,a1,j2,j1]      = L2old_ab[i,a1,j2,b1]*t1b_old[b1,j1]
+               PUT Xiajj[i,a1,j2,j1] += Tiajj[i,a1,j2,j1]
+#
+            ENDDO j1
+#
+            DO i1
+#
+               GET t1a_old[a1,i1]
+#
+               Tiibj[i1,i,b1,j2]      = L2old_ab[i,a1,j2,b1]*t1a_old[a1,i1]
+               PUT Xiibj[i1,i,b1,j2] += Tiibj[i1,i,b1,j2]
+#
+            ENDDO i1
+#
+      ENDPARDO i, j2, a1, b1
+      sip_barrier
+#
+      PARDO a, b, a1, j1  
+#
+#           Actual contribution computed. 
+#           ----------------------------- 
+#           T1iabj(i,a,b,j2) = -Xiajj(i,a1,j2,j1)*Vaabj(a,a1,b,j1)*t1b_old(b,j2)
+#
+            REQUEST Vaabj[a,a1,b,j1]
+#
+            DO i
+            DO j2
+#
+               GET                 Xiajj[i,a1,j2,j1]
+               GET                 t1b_old[b,j2]
+#
+               Tijaj[i,j2,a1,j1] = Xiajj[i,a1,j2,j1]
+               Tajab[a1,j1,a,b]  = Vaabj[a,a1,b,j1]
+#
+               Tijab[i,j2,a,b]   = Tijaj[i,j2,a1,j1]*Tajab[a1,j1,a,b]
+               Tiabj[i,a,b,j2]   = Tijab[i,j2,a,b]
+#
+               tia[i,a]          = Tiabj[i,a,b,j2]*t1b_old[b,j2]
+               tia[i,a]         *= -1.0
+               PUT l1a_new[i,a] += tia[i,a]
+#
+            ENDDO j2
+            ENDDO i
+#
+      ENDPARDO a, b, a1, j1 
+#
+      PARDO a, b, b1, i1  
+#
+#           Actual term computed. 
+#           ---------------------
+#
+            REQUEST Vbbai[b,b1,a,i1] 
+#
+            DO j2  
+            DO i
+#
+               GET                 Xiibj[i1,i,b1,j2]
+               GET                 t1b_old[b,j2]
+#
+               Tijib[i,j2,i1,b1] = Xiibj[i1,i,b1,j2]
+               Tibab[i1,b1,a,b]  = Vbbai[b,b1,a,i1]
+#
+               Tijab[i,j2,a,b]   = Tijib[i,j2,i1,b1]*Tibab[i1,b1,a,b]
+               Tiabj[i,a,b,j2]   = Tijab[i,j2,a,b]
+#
+               tia[i,a]          = Tiabj[i,a,b,j2]*t1b_old[b,j2]
+               tia[i,a]         *= -1.0
+               PUT l1a_new[i,a] += tia[i,a]
+#
+            ENDDO i
+            ENDDO j2  
+#
+      ENDPARDO a, b, b1, i1  
+#
+      sip_barrier
+
+      pardo i,i1,j,j1
+            put Xiijj[i,i1,j,j1] = 0.0
+      endpardo i,i1,j,j1
+      pardo i,a,j,j1
+            put Xiajj[i,a,j,j1] = 0.0
+      endpardo i,a,j,j1  
+      sip_barrier
+#
+      PARDO i1, j1, a1, b1  
+
+#
+            REQUEST Tau_ab[a1,i1,b1,j1] 
+#
+            DO i
+            DO j2  
+#
+               REQUEST                  L2old_ab[i,a1,j2,b1] 
+               Tiijj[i,i1,j2,j1]      = L2old_ab[i,a1,j2,b1]*Tau_ab[a1,i1,b1,j1]
+               PUT Xiijj[i,i1,j2,j1] += Tiijj[i,i1,j2,j1]
+#
+            ENDDO j2  
+            ENDDO i
+#
+      ENDPARDO i1, j1, a1, b1  
+#
+      PARDO i1, j1, a, b  
+#
+            REQUEST Vpiqj[a,i1,b,j1] 
+#
+            DO j2  
+#
+               GET                      t1b_old[b,j2]
+               Tiajj[i1,a,j1,j2]      = Vpiqj[a,i1,b,j1]*t1b_old[b,j2]
+               PUT Xiajj[i1,a,j1,j2] += Tiajj[i1,a,j1,j2]
+#
+            ENDDO j2  
+#
+      ENDPARDO i1, j1, a, b  
+      sip_barrier 
+#
+      PARDO a, i1, j1, j2
+#
+            GET Xiajj[i1,a,j1,j2] 
+#
+            DO i
+#
+               GET                 Xiijj[i,i1,j2,j1] 
+               tia[i,a]          = Xiijj[i,i1,j2,j1]*Xiajj[i1,a,j1,j2]
+               PUT l1a_new[i,a] += tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, i1, j1, j2
+#
+      sip_barrier 
+#
+      ENDPROC L1WABCDa 
+#     ----------------
+# 
+      PROC L1WABCDb 
+#     -------------- 
+#
+#     First piece
+#     -----------
+#
+      pardo j,j1,b,b1
+            put Xjjbb[j,j1,b,b1] = 0.0
+      endpardo j,j1,b,b1  
+      sip_barrier
+
+      PARDO j, j2, b1, b2
+#
+            REQUEST                  L2old_bb[j,b1,j2,b2] 
+            REQUEST                  L2old_bb[j,b2,j2,b1] 
+            tjbjb[j,b1,j2,b2]      = L2old_bb[j,b1,j2,b2]
+            t1jbjb[j,b1,j2,b2]     = L2old_bb[j,b2,j2,b1]
+            t1jbjb[j,b1,j2,b2]    -= tjbjb[j,b1,j2,b2]
+#
+            DO j3
+#
+               GET                      t1b_old[b1,j3]
+               tjjjb[j,j3,j2,b2]      = t1jbjb[j,b1,j2,b2]*t1b_old[b1,j3]
+               PUT Xjjjb[j,j3,j2,b2] += tjjjb[j,j3,j2,b2]
+#
+            ENDDO j3
+#
+      ENDPARDO j, j2, b1, b2
+      sip_barrier
+#
+      PARDO b, b3, b2, j3  
+#
+            REQUEST VSbbbj[b3,b2,b,j3] 
+#
+            DO j2
+            DO j
+#
+               GET                 Xjjjb[j,j3,j2,b2]
+               GET                 t1b_old[b3,j2]
+#
+               Tjbjb[j,b,j2,b3]  = Xjjjb[j,j3,j2,b2]*VSbbbj[b3,b2,b,j3]
+               tjb[j,b]          = Tjbjb[j,b,j2,b3]*t1b_old[b3,j2]
+               tjb[j,b]         *= 0.5
+               PUT l1b_new[j,b] += tjb[j,b]
+#
+            ENDDO j
+            ENDDO j2
+#
+      ENDPARDO b, b3, b2, j3
+      sip_barrier
+
+      pardo j,j1,j2,j3
+            put Xjjjj[j,j1,j2,j3] = 0.0
+      endpardo j,j1,j2,j3
+      pardo j,j1,j2,b1
+            put Xjjjb[j,j1,j2,b1] = 0.0
+      endpardo j,j1,j2,b1
+      sip_barrier 
+
+      PARDO j3, j4, b1, b2  
+#
+            REQUEST Tau_bb[b1,j3,b2,j4]
+#
+            DO j
+            DO j2
+#
+               REQUEST                  L2old_bb[j,b1,j2,b2] 
+               Tjjjj[j,j3,j2,j4]      = L2old_bb[j,b1,j2,b2]*Tau_bb[b1,j3,b2,j4]
+               PUT Xjjjj[j,j3,j2,j4] += Tjjjj[j,j3,j2,j4]
+#
+            ENDDO j2
+            ENDDO j
+#
+      ENDPARDO j3, j4, b1, b2 
+#
+      PARDO j3, j4, b, b3 
+#
+            REQUEST VSqjqj[b,j3,b3,j4] 
+#
+            DO j2  
+#
+               GET                      t1b_old[b3,j2]
+               Tjjjb[j4,j2,j3,b]      = VSqjqj[b,j3,b3,j4]*t1b_old[b3,j2]
+               PUT Xjjjb[j4,j2,j3,b] += Tjjjb[j4,j2,j3,b]
+#
+            ENDDO j2  
+#
+      ENDPARDO j3, j4, b, b3 
+      sip_barrier 
+#
+      PARDO b, j2, j3, j4
+#
+            GET Xjjjb[j4,j2,j3,b] 
+#
+            DO j
+#
+               GET                 Xjjjj[j,j3,j2,j4] 
+               tjb[j,b]          = Xjjjj[j,j3,j2,j4]*Xjjjb[j4,j2,j3,b]
+               tjb[j,b]         *= 0.25
+               PUT l1b_new[j,b] += tjb[j,b]
+#
+            ENDDO j
+#
+      ENDPARDO b, j2, j3, j4
+#
+#     Second piece
+#     ------------
+#
+      pardo j,b,i,i1
+            put Xjbii[j,b,i,i1] = 0.0
+      endpardo j,b,i,i1
+      pardo j,j1,a,i
+            put Xjjai[j,j1,a,i] = 0.0
+      endpardo j,j1,a,i
+      pardo j,j1,j2,j3
+            put Xjjjj[j,j1,j2,j3] = 0.0
+      endpardo j,j1,j2,j3
+      pardo j,j1,j2,b1
+            put Xjjjb[j,j1,j2,b1] = 0.0
+      endpardo j,j1,j2,b1
+      sip_barrier
+
+      PARDO j, i2, b1, a1
+#
+            REQUEST L2old_ab[i2,a1,j,b1] 
+#
+            DO i1
+#
+               GET t1a_old[a1,i1]
+#
+               Tjbii[j,b1,i2,i1]      = L2old_ab[i2,a1,j,b1]*t1a_old[a1,i1]
+               PUT Xjbii[j,b1,i2,i1] += Tjbii[j,b1,i2,i1]
+#
+            ENDDO i1
+#
+            DO j1
+#
+               GET t1b_old[b1,j1]
+#
+               Tjjai[j1,j,a1,i2]      = L2old_ab[i2,a1,j,b1]*t1b_old[b1,j1]
+               PUT Xjjai[j1,j,a1,i2] += Tjjai[j1,j,a1,i2]
+#
+            ENDDO j1
+#
+      ENDPARDO j, i2, b1, a1
+      sip_barrier
+#
+      PARDO a, b, b1, i1  
+#
+#           Actual term programmed. 
+#           -----------------------
+#           T1jbai(j,b,a,i2) = Xjbii(j,b1,i2,i1)*Vbbai(b,b1,a,i1)*t1a_old(a,i2)
+#
+            REQUEST Vbbai[b,b1,a,i1] 
+#
+            DO j
+            DO i2
+#
+               GET                 Xjbii[j,b1,i2,i1]
+               GET                 t1a_old[a,i2]
+#
+               Tjibi[j,i2,b1,i1] = Xjbii[j,b1,i2,i1]
+               Tbiba[b1,i1,b,a]  = Vbbai[b,b1,a,i1]
+#
+               Tjiba[j,i2,b,a]   = Tjibi[j,i2,b1,i1]*Tbiba[b1,i1,b,a]
+               Tjbai[j,b,a,i2]   = Tjiba[j,i2,b,a]
+#
+               tjb[j,b]          = Tjbai[j,b,a,i2]*t1a_old[a,i2]
+               tjb[j,b]         *= -1.0
+               PUT l1b_new[j,b] += tjb[j,b]
+#
+            ENDDO i2
+            ENDDO j
+#
+      ENDPARDO a, b, b1, i1  
+#
+      PARDO a, b, j1, a1  
+#
+#           Actual term programmed. 
+#           -----------------------
+#           T1jbai(j,b,a,i2)  = Xjjai(j1,j,a1,i2)*Vaabj(a,a1,b,j1)*t1a_old(a,i2) 
+#
+            REQUEST Vaabj[a,a1,b,j1] 
+#
+            DO j
+            DO i2  
+#
+               GET                 Xjjai[j1,j,a1,i2]
+               GET                 t1a_old[a,i2]
+#
+               Tjija[j,i2,j1,a1] = Xjjai[j1,j,a1,i2]
+               Tjaba[j1,a1,b,a]  = Vaabj[a,a1,b,j1]
+#
+               Tjiba[j,i2,b,a]   = Tjija[j,i2,j1,a1]*Tjaba[j1,a1,b,a]
+               Tjbai[j,b,a,i2]   = Tjiba[j,i2,b,a]
+#
+               tjb[j,b]          = Tjbai[j,b,a,i2]*t1a_old[a,i2]
+               tjb[j,b]         *= -1.0
+               PUT l1b_new[j,b] += tjb[j,b]
+#
+            ENDDO i2  
+            ENDDO j
+#
+      ENDPARDO a, b, j1, a1  
+#
+      sip_barrier
+
+      pardo i,i1,j,j1
+            put Xjjii[j,j1,i,i1] = 0.0
+      endpardo i,i1,j,j1
+      pardo j,b,i,i1
+            put Xjbii[j,b,i,i1] = 0.0
+      endpardo j,b,i,i1
+      sip_barrier 
+#
+      PARDO j1, i1, b1, a1  
+#
+            REQUEST Tau_ab[a1,i1,b1,j1] 
+#
+            DO j
+            DO i2  
+#
+               REQUEST                  L2old_ab[i2,a1,j,b1] 
+               Tjjii[j,j1,i2,i1]      = L2old_ab[i2,a1,j,b1]*Tau_ab[a1,i1,b1,j1]
+               PUT Xjjii[j,j1,i2,i1] += Tjjii[j,j1,i2,i1]
+#
+            ENDDO i2  
+            ENDDO j
+#
+      ENDPARDO j1, i1, b1, a1  
+#
+      PARDO j1, i1, b, a  
+#
+            REQUEST Vpiqj[a,i1,b,j1] 
+#
+            DO i2  
+#
+               GET                      t1a_old[a,i2]
+               Tjbii[j1,b,i1,i2]      = Vpiqj[a,i1,b,j1]*t1a_old[a,i2]
+               PUT Xjbii[j1,b,i1,i2] += Tjbii[j1,b,i1,i2]
+#
+            ENDDO i2  
+#
+      ENDPARDO j1, i1, b, a  
+      sip_barrier 
+#
+      PARDO b, i1, i2, j1  
+#
+            GET Xjbii[j1,b,i1,i2] 
+#
+            DO j
+#
+               GET                 Xjjii[j,j1,i2,i1] 
+               tjb[j,b]          = Xjjii[j,j1,i2,i1]*Xjbii[j1,b,i1,i2]
+               PUT l1b_new[j,b] += tjb[j,b]
+#
+            ENDDO j
+#
+      ENDPARDO b, i1, i2, j1 
+      sip_barrier 
+#
+      ENDPROC L1WABCDb 
+#     ---------------- 
+#
+      PROC VABCD
+#     ----------
+#
+           PARDO i,i1,i2,i3
+               PUT Iiiii[i,i1,i2,i3] = 0.0
+           ENDPARDO i,i1,i2,i3
+           PARDO i,i1,i2,a
+               PUT Iiiia[i,i1,i2,a] = 0.0
+           ENDPARDO i,i1,i2,a
+           PARDO j,j1,j2,j3
+               PUT Ijjjj[j,j1,j2,j3] = 0.0
+           ENDPARDO j,j1,j2,j3
+           PARDO j,j1,j2,b
+               PUT Ijjjb[j,j1,j2,b] = 0.0
+           ENDPARDO j,j1,j2,b
+           PARDO i,i1,j,b
+               PUT Iiijb[i,i1,j,b] = 0.0
+           ENDPARDO i,i1,j,b
+           PARDO i,a,j,j1
+               PUT Iiajj[i,a,j,j1] = 0.0
+           ENDPARDO i,a,j,j1
+           PARDO i, i1, j, j1
+                 PUT Iiijj[i,i1,j,j1] = 0.0
+           ENDPARDO  i, i1, j, j1
+           sip_barrier
+
+           CALL LLADDER
+           CALL L2WABCDaa
+           CALL L2WABCDbb
+           CALL L2WABCDab
+
+           CALL L1WABCDa
+           CALL L1WABCDb
+#
+      ENDPROC VABCD
+#     -------------
+#
+     PROC L2ZERO
+#    -----------
+#
+          pardo i,a
+             put l1a_new[i,a] = 0.0
+          endpardo i,a
+
+          pardo j, b
+             put l1b_new[j,b] = 0.0
+          endpardo j, b
+
+          PARDO a, a1, i, i1
+                Tiaia[i,a,i1,a1] = 0.0
+                PREPARE L2new_aa[i,a,i1,a1] = Tiaia[i,a,i1,a1]
+          ENDPARDO a, a1, i, i1
+#
+          PARDO b, b1, j, j1
+                Tjbjb[j,b,j1,b1] = 0.0
+                PREPARE L2new_bb[j,b,j1,b1] = Tjbjb[j,b,j1,b1]
+          ENDPARDO b, b1, j, j1
+#
+          PARDO a, b, i, j
+                Tiajb[i,a,j,b] = 0.0
+                PREPARE L2new_ab[i,a,j,b] = Tiajb[i,a,j,b]
+          ENDPARDO a, b, i, j
+#
+     ENDPROC L2ZERO
+#    --------------
+# 
+      PROC LMAIN 
+#     ---------- 
+#
+# Compute Tau and Taup arrays 
+# --------------------------- 
+      CALL TAU 
+      server_barrier  
+#
+# Compute permanent Intermediates 
+# ------------------------------------- 
+# 
+      CALL FME 
+      sip_barrier 
+      CALL F1AE 
+      CALL F1MI  
+      sip_barrier 
+#
+      CALL W1MINJ 
+      CALL W2MEBJ   
+      server_barrier 
+#
+      CALL W1IMEN 
+      CALL W1MEBJ_S  
+      CALL W1EAFM_S  
+
+# Done computing permanent Intermediates 
+# -------------------------------------- 
+#
+# Start Iterations 
+# ---------------- 
+#
+# Create initial guess
+# --------------------
+#
+      CALL LIGUESS
+      server_barrier 
+
+      CALL LOLDENERGY
+      eold = ecorrT 
+#
+      DO kiter 
+#
+# Zero-out new amplitudes 
+# ----------------------- 
+         
+         CALL L2ZERO 
+         server_barrier 
+         print kiter 
+# 
+# Compute temporary intermediates 
+# ------------------------------- 
+#
+         CALL GAE 
+         CALL GMI 
+         sip_barrier 
+#
+# Compute New L1 and L2 arrays 
+# ---------------------------- 
+#
+         CALL L1ANEW 
+         CALL L1BNEW 
+         CALL L2NEWAA 
+         CALL L2NEWBB 
+         CALL L2NEWAB 
+
+         CALL VABCD
+         CALL W1EAFM
+         CALL W1MEBJ 
+         server_barrier 
+
+#bgn_debug
+#      server_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      sumbb=0.0
+#      pardo a, i
+#      get l1a_new[i,a]
+#      tmp = l1a_new[i,a] * l1a_new[i,a]
+#      suma += tmp
+#      endpardo a, i
+#      sumb=0.0
+#      pardo b, j
+#      get l1b_new[j,b]
+#      tmp = l1b_new[j,b] * l1b_new[j,b]
+#      sumb += tmp
+#      endpardo b,j
+#      sip_barrier
+#      collective sumaa += suma
+#      collective sumbb += sumb
+#      print sumaa
+#      print sumbb
+#      server_barrier
+#      suma=0.0
+#      sumaa=0.0
+#      PARDO a, i, a1, i1
+#      request l2new_aa[i,a,i1,a1]
+#      tmp =  l2new_aa[i,a,i1,a1] *  l2new_aa[i,a,i1,a1]
+#      suma += tmp
+#      endpardo a, i, a1, i1
+#      sumb=0.0
+#      sumbb=0.0
+#      PARDO b, j, b1, j1
+#      request l2new_bb[j,b,j1,b1]
+#      tmp =  l2new_bb[j,b,j1,b1] *  l2new_bb[j,b,j1,b1]
+#      sumb += tmp
+#      endpardo b,j,b1,j1
+#      sip_barrier
+#      collective sumaa += suma
+#      collective sumbb += sumb
+#      print sumaa
+#      print sumbb
+#end_debug
+
+#
+# Update arrays 
+# ------------- 
+#
+         CALL UPDATEL1 
+         CALL UPDATEL2 
+         server_barrier 
+#
+         CALL LOLDENERGY
+#
+         if kiter >= diis_start
+            CALL DO_DIIS
+         ENDIF
+
+         CALL MOVEL1
+         CALL MOVEL2
+#
+#        Check on convergence
+#        --------------------
+
+         assert_same ecorrt
+         assert_same eold
+
+         etemp = (eold - ecorrt)**(2.0)
+         ediff = (etemp)**(0.5)
+         assert_same ediff
+#bgn_debug
+         print ecorrT
+         print ediff 
+#end_debug
+
+         IF ediff < ecrit
+            exit
+         ENDIF
+#
+         eold = ecorrT
+#
+      ENDDO kiter
+#
+      ENDPROC LMAIN 
+#     ------------- 
+#
+# Begin MAIN program 
+# ------------------
+      ecrit = cc_conv
+      one   = 1.0
+      two   = 2.0
+      five  = 5.0
+      six   = 6.0
+      seven = 7.0
+      eight = 8.0
+      nine  = 9.0
+      ten   = 10.0
+      zmax  = 0.0
+      imax  = 0.0
+      AAAA  = 1.0
+      BBBB  = 2.0
+      ABAB  = 3.0
+
+      execute compute_int_scratchmem oed_ovl zmax imax
+
+#bgn_debug
+      print "reference,diis_start,diis_order,ecrit"
+      print reference
+      print diis_start
+      print diis_order
+      print ecrit
+      print " "
+#end_debug
+# Read transformed integrals from lists
+# -------------------------------------
+#
+ 
+      CALL READ_2EL 
+      CALL LMAIN
+
+      restore_persistent scf_energy "scf_energy"
+      server_barrier
+      lambda_correlation = ecorrT
+      totenerg  = ecorrT
+      totenerg += scf_energy
+      lambda_pseudo_energy = totenerg
+#
+      print " "
+      print scf_energy
+      print lambda_correlation
+      print lambda_pseudo_energy
+      print "done4"
+
+      CALL WRITE_2EL
+#
+                           ENDSIAL LAMBDA_UHF
+#                          ------------------
+
+

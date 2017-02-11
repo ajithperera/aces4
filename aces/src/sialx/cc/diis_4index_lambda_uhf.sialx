@@ -1,0 +1,566 @@
+import "lambda_uhf_defs.sialx"
+import "lambda_uhf_vars.sialx"
+
+# This is a stand alone sial procedure to DIIS only two index array
+# vectors are involved. This is a closed shell only version. 
+# The definition of arrays are as follows.
+# The arrays that are specific to DIIS do not need to be declared in the
+# calling program. The follwing arrrays must match (the names and the
+# data) for this to work (and avoid duplicate copying).
+
+#
+#      Distributed Dia[i,a,kdiis]  : The vector that is being extrapolated
+#      Distributed Eia[i,a,jdiis]  : The error vector (diffrence between
+#                                    n and n-1 vectors, n= no. iteration)
+#
+#      Served Eiaia[i,a,i1,a1,jdiis] : Same as above but now has four indices
+#      Served Diaia[i,a,i1,a1,jdiis] :
+#
+#      Served D0ia[i,a]            : The vector at zero iteration.
+#      Served D0iajb[i,a,j,b]      : Same as above but now has four indices 
+#
+#
+#      Distributed l1a_old[i,a]    : The extrapolated vector returns
+#                                     in this generic distributed array. 
+#                                     Copy this to the name of the variable 
+#                                     name being used in the calling
+#      Distribute  l1b_old[j,b]    : Same as above for beta spin
+#
+#      Served L2old_aa[i,a,i1,a1] : The extrapolated four index vector
+#                                      return in this generic distributed array.
+#                                      Copy this to the name of the variable
+#                                      name being used in the calling
+#      Served L2old_bb[j,b,j1,b1] : The other spin combinations
+#      Served L2old_bb[i,a,j,b]   :
+#       
+#
+#      Distributed Djb[j,bkdiis]  : 
+#      Distributed Ejb[j,jbdiis]  : 
+#                                    
+#      Served D0jb[j,b]            :  SAME AS ABOVE now for beta spin.
+#
+#      Distributed XXb_old[j,b]    : 
+#
+      SIAL DIIS_4INDEX_UHF 
+#     --------------------
+
+      PROC DO_DIIS
+#     ------------
+
+      scale4 = 4.0
+      scale1 = 1.0
+
+      worder = kiter
+      If kiter >= diis_order 
+         worder = diis_order
+      Endif 
+      Iorder = worder 
+      sip_barrier 
+
+      PARDO a, i, a1, i1
+         DO jdiis
+         where jdiis <= Iorder
+
+               REQUEST Eiaia[i,a,i1,a1,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               REQUEST Eiaia[i,a,i1,a1,j1diis]
+
+               tbb[jdiis,j1diis]          = Eiaia[i,a,i1,a1,jdiis] * Eiaia[i,a,i1,a1,j1diis]
+               tbb[jdiis,j1diis]         *= Scale1
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+
+      ENDPARDO a, i, a1, i1
+
+      PARDO b, j, b1, j1
+         DO jdiis
+         where jdiis <= Iorder
+
+               REQUEST Ejbjb[j,b,j1,b1,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               REQUEST Ejbjb[j,b,j1,b1,j1diis]
+
+               tbb[jdiis,j1diis]          = Ejbjb[j,b,j1,b1,jdiis] * Ejbjb[j,b,j1,b1,j1diis]
+               tbb[jdiis,j1diis]         *= Scale1
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+
+      ENDPARDO b, j, b1, j1
+
+      PARDO a, i, b, j
+         DO jdiis
+         where jdiis <= Iorder
+
+               REQUEST Eiajb[i,a,j,b,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               REQUEST Eiajb[i,a,j,b,j1diis]
+
+               tbb[jdiis,j1diis]          = Eiajb[i,a,j,b,jdiis] *  Eiajb[i,a,j,b,j1diis]
+               tbb[jdiis,j1diis]         *= Scale4
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+
+      ENDPARDO a, i, b, j
+
+      PARDO a, i
+         DO jdiis
+         where jdiis <= Iorder
+
+               GET Eia[i,a,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               GET Eia[i,a,j1diis]
+
+               tbb[jdiis,j1diis]          = Eia[i,a,jdiis] * Eia[i,a,j1diis]
+               tbb[jdiis,j1diis]         *= Scale4
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+      ENDPARDO a, i
+
+      PARDO b, j
+         DO jdiis
+         where jdiis <= Iorder
+
+               GET Ejb[j,b,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               GET Ejb[j,b,j1diis]
+
+               tbb[jdiis,j1diis]          = Ejb[j,b,jdiis] * Ejb[j,b,j1diis]
+               tbb[jdiis,j1diis]         *= Scale4
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+      ENDPARDO b, j
+      sip_barrier
+
+      DO jdiis
+      where jdiis <= Iorder
+          DO j1diis
+          where j1diis <= Iorder
+                GET DIST_BB[jdiis,j1diis]
+                BB[jdiis,j1diis] = DIST_BB[jdiis,j1diis]
+          ENDDO j1diis
+      ENDDO jdiis
+
+      execute compute_diis BB
+      sip_barrier
+
+      PARDO a, i, a1, i1
+            tiaia[i,a,i1,a1] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+
+                  REQUEST            Diaia[i,a,i1,a1,kdiis]
+                  t2iaia[i,a,i1,a1] = Diaia[i,a,i1,a1,kdiis]
+                  DO d2
+                  where d2 <= Iorder
+                      n2 = (scalar)d2
+                      kcount  = n2
+                      kcount -= n1
+                      if kcount == one
+                         REQUEST           Eiaia[i,a,i1,a1,d2]
+                         t3iaia[i,a,i1,a1] = Eiaia[i,a,i1,a1,d2]
+                         etemp =  BB[d2,d2]
+                         t3iaia[i,a,i1,a1] += t2iaia[i,a,i1,a1]
+                         t3iaia[i,a,i1,a1] *= etemp
+                         tiaia[i,a,i1,a1]  += t3iaia[i,a,i1,a1]
+                      endif
+                   ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST            D0iaia[i,a,i1,a1]
+                  t2iaia[i,a,i1,a1] = D0iaia[i,a,i1,a1]
+                  REQUEST           Eiaia[i,a,i1,a1,d2]
+                  t3iaia[i,a,i1,a1] = Eiaia[i,a,i1,a1,d2]
+                  etemp =  BB[d2,d2]
+                  t3iaia[i,a,i1,a1] += t2iaia[i,a,i1,a1]
+                  t3iaia[i,a,i1,a1] *= etemp
+                  tiaia[i,a,i1,a1]  += t3iaia[i,a,i1,a1]
+               endif
+            ENDDO d2
+
+            PREPARE l2old_aa[i,a,i1,a1] = tiaia[i,a,i1,a1]
+      ENDPARDO a, i, a1, i1
+
+      PARDO b, j, b1, j1
+            tjbjb[j,b,j1,b1] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+
+                  REQUEST           Djbjb[j,b,j1,b1,kdiis]
+                  t2jbjb[j,b,j1,b1] = Djbjb[j,b,j1,b1,kdiis]
+                  DO d2
+                  where d2 <= Iorder
+                      n2 = (scalar)d2
+                      kcount  = n2
+                      kcount -= n1
+                      if kcount == one
+                         REQUEST           Ejbjb[j,b,j1,b1,d2]
+                         t3jbjb[j,b,j1,b1] = Ejbjb[j,b,j1,b1,d2]
+                         etemp =  BB[d2,d2]
+                         t3jbjb[j,b,j1,b1] += t2jbjb[j,b,j1,b1]
+                         t3jbjb[j,b,j1,b1] *= etemp
+                         tjbjb[j,b,j1,b1]  += t3jbjb[j,b,j1,b1]
+                      endif
+                   ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST           D0jbjb[j,b,j1,b1]
+                  t2jbjb[j,b,j1,b1] = D0jbjb[j,b,j1,b1]
+                  REQUEST           Ejbjb[j,b,j1,b1,d2]
+                  t3jbjb[j,b,j1,b1] = Ejbjb[j,b,j1,b1,d2]
+                  etemp =  BB[d2,d2]
+                  t3jbjb[j,b,j1,b1] += t2jbjb[j,b,j1,b1]
+                  t3jbjb[j,b,j1,b1] *= etemp
+                  tjbjb[j,b,j1,b1]  += t3jbjb[j,b,j1,b1]
+               endif
+            ENDDO d2
+
+            PREPARE l2old_bb[j,b,j1,b1] = tjbjb[j,b,j1,b1]
+      ENDPARDO b, j, b1, j1
+
+      PARDO a, i, b, j
+            tiajb[i,a,j,b] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+
+                  REQUEST           Diajb[i,a,j,b,kdiis]
+                  t2iajb[i,a,j,b] = Diajb[i,a,j,b,kdiis]
+                  DO d2
+                  where d2 <= Iorder
+                      n2 = (scalar)d2
+                      kcount  = n2
+                      kcount -= n1
+                      if kcount == one
+                         REQUEST           Eiajb[i,a,j,b,d2]
+                         t3iajb[i,a,j,b] = Eiajb[i,a,j,b,d2]
+                         etemp =  BB[d2,d2]
+                         t3iajb[i,a,j,b] += t2iajb[i,a,j,b]
+                         t3iajb[i,a,j,b] *= etemp
+                         tiajb[i,a,j,b]  += t3iajb[i,a,j,b]
+                      endif
+                   ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST           D0iajb[i,a,j,b]
+                  t2iajb[i,a,j,b] = D0iajb[i,a,j,b]
+                  REQUEST           Eiajb[i,a,j,b,d2]
+                  t3iajb[i,a,j,b] = Eiajb[i,a,j,b,d2]
+                  etemp =  BB[d2,d2]
+                  t3iajb[i,a,j,b] += t2iajb[i,a,j,b]
+                  t3iajb[i,a,j,b] *= etemp
+                  tiajb[i,a,j,b]  += t3iajb[i,a,j,b]
+               endif
+            ENDDO d2
+
+            PREPARE l2old_ab[i,a,j,b] = tiajb[i,a,j,b]
+      ENDPARDO a, i, b, j
+
+      PARDO a, i
+            tia[i,a] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+               GET         Dia[i,a,kdiis]
+               t2ia[i,a] = Dia[i,a,kdiis]
+
+                DO d2
+                where d2 <= Iorder
+                   n2 = (scalar)d2
+                   kcount  = n2
+                   kcount -= n1
+                   if kcount == one
+                      GET         Eia[i,a,d2]
+                      t3ia[i,a] = Eia[i,a,d2]
+                      etemp = BB[d2,d2]
+                      t3ia[i,a] += t2ia[i,a]
+                      t3ia[i,a] *= etemp
+                      tia[i,a]  += t3ia[i,a]
+                   endif
+                ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST D0ia[i,a]
+                  t2ia[i,a] = D0ia[i,a]
+                  GET         Eia[i,a,d2]
+                  t3ia[i,a] = Eia[i,a,d2]
+                  etemp = BB[d2,d2]
+                  t3ia[i,a] += t2ia[i,a]
+                  t3ia[i,a] *= etemp
+                  tia[i,a]  += t3ia[i,a]
+               endif
+            ENDDO d2
+
+            PUT l1a_old[i,a] = tia[i,a]
+      ENDPARDO a, i
+
+      PARDO b, j
+            tjb[j,b] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+               GET         Djb[j,b,kdiis]
+               t2jb[j,b] = Djb[j,b,kdiis]
+
+                DO d2
+                where d2 <= Iorder
+                   n2 = (scalar)d2
+                   kcount  = n2
+                   kcount -= n1
+                   if kcount == one
+                      GET         Ejb[j,b,d2]
+                      t3jb[j,b] = Ejb[j,b,d2]
+                      etemp = BB[d2,d2]
+                      t3jb[j,b] += t2jb[j,b]
+                      t3jb[j,b] *= etemp
+                      tjb[j,b]  += t3jb[j,b]
+                   endif
+                ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST D0jb[j,b]
+                  t2jb[j,b] = D0jb[j,b]
+                  GET         Ejb[j,b,d2]
+                  t3jb[j,b] = Ejb[j,b,d2]
+                  etemp = BB[d2,d2]
+                  t3jb[j,b] += t2jb[j,b]
+                  t3jb[j,b] *= etemp
+                  tjb[j,b]  += t3jb[j,b]
+               endif
+            ENDDO d2
+
+            PUT l1b_old[j,b] = tjb[j,b]
+      ENDPARDO b, j
+      server_barrier
+
+# If history space is full shift (downward) history end error vectors
+
+      PARDO a, i, a1, i1
+      DO kdiis
+      where kdiis < Iorder
+         n1 = (scalar)kdiis
+         REQUEST Diaia[i,a,i1,a1,kdiis]
+         tiaia[i,a,i1,a1] = Diaia[i,a,i1,a1,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PREPARE Diaia[i,a,i1,a1,k1diis] = tiaia[i,a,i1,a1]
+             endif
+          ENDDO k1diis
+             if n1 == one
+                PREPARE D0iaia[i,a,i1,a1] = tiaia[i,a,i1,a1]
+             endif
+      ENDDO kdiis
+      ENDPARDO a, i, a1, i1
+
+      PARDO b, j, b1, j1
+      DO kdiis
+      where kdiis < Iorder
+         n1 = (scalar)kdiis
+         REQUEST Djbjb[j,b,j1,b1,kdiis]
+         tjbjb[j,b,j1,b1] = Djbjb[j,b,j1,b1,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PREPARE Djbjb[j,b,j1,b1,k1diis] = tjbjb[j,b,j1,b1]
+             endif
+          ENDDO k1diis
+             if n1 == one
+                PREPARE D0jbjb[j,b,j1,b1] = tjbjb[j,b,j1,b1]
+             endif
+      ENDDO kdiis
+      ENDPARDO b, j, b1, j1
+
+      PARDO a, i, b, j
+      DO kdiis
+      where kdiis < Iorder
+         n1 = (scalar)kdiis
+         REQUEST Diajb[i,a,j,b,kdiis]
+         tiajb[i,a,j,b] = Diajb[i,a,j,b,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PREPARE Diajb[i,a,j,b,k1diis] = tiajb[i,a,j,b]
+             endif
+          ENDDO k1diis
+             if n1 == one
+                PREPARE D0iajb[i,a,j,b] = tiajb[i,a,j,b]
+             endif
+      ENDDO kdiis
+      ENDPARDO a, i, b, j
+
+      PARDO a, i
+      DO kdiis
+      where kdiis < Iorder
+          n1 = (scalar)kdiis
+          GET Dia[i,a,kdiis]
+          tia[i,a] = Dia[i,a,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Dia[i,a,k1diis] = tia[i,a]
+             endif
+          ENDDO k1diis
+          if n1 == one
+             PREPARE D0ia[i,a] = tia[i,a]
+          endif
+      ENDDO kdiis
+      ENDPARDO a, i
+
+      PARDO b, j
+      DO kdiis
+      where kdiis < Iorder
+          n1 = (scalar)kdiis
+          GET Djb[j,b,kdiis]
+          tjb[j,b] = Djb[j,b,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Djb[j,b,k1diis] = tjb[j,b]
+             endif
+          ENDDO k1diis
+          if n1 == one
+             PREPARE D0jb[j,b] = tjb[j,b]
+          endif
+      ENDDO kdiis
+      ENDPARDO b, j
+
+
+      PARDO a, i, a1, i1
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         REQUEST Eiaia[i,a,i1,a1,kdiis]
+         tiaia[i,a,i1,a1] = Eiaia[i,a,i1,a1,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PREPARE Eiaia[i,a,i1,a1,k1diis] = tiaia[i,a,i1,a1]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO a, i, a1, i1
+
+      PARDO b, j, b1, j1
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         REQUEST Ejbjb[j,b,j1,b1,kdiis]
+         tjbjb[j,b,j1,b1] = Ejbjb[j,b,j1,b1,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PREPARE Ejbjb[j,b,j1,b1,k1diis] = tjbjb[j,b,j1,b1]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO b, j, b1, j1 
+
+      PARDO a, i, b, j
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         REQUEST Eiajb[i,a,j,b,kdiis]
+         tiajb[i,a,j,b] = Eiajb[i,a,j,b,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PREPARE Eiajb[i,a,j,b,k1diis] = tiajb[i,a,j,b]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO a, i, b, j
+
+      PARDO a, i
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         GET Eia[i,a,kdiis]
+         tia[i,a] = Eia[i,a,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Eia[i,a,k1diis] = tia[i,a]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO a, i
+
+      PARDO b, j
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         GET Ejb[j,b,kdiis]
+         tjb[j,b] = Ejb[j,b,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Ejb[j,b,k1diis] = tjb[j,b]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO b, j
+
+      server_barrier
+
+      ENDPROC DO_DIIS
+#     ---------------
+
+      ENDSIAL DIIS_4INDEX_UHF 
+#     ----------------------

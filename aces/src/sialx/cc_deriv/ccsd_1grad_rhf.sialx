@@ -1,0 +1,5700 @@
+import "ccsdgrad_rhf_defs.sialx"
+import "ccsd_1grad_rhf_vars.sialx"
+import "diis_2index_ccgrad_rhf.sialx"
+
+#  Copyright (c) 2003-2010 University of Florida
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  The GNU General Public License is included in this distribution
+#  in the file COPYRIGHT.
+                    SIAL CCSD_1GRAD_RHF
+#                   ------------------
+#
+# This SIAL program computes the two particle density 
+# matrice but only stores one piece at a time similar to dens6.sial. 
+# The one-particle intermediates are computed and stored.  
+# The two-particle density matrices have been tested and are CORRECT.  
+# The one-particle intermediates have been tested and are CORRECT. 
+# Contributions coming from Vabcd --> Iab are computed in AO basis and CHECKED. 
+# Contributions coming from Vabcd --> Iai are computed in AO basis and CHECKED. 
+#
+# This version also computes Dai iteratively in the final step --> Tested and Working 
+#
+# Iij_aa --> matches aces 
+# Iij_bb --> matches aces 
+#
+# Iab_aa --> matches aces 
+# Iab_bb --> matches aces 
+#
+# Iai_aa --> matches aces 
+# Iai_bb --> matches aces 
+#
+# Iia_aa --> matches aces 
+# Iia_bb --> matches aces 
+#
+# ---------------------------------------
+# PROCEDURE                  OPTIMIZATION 
+# ---------------------------------------
+# DIJKL                      COMPLETE  
+# DABCD                      COMPLETE  
+# DIBJA                      IN PROGRESS  
+# DIJAB                      COMPLETE   
+# DIJKA                      PARTIAL  
+# DABCI                      PARTIAL  
+#
+# I11                        COMPLETE 
+# IABDIRECT                  COMPLETE 
+# IFOCK                      COMPLETE 
+# LINEQ                      COMPLETE 
+#
+# DAB                        COMPLETE  
+# DIJ                        COMPLETE  
+# GAE                        COMPLETE 
+# GMI                        COMPLETE  
+# TAU                        COMPLETE  
+# ---------------------------------------
+#
+     PROC READ_2EL
+#    ------------
+
+      restore_persistent ca        "ca"
+      restore_persistent Fock_a    "fock_a"
+      restore_persistent VSpipi    "VSpipi"
+      restore_persistent Vaaii     "Vaaii"
+      restore_persistent Viaai     "Viaai"
+      restore_persistent VSaaai    "VSaaai"
+      restore_persistent Vaabj     "Vaaai"
+      restore_persistent Vpiqj     "Vpiqj"
+      restore_persistent t1a_old   "t1a_old"
+      restore_persistent T2old_aa  "T2old_aa"
+      restore_persistent T2old_ab  "T2old_ab"
+      restore_persistent l1a_old  "l1a_old"
+      restore_persistent L2old_aa "L2old_aa"
+      restore_persistent L2old_ab "L2old_ab"   
+      server_barrier 
+
+     ENDPROC READ_2EL
+#    ----------------
+
+     PROC WRITE_2EL
+#    -------------
+
+     set_persistent ca "ca"
+     set_persistent t1a_old  "t1a_old"
+     set_persistent T2old_aa "T2old_aa"
+     set_persistent T2old_ab "T2old_ab"
+     set_persistent l1a_old  "l1a_old"
+     set_persistent L2old_aa "L2old_aa"
+     set_persistent L2old_ab "L2old_ab"
+     set_persistent Doldai_a "Doldai_a"
+     set_persistent DOR_ii   "DOR_ii"
+     set_persistent DOR_aa   "DOR_aa"
+     set_persistent D_Gradient "D_Gradient"
+     server_barrier
+
+     ENDPROC WRITE_2EL
+#    ----------------
+
+      PROC TAUAA
+#     ----------
+#
+      PARDO a, i, a1, i1
+#
+            REQUEST T2old_aa[a,i,a1,i1] 
+            GET t1a_old[a1,i1]
+            GET t1a_old[a1,i]
+            GET t1a_old[a,i1]
+            GET t1a_old[a,i]
+#
+            tai[a1,i1]            = t1a_old[a1,i1]
+            tmp1_aiai[a,i,a1,i1]  = t1a_old[a,i]^tai[a1,i1]
+            tai[a1,i]             = t1a_old[a1,i]
+            tmp2_aiai[a,i,a1,i1]  = t1a_old[a,i1]^tai[a1,i]
+            tmp1_aiai[a,i,a1,i1] += T2old_aa[a,i,a1,i1]
+            tmp1_aiai[a,i,a1,i1] -= tmp2_aiai[a,i,a1,i1]
+            PREPARE Tau_aa[a,i,a1,i1] = tmp1_aiai[a,i,a1,i1]
+#
+      ENDPARDO a, i, a1, i1
+#
+      ENDPROC TAUAA
+#     -------------
+#
+      PROC TAUAB
+#     ----------
+#
+      PARDO a, i, b, j
+#
+            REQUEST T2old_ab[a,i,b,j] 
+            GET t1a_old[a,i]
+            GET t1a_old[b,j]
+            tai[b,j] = t1a_old[b,j]
+#
+            tmp1_aibj[a,i,b,j]  = t1a_old[a,i]^tai[b,j]
+            tmp1_aibj[a,i,b,j] += T2old_ab[a,i,b,j]
+            PREPARE Tau_ab[a,i,b,j] = tmp1_aibj[a,i,b,j]
+#
+      ENDPARDO a, i, b, j
+#
+      ENDPROC TAUAB
+#     -------------
+
+      PROC TAU
+#     --------
+           CALL TAUAA
+           CALL TAUAB
+#
+      ENDPROC TAU
+#     -----------
+#
+      PROC GAEA
+#     ---------
+#
+      PARDO a, a1
+#
+            Taa[a,a1] = 0.0
+#
+            DO i1
+            DO i
+            DO a2
+#
+               REQUEST T2old_aa[a1,i1,a2,i] 
+               REQUEST L2old_aa[i1,a,i,a2]  
+#
+               T1aa[a,a1]  = L2old_aa[i1,a,i,a2]*T2old_aa[a1,i1,a2,i]
+               T1aa[a,a1] *= 0.5
+               Taa[a,a1]  -= T1aa[a,a1]
+#
+            ENDDO a2
+            ENDDO i
+            ENDDO i1
+#
+            DO i
+            DO j
+            DO b
+#
+               REQUEST T2old_ab[a1,i,b,j]  
+               REQUEST L2old_ab[i,a,j,b]   
+#
+               T1aa[a,a1] = L2old_ab[i,a,j,b]*T2old_ab[a1,i,b,j]
+               Taa[a,a1] -= T1aa[a,a1]
+#
+            ENDDO b
+            ENDDO j
+            ENDDO i
+#
+            PUT Gae_a[a,a1] += Taa[a,a1]
+#
+      ENDPARDO a, a1
+#
+      ENDPROC GAEA
+#     ------------
+#
+      PROC GAEB
+#     ---------
+#
+      PARDO b, b1
+#
+            TTbb[b,b1] = 0.0
+#
+            DO j
+            DO j1
+            DO b2
+#
+               REQUEST T2old_aa[b1,j,b2,j1] 
+               REQUEST L2old_aa[j,b,j1,b2]  
+#
+               T1bb[b,b1]  = L2old_aa[j,b,j1,b2]*T2old_aa[b1,j,b2,j1]
+               T1bb[b,b1] *= 0.5
+               TTbb[b,b1]  -= T1bb[b,b1]
+#
+            ENDDO b2
+            ENDDO j1
+            ENDDO j
+#
+            DO j
+            DO i
+            DO a
+#
+               REQUEST T2old_ab[a,i,b1,j] 
+               REQUEST L2old_ab[i,a,j,b]  
+#
+               T1bb[b,b1] = L2old_ab[i,a,j,b]*T2old_ab[a,i,b1,j]
+               TTbb[b,b1] -= T1bb[b,b1]
+#
+            ENDDO a
+            ENDDO i
+            ENDDO j
+#
+            PUT Gae_b[b,b1] += TTbb[b,b1]
+#
+      ENDPARDO b, b1
+#
+      ENDPROC GAEB
+#     ------------
+#
+      PROC GAE
+#     --------
+         CALL GAEA
+         CALL GAEB
+      ENDPROC GAE
+#     -----------
+#
+      PROC GMIA
+#     ---------
+#
+      PARDO i1, i
+#
+            Gmi_a[i1,i] = 0.0
+#
+      ENDPARDO i1, i
+      sip_barrier
+#
+      PARDO a, a1, i, i1
+#
+            DO i2
+#
+               REQUEST T2old_aa[a,i1,a1,i2] 
+               REQUEST L2old_aa[i,a,i2,a1] 
+#
+               Tii[i1,i]        = T2old_aa[a,i1,a1,i2]*L2old_aa[i,a,i2,a1]
+               Tii[i1,i]       *= 0.5
+               PUT Gmi_a[i1,i] += Tii[i1,i]
+#
+            ENDDO i2
+#
+      ENDPARDO a, a1, i, i1
+#
+      PARDO a, b, i, j
+#
+            DO i1
+#
+               REQUEST T2old_ab[a,i1,b,j]  
+               REQUEST L2old_ab[i,a,j,b]   
+#
+               Tii[i1,i]        = T2old_ab[a,i1,b,j]*L2old_ab[i,a,j,b]
+               PUT Gmi_a[i1,i] += Tii[i1,i]
+#
+            ENDDO i1
+#
+      ENDPARDO a, b, i, j
+#
+      ENDPROC GMIA
+#     ------------
+#
+      PROC GMIB
+#     ---------
+#
+      PARDO j1, j
+#
+            Gmi_b[j1,j] = 0.0
+#
+      ENDPARDO j1, j
+      sip_barrier 
+#
+      PARDO b, b1, j, j1
+#
+            DO j2
+#
+               REQUEST T2old_aa[b,j1,b1,j2] 
+               REQUEST L2old_aa[j,b,j2,b1]  
+#
+               Tjj[j1,j]        = T2old_aa[b,j1,b1,j2]*L2old_aa[j,b,j2,b1]
+               Tjj[j1,j]       *= 0.5
+               PUT Gmi_b[j1,j] += Tjj[j1,j]
+#
+            ENDDO j2
+#
+      ENDPARDO b, b1, j, j1
+#
+      PARDO b, a, j, i
+#
+            DO j1
+#
+               REQUEST T2old_ab[a,i,b,j1] 
+               REQUEST L2old_ab[i,a,j,b] 
+#
+               Tjj[j1,j]        = T2old_ab[a,i,b,j1]*L2old_ab[i,a,j,b]
+               PUT Gmi_b[j1,j] += Tjj[j1,j]
+#
+            ENDDO j1
+#
+      ENDPARDO b, a, j, i
+#
+      ENDPROC GMIB
+#     ------------
+#
+      PROC GMI
+#     --------
+         CALL GMIA
+         CALL GMIB
+      ENDPROC GMI
+#     -----------
+#
+# --------------------------------------------------------------------------- 
+#
+# In this PROCEDURE the D^{ij}_{ab} block of the two-particle 
+# density matrix is formed. Only the AA spin case is considered.  
+#
+# --------------------------------------------------------------------------- 
+#
+# First form one-particle intermediates 
+#
+# --------------------------------------------------------------------------- 
+#
+# Dim(i,m) = Gmi_a(i,m) + l1a_old(m,e)*t1a_old(e,i)  
+#
+# Dea(e,a) = Gae_a(e,a) - l1a_old(m,e)*t1a_old(a,m) 
+#
+# --------------------------------------------------------------------------- 
+#
+      PROC DIJABAA 
+#     ------------- 
+#
+# Dii 
+# ---  
+#
+      PARDO i, i1
+            PUT Dii[i,i1] = 0.0
+      ENDPARDO i, i1
+      sip_barrier 
+
+      PARDO i, i1 
+#
+            GET Gmi_a[i,i1] 
+            PUT Dii[i,i1] += Gmi_a[i,i1] 
+#
+      ENDPARDO i, i1 
+#
+      PARDO i, i1, a       
+#
+            GET l1a_old[i1,a] 
+            GET t1a_old[a,i] 
+            Tii[i,i1]      = l1a_old[i1,a]*t1a_old[a,i] 
+            PUT Dii[i,i1] += Tii[i,i1] 
+#
+      ENDPARDO i, i1, a       
+      sip_barrier 
+#
+# Daa 
+# --- 
+#
+      PARDO a1, a 
+             PUT Daa[a1,a] = 0.0
+      ENDPARDO a1, a 
+      sip_barrier 
+
+      PARDO a1, a 
+#
+            GET Gae_a[a1,a] 
+            PUT Daa[a1,a] += Gae_a[a1,a] 
+#
+      ENDPARDO a1, a 
+#
+      PARDO a1, a, i 
+#
+            GET l1a_old[i,a1] 
+            GET t1a_old[a,i] 
+            Taa[a1,a]      = t1a_old[a,i]*l1a_old[i,a1] 
+            Taa[a1,a]     *= -1.0  
+            PUT Daa[a1,a] += Taa[a1,a] 
+#
+      ENDPARDO a1, a, i  
+#
+     sip_barrier 
+#
+# Done one-particle intermediates 
+# ------------------------------- 
+#
+# Terms 1-5 in Eq. 33 
+# ------------------- 
+#
+      PARDO a, a1, i, i1 
+#
+            REQUEST Tau_aa[a,i,a1,i1]   
+            REQUEST L2old_aa[i,a,i1,a1] 
+#
+            Tiiaa[i,i1,a,a1]  = Tau_aa[a,i,a1,i1] 
+            T1iiaa[i,i1,a,a1] = L2old_aa[i,a,i1,a1] 
+            Tiiaa[i,i1,a,a1] += T1iiaa[i,i1,a,a1] 
+            Tiiaa[i,i1,a,a1] *= 0.125  
+#
+            DO i2  
+#
+               REQUEST Tau_aa[a,i2,a1,i1] 
+               REQUEST Tau_aa[a,i2,a1,i]  
+               GET Dii[i,i2] 
+               GET Dii[i1,i2] 
+#
+               T1iiaa[i,i1,a,a1] = Tau_aa[a,i2,a1,i1]*Dii[i,i2] 
+               T1iiaa[i,i1,a,a1]*= -0.125 
+               Tiiaa[i,i1,a,a1] += T1iiaa[i,i1,a,a1] 
+#
+               T1iiaa[i,i1,a,a1] = Tau_aa[a,i2,a1,i]*Dii[i1,i2] 
+               T1iiaa[i,i1,a,a1]*= 0.125 
+               Tiiaa[i,i1,a,a1] += T1iiaa[i,i1,a,a1] 
+#
+               DO i3 
+#
+                  REQUEST Tau_aa[a,i2,a1,i3] 
+                  REQUEST Vijmn_aaaa[i,i1,i2,i3] 
+#
+                  T2iiaa[i2,i3,a,a1] = Tau_aa[a,i2,a1,i3] 
+                  T1iiaa[i,i1,a,a1]  = Vijmn_aaaa[i,i1,i2,i3]*T2iiaa[i2,i3,a,a1]
+                  T1iiaa[i,i1,a,a1] *= 0.0625 
+                  Tiiaa[i,i1,a,a1]  += T1iiaa[i,i1,a,a1] 
+#
+               ENDDO i3 
+#
+            ENDDO i2 
+#            
+            DO a2 
+#
+               REQUEST Tau_aa[a2,i,a1,i1] 
+               REQUEST Tau_aa[a2,i,a,i1]   
+               GET Daa[a2,a] 
+               GET Daa[a2,a1] 
+#
+               T1iiaa[i,i1,a,a1] = Tau_aa[a2,i,a1,i1]*Daa[a2,a] 
+               T1iiaa[i,i1,a,a1]*= 0.125 
+               Tiiaa[i,i1,a,a1] += T1iiaa[i,i1,a,a1] 
+#
+               T1iiaa[i,i1,a,a1] = Tau_aa[a2,i,a,i1]*Daa[a2,a1] 
+               T1iiaa[i,i1,a,a1]*= -0.125 
+               Tiiaa[i,i1,a,a1] += T1iiaa[i,i1,a,a1] 
+#
+            ENDDO a2 
+#            
+            PREPARE Dijab_aa[i,i1,a,a1] += Tiiaa[i,i1,a,a1] 
+#
+      ENDPARDO a, a1, i, i1 
+#
+# Final term in Eq. 33
+# --------------------
+#
+      PARDO a, a1
+#
+            allocate L1aa[a1,*]
+#
+            DO i
+#
+               GET t1a_old[a1,i]
+#
+               DO a2
+#
+                  GET l1a_old[i,a2]
+                  Taa[a1,a2]   = t1a_old[a1,i]*l1a_old[i,a2]
+                  L1aa[a1,a2] += Taa[a1,a2]
+#
+               ENDDO a2
+#
+            ENDDO i
+#
+            allocate L1ai[a1,*]
+#
+            DO a2
+            DO i
+#
+               GET t1a_old[a2,i]
+               Tai[a1,i]   = L1aa[a1,a2]*t1a_old[a2,i]
+               L1ai[a1,i] += Tai[a1,i]
+#
+            ENDDO i
+            ENDDO a2
+#
+            deallocate L1aa[a1,*]
+#
+            DO i
+#
+               GET t1a_old[a,i]
+#
+               DO i1
+#
+                  Tiiaa[i,i1,a,a1]         = t1a_old[a,i]^L1ai[a1,i1]
+                  Tiiaa[i,i1,a,a1]        *= 0.375
+                  PREPARE Dijab_aa[i,i1,a,a1] += Tiiaa[i,i1,a,a1]
+#
+                  T1iiaa[i,i1,a1,a]        = Tiiaa[i,i1,a,a1]
+                  T1iiaa[i,i1,a1,a]       *= -1.0
+                  PREPARE Dijab_aa[i,i1,a1,a] += T1iiaa[i,i1,a1,a]
+#
+                  T1iiaa[i1,i,a,a1]        = Tiiaa[i,i1,a,a1]
+                  T1iiaa[i1,i,a,a1]       *= -1.0
+                  PREPARE Dijab_aa[i1,i,a,a1] += T1iiaa[i1,i,a,a1]
+#
+                  T1iiaa[i1,i,a1,a]        = Tiiaa[i,i1,a,a1]
+                  PREPARE Dijab_aa[i1,i,a1,a] += T1iiaa[i1,i,a1,a]
+#
+               ENDDO i1
+#
+            ENDDO i
+#
+            deallocate L1ai[a1,*]
+#
+      ENDPARDO a, a1
+#
+# Sixth-term in Eq. 33
+# --------------------
+#
+      PARDO i2, a2, a1, i1   
+#
+            GET l1a_old[i2,a2]
+            GET t1a_old[a1,i1]
+#
+            Tiaai[i2,a2,a1,i1]          = l1a_old[i2,a2]^t1a_old[a1,i1]
+            Tiaai[i2,a2,a1,i1]         *= 2.0
+            PREPARE Liaai[i2,a2,a1,i1] = Tiaai[i2,a2,a1,i1] 
+#
+      ENDPARDO i2, a2, a1, i1   
+#
+      server_barrier 
+#
+      PARDO i2, a2, a, i   
+#
+            REQUEST L2old_aa[i2,a2,i,a] 
+#
+            DO i1  
+            DO a1  
+#
+               REQUEST                       T2old_aa[a,i,a1,i1] 
+               Tiaai[i2,a2,a1,i1]          = L2old_aa[i2,a2,i,a]*T2old_aa[a,i,a1,i1]
+               PREPARE Liaai[i2,a2,a1,i1] += Tiaai[i2,a2,a1,i1] 
+#
+            ENDDO a1  
+            ENDDO i1  
+#
+      ENDPARDO i2, a2, a, i   
+#
+      PARDO i2, a2, b, j   
+#
+            REQUEST L2old_ab[i2,a2,j,b]
+#
+            DO i1  
+            DO a1  
+#
+               REQUEST                       T2old_ab[a1,i1,b,j] 
+               Tiaai[i2,a2,a1,i1]          = L2old_ab[i2,a2,j,b]*T2old_ab[a1,i1,b,j]
+               PREPARE Liaai[i2,a2,a1,i1] += Tiaai[i2,a2,a1,i1] 
+#
+            ENDDO a1  
+            ENDDO i1  
+#
+      ENDPARDO i2, a2, b, j   
+#
+      server_barrier 
+#
+      PARDO i1, a1, i2, a2    
+#
+            REQUEST Liaai[i2,a2,a1,i1] 
+#
+            DO i
+#
+               GET         t1a_old[a2,i]
+               tai[a2,i] = t1a_old[a2,i]
+#
+               DO a
+#
+                  REQUEST T2old_aa[a,i2,a2,i] 
+                  GET     t1a_old[a,i2]
+#
+                  Laiai[a,i2,a2,i]         = t1a_old[a,i2]^tai[a2,i]
+                  Laiai[a,i2,a2,i]        *= 2.0
+                  Laiai[a,i2,a2,i]        += T2old_aa[a,i2,a2,i]
+#
+#                 Tiiaa(i,i1,a,a1)         = Laiai(a,i2,a2,i)*Liaai(i2,a2,a1,i1)
+#
+                  Taiia[a,i,i2,a2]         = Laiai[a,i2,a2,i] 
+                  Taiai[a,i,a1,i1]         = Taiia[a,i,i2,a2]*Liaai[i2,a2,a1,i1]  
+                  Tiiaa[i,i1,a,a1]         = Taiai[a,i,a1,i1] 
+
+                  Tiiaa[i,i1,a,a1]        *= -0.0625 
+                  PREPARE Dijab_aa[i,i1,a,a1] += Tiiaa[i,i1,a,a1]
+#
+                  T1iiaa[i,i1,a1,a]        = Tiiaa[i,i1,a,a1]
+                  T1iiaa[i,i1,a1,a]       *= -1.0
+                  PREPARE Dijab_aa[i,i1,a1,a] += T1iiaa[i,i1,a1,a]
+#
+                  T1iiaa[i1,i,a,a1]        = Tiiaa[i,i1,a,a1]
+                  T1iiaa[i1,i,a,a1]       *= -1.0
+                  PREPARE Dijab_aa[i1,i,a,a1] += T1iiaa[i1,i,a,a1]
+#
+                  T1iiaa[i1,i,a1,a]        = Tiiaa[i,i1,a,a1]
+                  PREPARE Dijab_aa[i1,i,a1,a] += T1iiaa[i1,i,a1,a]
+#
+               ENDDO a
+#
+            ENDDO i
+#
+      ENDPARDO i1, a1, i2, a2 
+#
+# Odd spin combination
+# --------------------
+#
+      PARDO j, b, a1, i1
+#
+            GET l1a_old[j,b]
+            GET t1a_old[a1,i1]
+#
+            Tjbai[j,b,a1,i1]         = l1a_old[j,b]^t1a_old[a1,i1]
+            Tjbai[j,b,a1,i1]        *= 2.0
+            PREPARE Ljbai[j,b,a1,i1] = Tjbai[j,b,a1,i1]  
+#
+      ENDPARDO j, b, a1, i1
+#
+      server_barrier 
+#
+      PARDO j, b, a3, i3
+#
+            REQUEST L2old_ab[i3,a3,j,b] 
+#
+            DO i1
+            DO a1
+#
+               REQUEST                     T2old_aa[a3,i3,a1,i1] 
+               Tjbai[j,b,a1,i1]          = L2old_ab[i3,a3,j,b]*T2old_aa[a3,i3,a1,i1]
+               PREPARE Ljbai[j,b,a1,i1] += Tjbai[j,b,a1,i1]
+#
+            ENDDO a1
+            ENDDO i1
+#
+      ENDPARDO j, b, a3, i3
+#
+      PARDO j, b, j1, b1
+#
+            REQUEST L2old_aa[j1,b1,j,b] 
+#
+            DO i1
+            DO a1
+#
+               REQUEST                     T2old_ab[a1,i1,b1,j1] 
+               Tjbai[j,b,a1,i1]          = L2old_aa[j1,b1,j,b]*T2old_ab[a1,i1,b1,j1]
+               PREPARE Ljbai[j,b,a1,i1] += Tjbai[j,b,a1,i1]
+#
+            ENDDO a1
+            ENDDO i1
+#
+      ENDPARDO j, b, j1, b1
+#
+      server_barrier 
+#
+      PARDO i1, a1, j, b 
+#
+            REQUEST Ljbai[j,b,a1,i1] 
+#
+            DO i
+            DO a
+#
+               REQUEST                    T2old_ab[a,i,b,j] 
+               Taijb[a,i,j,b]           = T2old_ab[a,i,b,j]
+#
+#              Tiiaa(i,i1,a,a1)         = Taibj(a,i,b,j)*Ljbai(j,b,a1,i1)
+               Taiai[a,i,a1,i1]         = Taijb[a,i,j,b]*Ljbai[j,b,a1,i1] 
+               Tiiaa[i,i1,a,a1]         = Taiai[a,i,a1,i1] 
+#
+               Tiiaa[i,i1,a,a1]        *= 0.0625 
+               PREPARE Dijab_aa[i,i1,a,a1] += Tiiaa[i,i1,a,a1]
+#
+               T1iiaa[i,i1,a1,a]        = Tiiaa[i,i1,a,a1]
+               T1iiaa[i,i1,a1,a]       *= -1.0
+               PREPARE Dijab_aa[i,i1,a1,a] += T1iiaa[i,i1,a1,a]
+#
+               T1iiaa[i1,i,a,a1]        = Tiiaa[i,i1,a,a1]
+               T1iiaa[i1,i,a,a1]       *= -1.0
+               PREPARE Dijab_aa[i1,i,a,a1] += T1iiaa[i1,i,a,a1]
+#
+               T1iiaa[i1,i,a1,a]        = Tiiaa[i,i1,a,a1]
+               PREPARE Dijab_aa[i1,i,a1,a] += T1iiaa[i1,i,a1,a]
+#
+            ENDDO a
+            ENDDO i
+#
+      ENDPARDO i1, a1, j, b 
+      server_barrier 
+#
+# Multiply by 2 to match aces 
+# --------------------------- 
+#
+#     PARDO a, a1, i, i1 
+#
+#           REQUEST Dijab_aa(i,i1,a,a1) 
+#
+#           Tiiaa(i,i1,a,a1)        = 2.0*Dijab_aa(i,i1,a,a1)
+#           PREPARE Dijab_aa(i,i1,a,a1) = Tiiaa(i,i1,a,a1) 
+#
+#     ENDPARDO a, a1, i, i1 
+#     execute server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# ---------------------------------------------------
+#
+# First-term of Iij_aa 
+# --------------------
+#
+      PARDO i2, a1, a, i
+#
+           REQUEST VSpipi[a,i2,a1,i] 
+           Tpppp[i2,a1,a,i]  = VSpipi[a,i2,a1,i]
+#
+           DO i1
+#
+              REQUEST Dijab_aa[i1,i2,a1,a] 
+#
+              Tii[i,i1]         = Dijab_aa[i1,i2,a1,a]*Tpppp[i2,a1,a,i]
+#             Tii(i,i1)        *= -1.0  
+              Tii[i,i1]        *= -2.0  
+              PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+           ENDDO i1
+#
+      ENDPARDO i2, a1, a, i
+#
+# First-term of Iab_aa
+# --------------------
+#
+      PARDO a, a2, i, i1
+#
+            REQUEST VSpipi[a,i,a2,i1] 
+#
+            DO a1
+#
+               REQUEST Dijab_aa[i,i1,a1,a2] 
+#
+               Taa[a,a1]         = VSpipi[a,i,a2,i1]*Dijab_aa[i,i1,a1,a2]
+#              Taa(a,a1)        *= -1.0  
+               Taa[a,a1]        *= -2.0  
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, a2, i, i1
+#
+# First-term of Iai_aa
+# --------------------
+#
+      PARDO a, a1, a2, i1
+#
+            REQUEST VSaaai[a1,a,a2,i1] 
+            Tpppp[i1,a1,a2,a]  = VSaaai[a1,a,a2,i1]
+#
+            DO i
+#
+               REQUEST Dijab_aa[i,i1,a1,a2] 
+#
+               Tai[a,i]         = Dijab_aa[i,i1,a1,a2]*Tpppp[i1,a1,a2,a]
+               Tai[a,i]        *= 2.0  
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, a2, i1
+#
+# First-term of Iia_aa
+# --------------------
+# 
+      PARDO a, a1, i2, i1
+#
+            REQUEST Dijab_aa[i2,i1,a,a1] 
+#
+            DO i
+#
+               REQUEST VSpipi[a1,i1,i,i2]   
+#
+               Tia[i,a]           = VSpipi[a1,i1,i,i2]*Dijab_aa[i2,i1,a,a1]
+#              Tia(i,a)          *= -1.0  
+               Tia[i,a]          *= -2.0  
+               PUT Iia_aa[i,a]   += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, i2, i1
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+      sip_barrier 
+#
+# --------------------------------------------------------------------------- 
+#
+      ENDPROC DIJABAA 
+#
+# --------------------------------------------------------------------------- 
+#
+#
+# --------------------------------------------------------------------------- 
+#
+# In this PROCEDURE the D^{ij}_{ab} clock of the two-particle 
+# density matrix is formed.  
+#
+# --------------------------------------------------------------------------- 
+#
+# First form one-particle intermediates 
+#
+# --------------------------------------------------------------------------- 
+#
+# Dim(i,m) = Gmi_a(i,m) + l1a_old(m,e)*t1a_old(e,i)  
+#
+# Dea(e,a) = Gae_a(e,a) - l1a_old(m,e)*t1a_old(a,m) 
+#
+# --------------------------------------------------------------------------- 
+#
+      PROC DIJABAB 
+#     ------------- 
+#
+# One-particle intermediates computed in AA/BB blocks  
+# ---------------------------------------------------  
+#
+# Terms 1-5 in Eq. 33 
+# ------------------- 
+#
+      PARDO a, b, i, j 
+#
+            REQUEST Tau_ab[a,i,b,j]   
+            REQUEST L2old_ab[i,a,j,b]   
+#
+            Tijab[i,j,a,b]  = Tau_ab[a,i,b,j] 
+            T1ijab[i,j,a,b] = L2old_ab[i,a,j,b] 
+            Tijab[i,j,a,b] += T1ijab[i,j,a,b]  
+            Tijab[i,j,a,b] *= 0.125  
+#
+            DO i1 
+#
+               REQUEST Tau_ab[a,i1,b,j] 
+               GET Dii[i,i1] 
+#
+               T1ijab[i,j,a,b] = Tau_ab[a,i1,b,j]*Dii[i,i1] 
+               T1ijab[i,j,a,b]*= -0.125 
+               Tijab[i,j,a,b] += T1ijab[i,j,a,b] 
+#
+               DO j1 
+#
+                  REQUEST Tau_ab[a,i1,b,j1]     
+                  REQUEST Vijmn_abab[i,j,i1,j1]
+#
+                  T2ijab[i1,j1,a,b] = Tau_ab[a,i1,b,j1] 
+                  T1ijab[i,j,a,b]   = Vijmn_abab[i,j,i1,j1]*T2ijab[i1,j1,a,b]
+                  T1ijab[i,j,a,b]  *= 0.125 
+                  Tijab[i,j,a,b]   += T1ijab[i,j,a,b] 
+#
+               ENDDO j1 
+#
+            ENDDO i1 
+#
+            DO j1 
+#
+               REQUEST Tau_ab[a,i,b,j1] 
+               GET Djj[j,j1] 
+#
+               T1ijab[i,j,a,b] = Tau_ab[a,i,b,j1]*Djj[j,j1] 
+               T1ijab[i,j,a,b]*= -0.125 
+               Tijab[i,j,a,b] += T1ijab[i,j,a,b] 
+#
+            ENDDO j1 
+#            
+            DO a1 
+#
+               REQUEST Tau_ab[a1,i,b,j]  
+               GET Daa[a1,a] 
+#
+               T1ijab[i,j,a,b] = Tau_ab[a1,i,b,j]*Daa[a1,a] 
+               T1ijab[i,j,a,b]*= 0.125 
+               Tijab[i,j,a,b] += T1ijab[i,j,a,b] 
+#
+            ENDDO a1 
+#            
+            DO b1 
+#
+               REQUEST Tau_ab[a,i,b1,j] 
+               GET Dbb[b1,b] 
+#
+               T1ijab[i,j,a,b] = Tau_ab[a,i,b1,j]*Dbb[b1,b] 
+               T1ijab[i,j,a,b]*= 0.125 
+               Tijab[i,j,a,b] += T1ijab[i,j,a,b] 
+#
+            ENDDO b1 
+#            
+            PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b] 
+#
+      ENDPARDO a, b, i, j 
+#
+# Final term in Eq. 33
+# --------------------
+#
+      PARDO a, b
+#
+            allocate Lbb[b,*]
+#
+            DO j
+#
+               GET t1a_old[b,j]
+#
+               DO b1
+#
+                  GET l1a_old[j,b1]
+                  TTbb[b,b1]  = t1a_old[b,j]*l1a_old[j,b1]
+                  Lbb[b,b1] += TTbb[b,b1]
+#
+               ENDDO b1
+#
+            ENDDO j
+#
+            allocate Lbj[b,*]
+#
+            DO b1
+            DO j
+#
+               GET t1a_old[b1,j]
+               Tbj[b,j]  = Lbb[b,b1]*t1a_old[b1,j]
+               Lbj[b,j] += Tbj[b,j]
+#
+            ENDDO j
+            ENDDO b1
+#
+            deallocate Lbb[b,*]
+#
+            DO i
+#
+               GET t1a_old[a,i]
+#
+               DO j
+#
+                  Tijab[i,j,a,b]  = t1a_old[a,i]^Lbj[b,j]
+                  Tijab[i,j,a,b] *= 0.375
+                  PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+               ENDDO j
+#
+            ENDDO i
+#
+            deallocate Lbj[b,*]
+#
+      ENDPARDO a, b
+#
+      PARDO a, b
+#
+            allocate Laa[a,*]
+#
+            DO i
+#
+               GET t1a_old[a,i]
+#
+               DO a1
+#
+                  GET l1a_old[i,a1]
+                  Taa[a,a1]  = t1a_old[a,i]*l1a_old[i,a1]
+                  Laa[a,a1] += Taa[a,a1]
+#
+               ENDDO a1
+#
+            ENDDO i
+#
+            allocate Lai[a,*]
+#
+            DO a1
+            DO i
+#
+               GET t1a_old[a1,i]
+               Tai[a,i]  = Laa[a,a1]*t1a_old[a1,i]
+               Lai[a,i] += Tai[a,i]
+#
+            ENDDO i
+            ENDDO a1
+#
+            deallocate Laa[a,*]
+#
+            DO i
+            DO j
+#
+               GET t1a_old[b,j]
+               Tijab[i,j,a,b]         = t1a_old[b,j]^Lai[a,i]
+               Tijab[i,j,a,b]        *= 0.375
+               PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+            ENDDO j
+            ENDDO i
+#
+            deallocate Lai[a,*]
+#
+      ENDPARDO a, b
+#
+# Sixth-term in Eq. 33
+# --------------------
+#
+      PARDO i1, a1, b, j
+#
+            GET l1a_old[i1,a1]
+            GET t1a_old[b,j]
+#
+            Tiabj[i1,a1,b,j]         = l1a_old[i1,a1]^t1a_old[b,j]
+            Tiabj[i1,a1,b,j]        *= 2.0
+            PREPARE Liabj[i1,a1,b,j] = Tiabj[i1,a1,b,j] 
+#
+      ENDPARDO i1, a1, b, j
+#
+      server_barrier 
+#
+      PARDO i1, a1, b1, j1 
+#
+            REQUEST L2old_ab[i1,a1,j1,b1] 
+#
+            DO j
+            DO b
+#
+               REQUEST                     T2old_aa[b,j,b1,j1]   
+               Tiabj[i1,a1,b,j]          = L2old_ab[i1,a1,j1,b1]*T2old_aa[b,j,b1,j1]
+               PREPARE Liabj[i1,a1,b,j] += Tiabj[i1,a1,b,j] 
+#
+            ENDDO b
+            ENDDO j
+#
+      ENDPARDO i1, a1, b1, j1
+#
+      PARDO i1, a1, a, i
+#
+            REQUEST L2old_aa[i1,a1,i,a] 
+#
+            DO j
+            DO b
+#
+               REQUEST                     T2old_ab[a,i,b,j] 
+               Tiabj[i1,a1,b,j]          = L2old_aa[i1,a1,i,a]*T2old_ab[a,i,b,j]
+               PREPARE Liabj[i1,a1,b,j] += Tiabj[i1,a1,b,j] 
+#
+            ENDDO b
+            ENDDO j
+#
+      ENDPARDO i1, a1, a, i
+#
+      server_barrier 
+#
+      PARDO j, b, i1, a1 
+#
+            REQUEST Liabj[i1,a1,b,j] 
+#
+            DO i
+#
+               GET         t1a_old[a1,i]
+               tai[a1,i] = t1a_old[a1,i]
+#
+               DO a
+#
+                  REQUEST T2old_aa[a,i1,a1,i] 
+                  GET     t1a_old[a,i1]
+#
+                  Laiai[a,i1,a1,i]       = t1a_old[a,i1]^tai[a1,i]
+                  Laiai[a,i1,a1,i]      *= 2.0
+                  Laiai[a,i1,a1,i]      += T2old_aa[a,i1,a1,i]
+#
+#                 Tijab(i,j,a,b)         = Laiai(a,i1,a1,i)*Liabj(i1,a1,b,j)
+#
+                  Taiia[a,i,i1,a1]       = Laiai[a,i1,a1,i] 
+                  Taibj[a,i,b,j]         = Taiia[a,i,i1,a1]*Liabj[i1,a1,b,j]  
+                  Tijab[i,j,a,b]         = Taibj[a,i,b,j] 
+                  Tijab[i,j,a,b]        *= -0.0625 
+                  PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+               ENDDO a
+#
+            ENDDO i
+#
+      ENDPARDO j, b, i1, a1 
+#
+      PARDO j2, b2, b, j
+#
+            GET l1a_old[j2,b2]
+            GET t1a_old[b,j]
+#
+            Tjbbj[j2,b2,b,j]         = l1a_old[j2,b2]^t1a_old[b,j]
+            Tjbbj[j2,b2,b,j]        *= 2.0
+            PREPARE Ljbbj[j2,b2,b,j] = Tjbbj[j2,b2,b,j] 
+#
+      ENDPARDO j2, b2, b, j
+#
+      server_barrier 
+#
+      PARDO j2, b2, b1, j1
+#
+            REQUEST L2old_aa[j2,b2,j1,b1] 
+#
+            DO j
+            DO b
+#
+               REQUEST                     T2old_aa[b,j,b1,j1]
+               Tjbbj[j2,b2,b,j]          = L2old_aa[j2,b2,j1,b1]*T2old_aa[b,j,b1,j1]
+               PREPARE Ljbbj[j2,b2,b,j] += Tjbbj[j2,b2,b,j] 
+#
+            ENDDO b
+            ENDDO j
+#
+      ENDPARDO j2, b2, b1, j1
+#
+      PARDO j2, b2, a, i
+#
+            REQUEST L2old_ab[i,a,j2,b2]  
+#
+            DO j
+            DO b
+#
+               REQUEST                     T2old_ab[a,i,b,j] 
+               Tjbbj[j2,b2,b,j]          = L2old_ab[i,a,j2,b2]*T2old_ab[a,i,b,j]
+               PREPARE Ljbbj[j2,b2,b,j] += Tjbbj[j2,b2,b,j] 
+#
+            ENDDO b
+            ENDDO j
+#
+      ENDPARDO j2, b2, a, i
+#
+      server_barrier 
+#
+      PARDO j, b, b2, j2
+#
+            REQUEST Ljbbj[j2,b2,b,j] 
+#
+            DO i
+            DO a
+#
+               REQUEST T2old_ab[a,i,b2,j2] 
+#
+#              Tijab(i,j,a,b)         = T2old_ab(a,i,b2,j2)*Ljbbj(j2,b2,b,j)
+#
+               Tiajb[i,a,j2,b2]       = T2old_ab[a,i,b2,j2] 
+               Tiabj[i,a,b,j]         = Tiajb[i,a,j2,b2]*Ljbbj[j2,b2,b,j] 
+               Tijab[i,j,a,b]         = Tiabj[i,a,b,j]  
+               Tijab[i,j,a,b]        *= 0.0625 
+               PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+            ENDDO a
+            ENDDO i
+#
+      ENDPARDO j, b, b2, j2
+#
+      PARDO j1, b1, a, i
+#
+            GET l1a_old[j1,b1]
+            GET t1a_old[a,i]
+#
+            Tjbai[j1,b1,a,i]         = l1a_old[j1,b1]^t1a_old[a,i]
+            Tjbai[j1,b1,a,i]        *= 2.0
+            PREPARE Ljbai[j1,b1,a,i] = Tjbai[j1,b1,a,i] 
+#
+      ENDPARDO j1, b1, a, i
+#
+      server_barrier 
+#
+      PARDO i, a, i1, a1  
+#
+            REQUEST T2old_aa[a,i,a1,i1]  
+#
+            DO j1
+            DO b1
+#
+               REQUEST                     L2old_ab[i1,a1,j1,b1] 
+               Tjbai[j1,b1,a,i]          = L2old_ab[i1,a1,j1,b1]*T2old_aa[a,i,a1,i1]
+               PREPARE Ljbai[j1,b1,a,i] += Tjbai[j1,b1,a,i]
+#
+            ENDDO b1
+            ENDDO j1
+#
+      ENDPARDO i, a, i1, a1  
+#
+      PARDO j, b, a, i
+#
+            REQUEST T2old_ab[a,i,b,j] 
+#
+            DO j1
+            DO b1
+#
+               REQUEST                     L2old_aa[j,b,j1,b1] 
+               Tjbai[j1,b1,a,i]          = L2old_aa[j,b,j1,b1]*T2old_ab[a,i,b,j]
+               PREPARE Ljbai[j1,b1,a,i] += Tjbai[j1,b1,a,i]
+#
+            ENDDO b1
+            ENDDO j1
+#
+      ENDPARDO j, b, a, i
+#
+      server_barrier 
+#
+      PARDO i, a, j1, b1 
+#
+            REQUEST Ljbai[j1,b1,a,i] 
+#
+            DO j
+#
+               GET         t1a_old[b1,j]
+               tbj[b1,j] = t1a_old[b1,j]
+#
+               DO b
+#
+                  REQUEST T2old_aa[b,j1,b1,j] 
+                  GET     t1a_old[b,j1]
+#
+                  Tbjjb[b,j,j1,b1]       = t1a_old[b,j1]^tbj[b1,j]
+                  Tbjjb[b,j,j1,b1]      *= 2.0
+                  T1bjjb[b,j,j1,b1]      = T2old_aa[b,j1,b1,j]
+                  Tbjjb[b,j,j1,b1]      += T1bjjb[b,j,j1,b1]  
+#
+#                 Tijab(i,j,a,b)         = Lbjbj(b,j1,b1,j)*Ljbai(j1,b1,a,i)
+                  Tbjai[b,j,a,i]         = Tbjjb[b,j,j1,b1]*Ljbai[j1,b1,a,i]
+                  Tijab[i,j,a,b]         = Tbjai[b,j,a,i]  
+                  Tijab[i,j,a,b]        *= -0.0625 
+                  PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+               ENDDO b
+#
+            ENDDO j
+#
+      ENDPARDO i, a, j1, b1 
+#
+      PARDO i2, a2, a, i
+#
+            GET l1a_old[i2,a2]
+            GET t1a_old[a,i]
+#
+            Tiaai[i2,a2,a,i]         = l1a_old[i2,a2]^t1a_old[a,i]
+            Tiaai[i2,a2,a,i]        *= 2.0
+            PREPARE Liaai[i2,a2,a,i] = Tiaai[i2,a2,a,i] 
+#
+      ENDPARDO i2, a2, a, i
+#
+      server_barrier 
+#
+      PARDO i2, a2, a1, i1
+#
+            REQUEST L2old_aa[i2,a2,i1,a1] 
+#
+            DO i
+            DO a
+#
+               REQUEST                     T2old_aa[a,i,a1,i1] 
+               Tiaai[i2,a2,a,i]          = L2old_aa[i2,a2,i1,a1]*T2old_aa[a,i,a1,i1]
+               PREPARE Liaai[i2,a2,a,i] += Tiaai[i2,a2,a,i] 
+#
+            ENDDO a
+            ENDDO i
+#
+      ENDPARDO i2, a2, a1, i1
+#
+      PARDO i2, a2, b, j
+#
+            REQUEST L2old_ab[i2,a2,j,b] 
+#
+            DO i
+            DO a
+#
+               REQUEST                     T2old_ab[a,i,b,j] 
+               Tiaai[i2,a2,a,i]          = L2old_ab[i2,a2,j,b]*T2old_ab[a,i,b,j]
+               PREPARE Liaai[i2,a2,a,i] += Tiaai[i2,a2,a,i] 
+#
+            ENDDO a
+            ENDDO i
+#
+      ENDPARDO i2, a2, b, j
+#
+      server_barrier 
+#
+      PARDO i, a, a2, i2
+#
+            REQUEST Liaai[i2,a2,a,i] 
+#
+            DO j
+            DO b
+#
+               REQUEST T2old_ab[a2,i2,b,j] 
+#
+#              Tijab(i,j,a,b)         = T2old_ab(a2,i2,b,j)*Liaai(i2,a2,a,i)
+#
+               Taiai[a,i,a2,i2]       = Liaai[i2,a2,a,i] 
+               Taibj[a,i,b,j]         = Taiai[a,i,a2,i2]*T2old_ab[a2,i2,b,j] 
+               Tijab[i,j,a,b]         = Taibj[a,i,b,j] 
+               Tijab[i,j,a,b]        *= 0.0625 
+               PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+            ENDDO b
+            ENDDO j
+#
+      ENDPARDO i, a, a2, i2
+#
+      PARDO b, b1, i1, i
+#
+            Lbibi[b,i1,b1,i] = 0.0
+#
+            DO j
+            DO a
+#
+               REQUEST T2old_ab[a,i,b,j]    
+               REQUEST L2old_ab[i1,a,j,b1]  
+#
+#              Tbibi(b,i1,b1,i)  = T2old_ab(a,i,b,j)*L2old_ab(i1,a,j,b1)
+#
+               Tibja[i,b,j,a]    = T2old_ab[a,i,b,j]
+               Tjaib[j,a,i1,b1]  = L2old_ab[i1,a,j,b1] 
+               Tibib[i,b,i1,b1]  = Tibja[i,b,j,a]*Tjaib[j,a,i1,b1]   
+               Tbibi[b,i1,b1,i]  = Tibib[i,b,i1,b1] 
+               Lbibi[b,i1,b1,i] += Tbibi[b,i1,b1,i]
+#
+            ENDDO a
+            ENDDO j
+#
+            DO a
+            DO j
+#
+               REQUEST T2old_ab[a,i1,b1,j]  
+               GET t1a_old[a,i1]
+               GET t1a_old[b1,j]
+               tai[b1,j] = t1a_old[b1,j]
+#
+               Taibj[a,i1,b1,j]       = t1a_old[a,i1]^tai[b1,j]
+               Taibj[a,i1,b1,j]      *= 2.0
+               Taibj[a,i1,b1,j]      += T2old_ab[a,i1,b1,j]
+#
+               Tijab[i,j,a,b]         = Taibj[a,i1,b1,j]*Lbibi[b,i1,b1,i]
+               Tijab[i,j,a,b]        *= 0.0625 
+               PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+            ENDDO j
+            ENDDO a
+#
+      ENDPARDO b, b1, i1, i
+#
+      PARDO a, a1, j1, j
+#
+            Lajaj[a,j1,a1,j] = 0.0
+#
+            DO i
+            DO b
+#
+               REQUEST T2old_ab[a,i,b,j]  
+               REQUEST L2old_ab[i,a1,j1,b]  
+#
+               Tajaj[a,j1,a1,j]  = T2old_ab[a,i,b,j]*L2old_ab[i,a1,j1,b]
+               Lajaj[a,j1,a1,j] += Tajaj[a,j1,a1,j]
+#
+            ENDDO b
+            ENDDO i
+#
+            DO b
+#
+               GET t1a_old[b,j1]
+               tai[b,j1] = t1a_old[b,j1]
+#
+               DO i
+#
+                  REQUEST T2old_ab[a1,i,b,j1] 
+                  GET t1a_old[a1,i]
+#
+                  Taibj[a1,i,b,j1]       = t1a_old[a1,i]^tai[b,j1]
+                  Taibj[a1,i,b,j1]      *= 2.0
+                  Taibj[a1,i,b,j1]      += T2old_ab[a1,i,b,j1]
+#
+                  Tijab[i,j,a,b]         = Taibj[a1,i,b,j1]*Lajaj[a,j1,a1,j]
+                  Tijab[i,j,a,b]        *= 0.0625 
+                  PREPARE Dijab_ab[i,j,a,b] += Tijab[i,j,a,b]
+#
+            ENDDO i
+#
+            ENDDO b
+#
+      ENDPARDO a, a1, j1, j 
+      server_barrier 
+#
+# Multiply by 2 to match aces 
+# --------------------------- 
+#
+#     PARDO b, a, j, i 
+#
+#           REQUEST Dijab_ab(i,j,a,b) 
+#           Tijab(i,j,a,b)        = 2.0*Dijab_ab(i,j,a,b)
+#           PREPARE Dijab_ab(i,j,a,b) = Tijab(i,j,a,b) 
+#
+#     ENDPARDO b, a, j, i 
+#     execute server_barrier ca  
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# First-term of Iij_aa 
+# --------------------
+#
+      PARDO j, a, b, i
+#
+           REQUEST Vpiqj[a,i,b,j] 
+#
+           DO i1
+#
+              REQUEST Dijab_ab[i1,j,a,b] 
+#
+              Tii[i,i1]         = Dijab_ab[i1,j,a,b]*Vpiqj[a,i,b,j]
+              Tii[i,i1]        *= -4.0  
+              PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+           ENDDO i1
+#
+      ENDPARDO j, a, b, i
+#
+# First-term of Iab_aa
+# --------------------
+#
+      PARDO a, b, i, j
+#
+            REQUEST Vpiqj[a,i,b,j] 
+#
+            DO a1
+#
+               REQUEST Dijab_ab[i,j,a1,b] 
+#
+               Taa[a,a1]         = Vpiqj[a,i,b,j]*Dijab_ab[i,j,a1,b]
+               Taa[a,a1]        *= -4.0  
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, b, i, j
+#
+# First-term of Iai_aa 
+# -------------------- 
+#
+      PARDO a, a1, b, j
+#
+            REQUEST Vaabj[a1,a,b,j] 
+            Tqpqp[j,a1,b,a]  = Vaabj[a1,a,b,j]
+#
+            DO i
+#
+               REQUEST Dijab_ab[i,j,a1,b]  
+#
+               Tai[a,i]         = Dijab_ab[i,j,a1,b]*Tqpqp[j,a1,b,a]
+               Tai[a,i]        *= 4.0  
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, b, j
+#
+# First-term of Iia_aa 
+# -------------------- 
+#
+      PARDO a, b, i1, j
+#
+            REQUEST Dijab_ab[i1,j,a,b] 
+#
+            DO i
+#
+               REQUEST Vpiqj[i,i1,b,j] 
+#
+               Tia[i,a]         = Vpiqj[i,i1,b,j]*Dijab_ab[i1,j,a,b]
+               Tia[i,a]        *= -4.0 
+               PUT Iia_aa[i,a] += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, i1, j
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+      sip_barrier 
+#
+      ENDPROC DIJABAB 
+#     --------------- 
+#
+# In this PROCEDURE the D^{ij}_{ab} block of the two-particle 
+# density matrix is formed. Only the BB spin case is considered.  
+#
+# --------------------------------------------------------------------------- 
+#
+# First form one-particle intermediates 
+#
+# --------------------------------------------------------------------------- 
+#
+# Dim(i,m) = Gmi_b(i,m) + l1b_old(m,e)*t1b_old(e,i)  
+#
+# Dea(e,a) = Gae_b(e,a) - l1b_old(m,e)*t1b_old(a,m) 
+#
+# --------------------------------------------------------------------------- 
+#
+      PROC DIJABBB 
+#     ------------- 
+#
+# Djj 
+# ---  
+#
+      PARDO j, j1 
+            PUT Djj[j,j1] = 0.0
+      ENDPARDO j, j1 
+      sip_barrier
+
+      PARDO j, j1 
+#
+            GET Gmi_b[j,j1] 
+            PUT Djj[j,j1] += Gmi_b[j,j1] 
+#
+      ENDPARDO j, j1 
+#
+      PARDO j, j1, b       
+#
+            GET l1a_old[j1,b] 
+            GET t1a_old[b,j] 
+            Tjj[j,j1]      = l1a_old[j1,b]*t1a_old[b,j]  
+            PUT Djj[j,j1] += Tjj[j,j1] 
+#
+      ENDPARDO j, j1, b       
+#
+# Dbb 
+# --- 
+#
+      PARDO b1, b 
+             PUT Dbb[b1,b] = 0.0
+      ENDPARDO b1, b 
+      sip_barrier 
+      
+      PARDO b1, b 
+#
+            GET Gae_b[b1,b] 
+            PUT Dbb[b1,b] += Gae_b[b1,b] 
+#
+      ENDPARDO b1, b 
+#
+      PARDO b1, b, j 
+#
+            GET l1a_old[j,b1] 
+            GET t1a_old[b,j] 
+            TTbb[b1,b]      = t1a_old[b,j]*l1a_old[j,b1] 
+            TTbb[b1,b]     *= -1.0  
+            PUT Dbb[b1,b] += TTbb[b1,b] 
+#
+      ENDPARDO b1, b, j  
+#
+      sip_barrier 
+#
+# Done one-particle intermediates 
+# ------------------------------- 
+#
+# Sixth-term in Eq. 33
+# --------------------
+#
+      PARDO j2, b2, b1, j1
+#
+            GET l1a_old[j2,b2]
+            GET t1a_old[b1,j1]
+
+            Tjbbj[j2,b2,b1,j1]         = l1a_old[j2,b2]^t1a_old[b1,j1]
+            Tjbbj[j2,b2,b1,j1]        *= 2.0
+            PREPARE Ljbbj[j2,b2,b1,j1] = Tjbbj[j2,b2,b1,j1] 
+#
+      ENDPARDO j2, b2, b1, j1
+#
+      server_barrier 
+#
+      PARDO j2, b2, b3, j3
+#
+            REQUEST L2old_aa[j2,b2,j3,b3] 
+#
+            DO j1
+            DO b1
+#
+               REQUEST                       T2old_aa[b3,j3,b1,j1] 
+               Tjbbj[j2,b2,b1,j1]          = L2old_aa[j2,b2,j3,b3]*T2old_aa[b3,j3,b1,j1]
+               PREPARE Ljbbj[j2,b2,b1,j1] += Tjbbj[j2,b2,b1,j1] 
+#
+            ENDDO b1
+            ENDDO j1
+#
+      ENDPARDO j2, b2, b3, j3
+#
+      PARDO j2, b2, a, i
+#
+            REQUEST L2old_ab[i,a,j2,b2] 
+#
+            DO j1  
+            DO b1  
+#
+               REQUEST                       T2old_ab[a,i,b1,j1] 
+               Tjbbj[j2,b2,b1,j1]          = L2old_ab[i,a,j2,b2]*T2old_ab[a,i,b1,j1]
+               PREPARE Ljbbj[j2,b2,b1,j1] += Tjbbj[j2,b2,b1,j1] 
+#
+            ENDDO b1  
+            ENDDO j1  
+#
+      ENDPARDO j2, b2, a, i
+#
+      server_barrier 
+#
+# Odd spin combination
+# --------------------
+#
+      PARDO i, a, b1, j1
+#
+            GET l1a_old[i,a]
+            GET t1a_old[b1,j1]
+#
+            Tiabj[i,a,b1,j1]         = l1a_old[i,a]^t1a_old[b1,j1]
+            Tiabj[i,a,b1,j1]        *= 2.0
+            PREPARE Liabj[i,a,b1,j1] = Tiabj[i,a,b1,j1]  
+#
+      ENDPARDO i, a, b1, j1
+#
+      server_barrier 
+#
+      PARDO i, a, b3, j3
+#
+            REQUEST L2old_ab[i,a,j3,b3]   
+#
+            DO j1
+            DO b1
+#
+               REQUEST                     T2old_aa[b3,j3,b1,j1] 
+               Tiabj[i,a,b1,j1]          = L2old_ab[i,a,j3,b3]*T2old_aa[b3,j3,b1,j1]
+               PREPARE Liabj[i,a,b1,j1] += Tiabj[i,a,b1,j1]  
+#
+            ENDDO b1
+            ENDDO j1
+#
+      ENDPARDO i, a, b3, j3
+#
+      PARDO i, a, a1, i1
+#
+            REQUEST L2old_aa[i1,a1,i,a]  
+#
+            DO j1
+            DO b1
+#
+               REQUEST                     T2old_ab[a1,i1,b1,j1] 
+               Tiabj[i,a,b1,j1]          = L2old_aa[i1,a1,i,a]*T2old_ab[a1,i1,b1,j1]
+               PREPARE Liabj[i,a,b1,j1] += Tiabj[i,a,b1,j1]  
+#
+            ENDDO b1
+            ENDDO j1
+#
+      ENDPARDO i, a, a1, i1
+#
+      server_barrier 
+#
+#     PARDO b, b1, j, j1 
+#
+#           REQUEST Dijab_bb(j,j1,b,b1)   
+#           Tjjbb(j,j1,b,b1)        = 2.0*Dijab_bb(j,j1,b,b1)
+#           PREPARE Dijab_bb(j,j1,b,b1) = Tjjbb(j,j1,b,b1) 
+#
+#     ENDPARDO b, b1, j, j1 
+#     server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# --------------------------------------------------------------------------- 
+#
+      ENDPROC DIJABBB 
+#
+# --------------------------------------------------------------------------- 
+#
+      PROC DIJAB 
+#     ----------- 
+#
+# Create gamma arrays and one-particle intermediates 
+# Note that Dii and Daa are computed in DIJABAA and 
+# Djj and Dbb are computed in DIJABBB. 
+# -------------------------------------------------- 
+#
+           CALL DIJABAA 
+           CALL DIJABBB 
+           CALL DIJABAB 
+#
+      ENDPROC DIJAB 
+#     ------------- 
+#
+# --------------------------------------------------------------------------- 
+#
+# Expression programmed: 
+#
+# D^{ij}_{kl} = 1/16 P_+(ij,kl) \lambda^{ij}_{ef} \tau^{ef}_{kl} 
+# Note that 4* result is kept to be consistent with aces. 
+#
+# Equivalent to gamma3 
+#
+# ---------------------------------------------------------------------------- 
+#
+      PROC DIJKLAAAA 
+#     -------------- 
+#
+      PARDO a, a1, i, i1  
+#
+            REQUEST L2old_aa[i,a,i1,a1] 
+            Tiiaa[i,i1,a,a1] = L2old_aa[i,a,i1,a1]  
+#
+            DO i2 
+            DO i3 
+#
+               REQUEST Tau_aa[a,i2,a1,i3] 
+               Taaii[a,a1,i2,i3] = Tau_aa[a,i2,a1,i3] 
+#
+#              Tiiii(i,i1,i2,i3)           = L2old_aa(i,a,i1,a1)*Tau_aa(a,i2,a1,i3) 
+               Tiiii[i,i1,i2,i3]           = Tiiaa[i,i1,a,a1]*Taaii[a,a1,i2,i3]  
+#
+               Tiiii[i,i1,i2,i3]          *= 0.25  
+               T1iiii[i2,i3,i,i1]          = Tiiii[i,i1,i2,i3] 
+               PREPARE Dijkl_aa[i,i1,i2,i3]   += Tiiii[i,i1,i2,i3] 
+               PREPARE Dijkl_aa[i2,i3,i,i1]   += T1iiii[i2,i3,i,i1] 
+#
+               T1iiii[i2,i3,i,i1]         *= 2.0   
+               PREPARE Vijmn_aaaa[i2,i3,i,i1] += T1iiii[i2,i3,i,i1]  
+#
+            ENDDO i3 
+            ENDDO i2 
+#
+      ENDPARDO a, a1, i, i1  
+      server_barrier 
+#
+# Compute contributions to intermediates 
+# -------------------------------------- 
+#
+#     Part of the Second-term of Iij_aa
+#     ---------------------------------
+#
+      PARDO i2, i3, i4, i
+#
+            REQUEST VSpipi[i3,i,i4,i2] 
+            Tpppp[i2,i3,i4,i]  = VSpipi[i3,i,i4,i2]
+#
+            DO i1
+#
+               REQUEST Dijkl_aa[i1,i2,i3,i4]  
+#
+               Tii[i,i1]         = Dijkl_aa[i1,i2,i3,i4]*Tpppp[i2,i3,i4,i]
+               Tii[i,i1]        *= -0.5
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i2, i3, i4, i
+#
+#     Part of the Second-term of Iai_aa
+#     ---------------------------------
+#
+      PARDO a, i2, i3, i1
+#
+            REQUEST VSpipi[i3,i2,a,i1] 
+            Tpppp[i3,i1,i2,a]  = VSpipi[i3,i2,a,i1]
+#
+            DO i
+#
+               REQUEST Dijkl_aa[i,i3,i1,i2] 
+#
+               Tai[a,i]         = Dijkl_aa[i,i3,i1,i2]*Tpppp[i3,i1,i2,a]
+               Tai[a,i]        *= 0.5
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, i2, i3, i1
+#
+# Done one-particle contributions 
+# ------------------------------- 
+#
+# Remove density component
+# ------------------------ 
+      sip_barrier 
+#
+      ENDPROC DIJKLAAAA 
+#     ----------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+# Expression programmed: 
+#
+# D^{iJ}_{kL} = 1/8 P_+(iJ,kL) \lambda^{iJ}_{eF} \tau^{eF}_{kL} 
+#
+# ---------------------------------------------------------------------------- 
+#
+      PROC DIJKLABAB 
+#     -------------- 
+#
+      PARDO a, b, i, j  
+#
+            REQUEST L2old_ab[i,a,j,b] 
+            Tijab[i,j,a,b] = L2old_ab[i,a,j,b] 
+#
+            DO i1 
+            DO j1 
+#
+               REQUEST Tau_ab[a,i1,b,j1] 
+               Tabij[a,b,i1,j1] = Tau_ab[a,i1,b,j1] 
+#
+#              Tijij(i,j,i1,j1)           = L2old_ab(i,a,j,b)*Tau_ab(a,i1,b,j1) 
+               Tijij[i,j,i1,j1]           = Tijab[i,j,a,b]*Tabij[a,b,i1,j1]   
+#
+               Tijij[i,j,i1,j1]          *= 0.5  
+               T1ijij[i1,j1,i,j]          = Tijij[i,j,i1,j1] 
+               PREPARE Dijkl_ab[i,j,i1,j1]   += Tijij[i,j,i1,j1] 
+               PREPARE Dijkl_ab[i1,j1,i,j]   += T1ijij[i1,j1,i,j] 
+#
+               T1ijij[i1,j1,i,j]         *= 2.0  
+               PREPARE Vijmn_abab[i1,j1,i,j] += T1ijij[i1,j1,i,j] 
+#
+            ENDDO j1 
+            ENDDO i1 
+#
+      ENDPARDO a, b, i, j  
+      server_barrier 
+#
+# Compute contributions to intermediates 
+# -------------------------------------- 
+#
+# Part of the second-term of Iij_aa
+# ---------------------------------
+#
+      PARDO j1, i2, j, i
+#
+            REQUEST Vpiqj[i2,i,j,j1]
+#
+            DO i1
+#
+               REQUEST Dijkl_ab[i1,j1,i2,j] 
+#
+               Tii[i,i1]         = Dijkl_ab[i1,j1,i2,j]*Vpiqj[i2,i,j,j1] 
+               Tii[i,i1]        *= -1.0
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO j1, i2, j, i
+#
+# Part of the Second-term of Iai_aa
+# ---------------------------------
+#
+      PARDO a, j1, j, i1
+#
+            REQUEST Vpiqj[a,i1,j,j1]
+            Tqpqp[j,i1,j1,a]  = Vpiqj[a,i1,j,j1]
+#
+            DO i
+#
+               REQUEST Dijkl_ab[i,j,i1,j1] 
+#
+               Tai[a,i]         = Dijkl_ab[i,j,i1,j1]*Tqpqp[j,i1,j1,a]
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, j1, j, i1
+#
+# Done one-particle contributions 
+# ------------------------------- 
+#
+# Remove density component
+# ------------------------ 
+     sip_barrier 
+#
+      ENDPROC DIJKLABAB 
+#     ----------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+      PROC DIJKL 
+#     ---------- 
+#
+      CALL DIJKLAAAA 
+      CALL DIJKLABAB 
+#
+      ENDPROC DIJKL 
+#     ------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+# Equivalent to gamma4*4 --> factor of 4 to match aces  
+#
+# ----------------------------------------------------------------------------
+#
+      PROC DIBJAAAAA 
+#     -------------- 
+#
+      PARDO a, a1, i, i1 
+#
+            GET                              t1a_old[a,i] 
+            GET                              l1a_old[i1,a1] 
+# 
+            Tiaia[i,a1,i1,a]               = t1a_old[a,i]^l1a_old[i1,a1]    
+            Tiaia[i,a1,i1,a]              *= 0.5     
+            TAiaia[i1,a,i,a1]              = Tiaia[i,a1,i1,a]  
+#
+            PREPARE Dibja_aaaa[i,a1,i1,a] += Tiaia[i,a1,i1,a]  
+            PREPARE Dibja_aaaa[i1,a,i,a1] += TAiaia[i1,a,i,a1]  
+#
+      ENDPARDO a, a1, i, i1 
+#
+      PARDO a, i, a2, i2  
+#
+            REQUEST     T2old_aa[a,i,a2,i2] 
+            GET         t1a_old[a,i2] 
+            GET         t1a_old[a2,i] 
+            tai[a,i2] = t1a_old[a,i2] 
+#
+            DO i1  
+#
+               DO a1 
+#
+                  REQUEST                          L2old_aa[i1,a1,i2,a2] 
+#
+                  Tiaai[i2,a2,a,i]               = T2old_aa[a,i,a2,i2] 
+                  T1iaai[i1,a1,a,i]              = L2old_aa[i1,a1,i2,a2]*Tiaai[i2,a2,a,i]  
+                  Tiaia[i,a1,i1,a]               = T1iaai[i1,a1,a,i]  
+                  Tiaia[i,a1,i1,a]              *= 0.5   
+                  TAiaia[i1,a,i,a1]              = Tiaia[i,a1,i1,a] 
+                  PREPARE Vibja_aaaa[i,a1,i1,a] += Tiaia[i,a1,i1,a] 
+                  PREPARE Dibja_aaaa[i,a1,i1,a] += Tiaia[i,a1,i1,a]  
+                  PREPARE Dibja_aaaa[i1,a,i,a1] += TAiaia[i1,a,i,a1]  
+#
+                  T1iaia[i2,a2,i,a]             = t1a_old[a2,i]^tai[a,i2]
+#
+#                 T1iaia(i,a1,i1,a)             = L2old_aa(i1,a1,i2,a2)*Taiai(a2,i,a,i2) 
+                  T3iaia[i1,a1,i,a]             = L2old_aa[i1,a1,i2,a2]*T1iaia[i2,a2,i,a] 
+                  Tiaia[i,a1,i1,a]              = T3iaia[i1,a1,i,a]  
+                  Tiaia[i,a1,i1,a]             *= -0.5 
+                  TAiaia[i1,a,i,a1]             = Tiaia[i,a1,i1,a]  
+#
+                  PREPARE Dibja_aaaa[i,a1,i1,a] += Tiaia[i,a1,i1,a]  
+                  PREPARE Dibja_aaaa[i1,a,i,a1] += TAiaia[i1,a,i,a1]  
+#
+               ENDDO a1 
+            ENDDO i1 
+#
+      ENDPARDO a, i, a2, i2  
+#
+      PARDO a, i, b, j  
+#
+            REQUEST T2old_ab[a,i,b,j]
+#
+            DO i1 
+            DO a1 
+#
+               REQUEST                          L2old_ab[i1,a1,j,b]    
+#
+               Tjbia[j,b,i,a]                 = T2old_ab[a,i,b,j] 
+               T2iaia[i1,a1,i,a]              = L2old_ab[i1,a1,j,b]*Tjbia[j,b,i,a]  
+               Tiaia[i,a1,i1,a]               = T2iaia[i1,a1,i,a] 
+               Tiaia[i,a1,i1,a]              *= 0.5   
+               TAiaia[i1,a,i,a1]              = Tiaia[i,a1,i1,a]  
+#
+               PREPARE Vibja_aaaa[i,a1,i1,a] += Tiaia[i,a1,i1,a] 
+               PREPARE Dibja_aaaa[i,a1,i1,a] += Tiaia[i,a1,i1,a]  
+               PREPARE Dibja_aaaa[i1,a,i,a1] += TAiaia[i1,a,i,a1]  
+#
+            ENDDO a1  
+            ENDDO i1 
+#
+      ENDPARDO a, i, b, j  
+      server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+#     Third-term of Iij_ii
+#     --------------------
+#
+      PARDO i, a, i2, a1
+#
+            REQUEST Vaaii[a1,a,i2,i] 
+            REQUEST Viaai[i2,a,a1,i] 
+#
+            Tpppp[a,i2,a1,i]  = Vaaii[a1,a,i2,i]
+            T1pppp[a,i2,a1,i] = Viaai[i2,a,a1,i]
+            Tpppp[a,i2,a1,i] -= T1pppp[a,i2,a1,i]
+#
+            DO i1
+#
+               REQUEST Dibja_aaaa[i1,a,i2,a1] 
+#
+               Tii[i,i1]         = Dibja_aaaa[i1,a,i2,a1]*Tpppp[a,i2,a1,i]
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i, a, i2, a1
+#
+#     Third-term of Iab_aa
+#     --------------------
+#
+      PARDO a, a2, i, i1
+#
+            REQUEST Vaaii[a2,a,i1,i]
+            REQUEST Viaai[i1,a,a2,i] 
+            Tpppp[a2,a,i1,i]  = Vaaii[a2,a,i1,i]
+            T1pppp[a2,a,i1,i] = Viaai[i1,a,a2,i]
+            Tpppp[a2,a,i1,i] -= T1pppp[a2,a,i1,i]
+#
+            DO a1
+#
+               REQUEST Dibja_aaaa[i,a1,i1,a2] 
+#
+               Taa[a,a1]         = Tpppp[a2,a,i1,i]*Dibja_aaaa[i,a1,i1,a2]
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, a2, i, i1
+#
+#     Fifth-term of Iai_aa
+#     --------------------
+#
+      PARDO a, a1, i1, a2
+#
+            REQUEST VSaaai[a1,a2,a,i1] 
+            Tpppp[a1,i1,a2,a]  = VSaaai[a1,a2,a,i1]
+#
+            DO i
+#
+               REQUEST Dibja_aaaa[i,a1,i1,a2] 
+#
+               Tai[a,i]         = Dibja_aaaa[i,a1,i1,a2]*Tpppp[a1,i1,a2,a]
+               Tai[a,i]        *= -1.0  
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, i1, a2
+#
+#     Third-term of Iia_aa
+#     --------------------
+#
+      PARDO a, a1, i1, i2
+#
+            REQUEST Dibja_aaaa[i1,a,i2,a1] 
+#
+            DO i
+#
+               REQUEST VSpipi[i2,i1,a1,i]
+#
+               Tia[i,a]         = Dibja_aaaa[i1,a,i2,a1]*VSpipi[i2,i1,a1,i]
+               PUT Iia_aa[i,a] += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, i1, i2
+#
+# Done one-particle intermediate contributions 
+# -------------------------------------------- 
+      sip_barrier 
+#
+      ENDPROC DIBJAAAAA 
+#     ------------------ 
+#
+# The D(iB,jA) block of the two-particle density matrix is calculated. 
+#
+      PROC DIBJAABAB 
+#     -------------- 
+#
+      PARDO i, b1, j, a  
+#
+            REQUEST T2old_ab[a,i,b1,j] 
+#
+            DO i1 
+            DO b 
+#
+               REQUEST                          L2old_ab[i1,a,j,b] 
+#
+               Tibib[i1,b1,i,b]               = L2old_ab[i1,a,j,b]*T2old_ab[a,i,b1,j] 
+               Tibib[i1,b1,i,b]              *= 0.5   
+#
+               TAibib[i,b,i1,b1]              = Tibib[i1,b1,i,b]  
+#
+               PREPARE Vibja_abab[i,b,i1,b1] += TAibib[i,b,i1,b1] 
+               PREPARE Dibja_abab[i1,b1,i,b] += Tibib[i1,b1,i,b] 
+               PREPARE Dibja_abab[i,b,i1,b1] += TAibib[i,b,i1,b1] 
+#
+            ENDDO b 
+            ENDDO i1 
+#
+      ENDPARDO i, b1, j, a  
+#
+      PARDO i1, b, j, a 
+#
+            REQUEST L2old_ab[i1,a,j,b] 
+#
+            DO i 
+#
+               GET        t1a_old[a,i] 
+               tai[a,i] = t1a_old[a,i] 
+#
+               DO b1 
+#
+                  GET                              t1a_old[b1,j] 
+#
+                  Taibj[a,i,b1,j]                = tai[a,i]^t1a_old[b1,j]
+                  Tibib[i1,b1,i,b]               = L2old_ab[i1,a,j,b]*Taibj[a,i,b1,j] 
+                  Tibib[i1,b1,i,b]              *= 0.5   
+#
+                  T2ibib[i,b,i1,b1]              = Tibib[i1,b1,i,b]  
+                  TAibib[i,b,i1,b1]              = T2ibib[i,b,i1,b1]  
+#
+                  PREPARE Dibja_abab[i1,b1,i,b] += Tibib[i1,b1,i,b] 
+                  PREPARE Dibja_abab[i,b,i1,b1] += TAibib[i,b,i1,b1] 
+#
+               ENDDO b1 
+            ENDDO i 
+#
+      ENDPARDO i1, b, j, a  
+      server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# ---------------------------------------------------
+#
+# Third-term of Iij_aa 
+# --------------------
+#
+      PARDO i1, b, i2, b1
+#
+            REQUEST Dibja_abab[i1,b,i2,b1] 
+#
+            DO i
+#
+               REQUEST Vaaii[b1,b,i2,i]  
+#
+               Tii[i,i1]         = Dibja_abab[i1,b,i2,b1]*Vaaii[b1,b,i2,i]
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i
+#
+      ENDPARDO i1, b, i2, b1
+#
+# Fifth-term of Iai_aa 
+# -------------------- 
+#
+      PARDO a, b, i1, b1
+#
+            REQUEST Vaabj[b,b1,a,i1] 
+            Tqpqp[b,i1,b1,a]  = Vaabj[b,b1,a,i1]
+#
+            DO i
+#
+               REQUEST Dibja_abab[i,b,i1,b1] 
+#
+               Tai[a,i]         = Dibja_abab[i,b,i1,b1]*Tqpqp[b,i1,b1,a]
+               Tai[a,i]        *= -1.0  
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, i1, b1 
+#
+# Done contribution to intermediates 
+# ---------------------------------- 
+      sip_barrier 
+#
+      ENDPROC DIBJAABAB 
+#     ------------------ 
+#
+# The D(Ib,Ja) block of the two-particle density matrix is calculated. 
+#
+      PROC DIBJABABA 
+#     --------------  
+#
+# Compute contributions to one-particle intermediates 
+# ---------------------------------------------------
+#
+# Third-term of Iab_aa 
+# -------------------- 
+#
+      PARDO a, a2, j, j1
+#
+            REQUEST Vaaii[a2,a,j1,j] 
+#
+            DO a1
+#
+               REQUEST Dibja_abab[j,a1,j1,a2] 
+#
+               Taa[a,a1]         = Vaaii[a2,a,j1,j]*Dibja_abab[j,a1,j1,a2]
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, a2, j, j1
+#
+# Third-term of Iia_aa 
+# -------------------- 
+#
+      PARDO a, a1, j, j1
+#
+            REQUEST Dibja_abab[j,a,j1,a1] 
+#
+            DO i
+#
+               REQUEST Vpiqj[a1,i,j1,j]  
+#
+               Tia[i,a]         = Dibja_abab[j,a,j1,a1]*Vpiqj[a1,i,j1,j]
+               PUT Iia_aa[i,a] += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, j, j1
+#
+# Done one-particle intermediates 
+# -------------------------------
+#
+      sip_barrier 
+#
+      ENDPROC DIBJABABA 
+#     ------------------ 
+#
+      PROC DIBJAABBA 
+#     --------------- 
+#
+      PARDO i, a, b, j 
+#
+            GET l1a_old[j,b] 
+            GET t1a_old[a,i] 
+            GET l1a_old[i,a] 
+            GET t1a_old[b,j] 
+#
+            Tiajb[i,a,j,b]               = t1a_old[a,i]^l1a_old[j,b] 
+            T1iajb[i,a,j,b]              = l1a_old[i,a]^t1a_old[b,j] 
+            Tiajb[i,a,j,b]              += T1iajb[i,a,j,b] 
+#
+            Tiajb[i,a,j,b]              *= 0.5 
+            Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
+            PREPARE Dibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+#
+      ENDPARDO i, a, b, j 
+#
+      PARDO a, i, a1, i1  
+#
+            REQUEST T2old_aa[a,i,a1,i1] 
+#
+            DO j 
+            DO b 
+#
+               REQUEST                        L2old_ab[i1,a1,j,b] 
+               Tiajb[i,a,j,b]               = T2old_aa[a,i,a1,i1]*L2old_ab[i1,a1,j,b]  
+               Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
+               Tibja[i,b,j,a]              *= 0.5 
+               PREPARE Vibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+               PREPARE Dibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+#
+            ENDDO b 
+            ENDDO j 
+#
+      ENDPARDO a, i, a1, i1  
+#
+      PARDO b, j, a1, i1  
+#
+            REQUEST T2old_ab[a1,i1,b,j]   
+            REQUEST L2old_ab[i1,a1,j,b]   
+#
+            DO i 
+            DO a 
+#
+               REQUEST L2old_aa[i1,a1,i,a] 
+               GET t1a_old[a1,i] 
+               GET t1a_old[a,i1] 
+               tai[a,i1] = t1a_old[a,i1] 
+#
+               Tiaai[i,a,a1,i1]         = L2old_aa[i1,a1,i,a] 
+               Tiabj[i,a,b,j]           = Tiaai[i,a,a1,i1]*T2old_ab[a1,i1,b,j]    
+               Tiajb[i,a,j,b]           = Tiabj[i,a,b,j] 
+#
+               Tiaia[i,a,i1,a1]         = t1a_old[a1,i]^tai[a,i1] 
+               T1iajb[i,a,j,b]          = Tiaia[i,a,i1,a1]*L2old_ab[i1,a1,j,b] 
+               Tiajb[i,a,j,b]          -= T1iajb[i,a,j,b] 
+#
+# Multiply by 4(VFL) to match aces 
+# -------------------------------- 
+#
+               Tiajb[i,a,j,b]              *= 0.5 
+               Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
+               PREPARE Dibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+#
+            ENDDO a 
+            ENDDO i 
+#
+      ENDPARDO b, j, a1, i1  
+#
+      PARDO a, i, b1, j1  
+#
+            REQUEST T2old_ab[a,i,b1,j1] 
+#
+            DO j 
+            DO b 
+#
+               REQUEST                        L2old_aa[j1,b1,j,b] 
+#
+               Tiajb[i,a,j,b]               = T2old_ab[a,i,b1,j1]*L2old_aa[j1,b1,j,b]  
+               Tiajb[i,a,j,b]              *= 0.5  
+#
+               Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
+               PREPARE Vibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+#
+               Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
+               PREPARE Dibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+#
+            ENDDO b 
+            ENDDO j  
+#
+      ENDPARDO a, i, b1, j1  
+#
+      sip_barrier 
+#
+      PARDO b, j, b1, j1  
+#
+            REQUEST T2old_aa[b,j,b1,j1] 
+#
+            DO i 
+            DO a 
+#
+               REQUEST     L2old_ab[i,a,j1,b1] 
+               GET         t1a_old[b1,j] 
+               GET         t1a_old[b,j1] 
+               tbj[b,j1] = t1a_old[b,j1] 
+#
+#              T1iajb(i,a,j,b)              = T2old_aa(b,j,b1,j1)*L2old_ab(i,a,j1,b1)  
+               Tjbjb[j1,b1,j,b]             = T2old_aa[b,j,b1,j1] 
+               Tiajb[i,a,j,b]               = L2old_ab[i,a,j1,b1]*Tjbjb[j1,b1,j,b]   
+#
+               Tjbjb[j,b,j1,b1]             = t1a_old[b1,j]^tbj[b,j1] 
+               T1iajb[i,a,j,b]              = Tjbjb[j,b,j1,b1]*L2old_ab[i,a,j1,b1] 
+               Tiajb[i,a,j,b]              -= T1iajb[i,a,j,b] 
+#
+               Tiajb[i,a,j,b]              *= 0.5 
+               Tibja[i,b,j,a]               = Tiajb[i,a,j,b] 
+               PREPARE Dibja_abba[i,b,j,a] += Tibja[i,b,j,a]  
+#
+            ENDDO a 
+            ENDDO i  
+#
+# Multiply by 4(VFL) to match aces 
+# -------------------------------- 
+#
+      ENDPARDO b, j, b1, j1  
+#
+      server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# Third-term of Iij_aa 
+# -------------------- 
+#
+      PARDO i1, b, j, a
+#
+            REQUEST Dibja_abba[i1,b,j,a] 
+#
+            DO i
+#
+               REQUEST Viaai[i,a,b,j] 
+#
+               Tii[i,i1]         = Dibja_abba[i1,b,j,a]*Viaai[i,a,b,j]
+               Tii[i,i1]        *= -1.0  
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i
+#
+      ENDPARDO i1, b, j, a
+#
+# Fifth-term of Iai_aa
+# -------------------- 
+#
+      PARDO a, b, j, a1
+#
+            REQUEST Vaabj[a,a1,b,j] 
+            Tqqpp[b,j,a1,a] = Vaabj[a,a1,b,j]
+#
+            DO i
+#
+               REQUEST Dibja_abba[i,b,j,a1] 
+#
+               Tai[a,i]         = Dibja_abba[i,b,j,a1]*Tqqpp[b,j,a1,a]
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, j, a1
+#
+# Done one-particle intermediates 
+# -------------------------------
+      sip_barrier 
+#
+      ENDPROC DIBJAABBA 
+#     ------------------ 
+# 
+      PROC DIBJABAAB 
+#     --------------- 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# Third-term of Iab_aa 
+# --------------------
+#
+      PARDO a, b, j, i
+#
+            REQUEST Viaai[i,a,b,j] 
+#
+            DO a1
+#
+               REQUEST Dibja_abba[j,a1,i,b] 
+#
+               Taa[a,a1]         = Viaai[i,a,b,j]*Dibja_abba[j,a1,i,b]
+               Taa[a,a1]        *= -1.0  
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, b, j, i
+#
+# Third-term of Iia_aa
+# --------------------
+#
+      PARDO a, b, j, i1
+#
+            REQUEST Dibja_abba[j,a,i1,b] 
+#
+            DO i
+#
+               REQUEST Vpiqj[i1,i,b,j] 
+#
+               Tia[i,a]         = Dibja_abba[j,a,i1,b]*Vpiqj[i1,i,b,j]
+               Tia[i,a]        *= -1.0  
+               PUT Iia_aa[i,a] += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, j, i1
+#
+# Done one-particle intermediate contributions 
+# -------------------------------------------- 
+      sip_barrier 
+#
+      ENDPROC DIBJABAAB
+#     ------------------ 
+#
+# ----------------------------------------------------------------------------
+#
+      PROC DIBJA  
+#
+# Create gamma arrays and V intermediates 
+# --------------------------------------- 
+#
+           CALL DIBJAAAAA
+           CALL DIBJAABAB
+           CALL DIBJABABA
+           CALL DIBJAABBA 
+           CALL DIBJABAAB 
+#
+      ENDPROC DIBJA 
+#
+# ----------------------------------------------------------------------------
+#
+# Equivalent to gamma6 
+#
+# ----------------------------------------------------------------------------- 
+#
+# In this procedure the D(ij,ka) block of the two-particle 
+# density matrix is evaluated. Only the AAAA contribution is computed.  
+#
+# ----------------------------------------------------------------------------- 
+#
+      PROC DIJKAAAAA 
+#     -------------- 
+#
+      PARDO i, i1, i2, a 
+#
+            Tiiia[i,i1,i2,a] = 0.0 
+#
+            GET Gmi_a[i,i2] 
+            GET t1a_old[a,i1] 
+            GET Gmi_a[i1,i2] 
+            GET t1a_old[a,i] 
+#
+            T1iiia[i,i1,i2,a]  = Gmi_a[i,i2]^t1a_old[a,i1] 
+            T1iiia[i,i1,i2,a] *= -0.125  
+            Tiiia[i,i1,i2,a]  += T1iiia[i,i1,i2,a] 
+#
+            T1iiia[i,i1,i2,a]  = Gmi_a[i1,i2]^t1a_old[a,i] 
+            T1iiia[i,i1,i2,a] *= 0.125  
+            Tiiia[i,i1,i2,a]  += T1iiia[i,i1,i2,a] 
+#
+            DO a1 
+#
+               REQUEST Tau_aa[a1,i,a,i1]     
+               REQUEST L2old_aa[i,a1,i1,a] 
+               REQUEST Vibja_aaaa[i,a1,i2,a]  
+               REQUEST Vibja_aaaa[i1,a1,i2,a] 
+               GET t1a_old[a1,i1] 
+               GET t1a_old[a1,i] 
+               GET t1a_old[a1,i2] 
+               GET l1a_old[i2,a1] 
+#
+               T1iiia[i,i1,i2,a] = Tau_aa[a1,i,a,i1]*l1a_old[i2,a1] 
+               T1iiia[i,i1,i2,a]*= -0.125  
+               Tiiia[i,i1,i2,a] += T1iiia[i,i1,i2,a] 
+#
+               T1iiia[i,i1,i2,a] = L2old_aa[i,a1,i1,a]*t1a_old[a1,i2] 
+               T1iiia[i,i1,i2,a]*= -0.125  
+               Tiiia[i,i1,i2,a] += T1iiia[i,i1,i2,a] 
+#
+               T1iiia[i,i1,i2,a] = Vibja_aaaa[i,a1,i2,a]*t1a_old[a1,i1] 
+               T1iiia[i,i1,i2,a]*= 0.25  
+               Tiiia[i,i1,i2,a] += T1iiia[i,i1,i2,a] 
+#
+               T1iiia[i,i1,i2,a] = Vibja_aaaa[i1,a1,i2,a]*t1a_old[a1,i] 
+               T1iiia[i,i1,i2,a]*= -0.25  
+               Tiiia[i,i1,i2,a] += T1iiia[i,i1,i2,a] 
+#
+            ENDDO a1 
+#
+            DO i3 
+# 
+               REQUEST Vijmn_aaaa[i,i1,i2,i3]   
+               GET t1a_old[a,i3] 
+# 
+               T1iiia[i,i1,i2,a] = Vijmn_aaaa[i,i1,i2,i3]*t1a_old[a,i3] 
+               T1iiia[i,i1,i2,a]*= 0.125  
+               Tiiia[i,i1,i2,a] += T1iiia[i,i1,i2,a] 
+#
+            ENDDO i3 
+#
+# Multiply by 4 to match aces 
+# --------------------------- 
+#
+            Tiiia[i,i1,i2,a] *= 4.0 
+#
+            PREPARE Dijka_aaaa[i,i1,i2,a] += Tiiia[i,i1,i2,a] 
+#
+      ENDPARDO i, i1, i2, a 
+      server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# Fifth-term of Iij_aa 
+# -------------------- 
+#
+      PARDO i2, i3, a, i
+#
+            REQUEST VSpipi[a,i2,i3,i] 
+            Tpppp[i2,i3,a,i]  = VSpipi[a,i2,i3,i]
+#
+            DO i1
+#
+               REQUEST Dijka_aaaa[i1,i2,i3,a] 
+#
+               Tii[i,i1]         = Dijka_aaaa[i1,i2,i3,a]*Tpppp[i2,i3,a,i]
+               Tii[i,i1]        *= -1.0  
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i2, i3, a, i
+#
+# Sixth-term of Iij_aa
+# -------------------- 
+#
+      PARDO i3, i2, a, i
+#
+            REQUEST VSpipi[a,i2,i,i3] 
+#
+            DO i1
+#
+               REQUEST Dijka_aaaa[i3,i2,i1,a]
+#
+               Tii[i,i1]         = VSpipi[a,i2,i,i3]*Dijka_aaaa[i3,i2,i1,a]
+               Tii[i,i1]        *= -0.5
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i3, i2, a, i
+#
+# Sixth-term of Iab_aa
+# --------------------
+#
+      PARDO a, i2, i, i1
+#
+            REQUEST VSpipi[a,i1,i2,i] 
+            Tpppp[a,i,i1,i2]  = VSpipi[a,i1,i2,i]
+#
+            DO a1
+#
+               REQUEST Dijka_aaaa[i,i1,i2,a1] 
+#
+               Taa[a,a1]         = Tpppp[a,i,i1,i2]*Dijka_aaaa[i,i1,i2,a1]
+               Taa[a,a1]        *= -0.5
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, i2, i, i1
+#
+# Third-term of Iai_aa
+# --------------------  
+#
+      PARDO a, a1, i1, i2
+#
+            REQUEST Viaai[i1,a1,a,i2] 
+            REQUEST Vaaii[a,a1,i1,i2]   
+#
+            Tpppp[i1,i2,a1,a]  = Viaai[i1,a1,a,i2]
+            T1pppp[i1,i2,a1,a] = Vaaii[a,a1,i1,i2]
+            Tpppp[i1,i2,a1,a] -= T1pppp[i1,i2,a1,a]
+#
+            DO i
+#
+               REQUEST Dijka_aaaa[i,i1,i2,a1] 
+#
+               Tai[a,i]         = Dijka_aaaa[i,i1,i2,a1]*Tpppp[i1,i2,a1,a]
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, i1, i2
+#
+# Fourth-term of Iai_aa
+# --------------------
+#
+      PARDO a, a1, i1, i2
+#
+            REQUEST VSpipi[a,i1,a1,i2] 
+#
+            DO i
+#
+               REQUEST Dijka_aaaa[i1,i2,i,a1] 
+#
+               Tai[a,i]         = VSpipi[a,i1,a1,i2]*Dijka_aaaa[i1,i2,i,a1]
+               Tai[a,i]        *= 0.5
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, i1, i2
+#
+# Sixth-term of Iia_aa 
+# --------------------
+#
+      PARDO a, i3, i1, i2
+#
+            REQUEST Dijka_aaaa[i1,i2,i3,a] 
+#
+            DO i
+#
+               REQUEST VSpipi[i1,i3,i2,i]
+#
+               Tpppp[i,i1,i2,i3]  = VSpipi[i1,i3,i2,i]
+               Tia[i,a]           = Tpppp[i,i1,i2,i3]*Dijka_aaaa[i1,i2,i3,a]
+               Tia[i,a]          *= -0.5
+               PUT Iia_aa[i,a]   += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, i3, i1, i2
+#
+# Done contribution to one-particle intermediates 
+# ----------------------------------------------- 
+      sip_barrier 
+#
+      ENDPROC DIJKAAAAA 
+#     ----------------- 
+#
+# ----------------------------------------------------------------------------- 
+#
+# In this procedure the D(iJ,kA) block of the two-particle 
+# density matrix is evaluated. The AB block is computed.  
+#
+# ----------------------------------------------------------------------------- 
+#
+      PROC DIJKAABAB 
+#     -------------- 
+#
+      PARDO i, j, i1, b
+#
+            Tijib[i,j,i1,b] = 0.0 
+#
+            GET Gmi_a[i,i1] 
+            GET t1a_old[b,j] 
+#
+            T1ijib[i,j,i1,b] = Gmi_a[i,i1]^t1a_old[b,j] 
+            T1ijib[i,j,i1,b]*= -0.125  
+            Tijib[i,j,i1,b] += T1ijib[i,j,i1,b] 
+#
+            DO a 
+#
+               REQUEST Tau_ab[a,i,b,j]      
+               REQUEST L2old_ab[i,a,j,b]    
+               REQUEST Vibja_abba[j,a,i1,b] 
+               GET l1a_old[i1,a] 
+               GET t1a_old[a,i1] 
+               GET t1a_old[a,i] 
+#
+               T1ijib[i,j,i1,b] = Tau_ab[a,i,b,j]*l1a_old[i1,a] 
+               T1ijib[i,j,i1,b]*= -0.125  
+               Tijib[i,j,i1,b] += T1ijib[i,j,i1,b] 
+#
+               T1ijib[i,j,i1,b] = L2old_ab[i,a,j,b]*t1a_old[a,i1] 
+               T1ijib[i,j,i1,b]*= -0.125  
+               Tijib[i,j,i1,b] += T1ijib[i,j,i1,b] 
+#
+               T1ijib[i,j,i1,b] = Vibja_abba[j,a,i1,b]*t1a_old[a,i] 
+               T1ijib[i,j,i1,b]*= -0.25  
+               Tijib[i,j,i1,b] += T1ijib[i,j,i1,b] 
+#
+            ENDDO a 
+#
+            DO j1 
+# 
+               REQUEST Vijmn_abab[i,j,i1,j1] 
+               GET t1a_old[b,j1] 
+               T1ijib[i,j,i1,b] = Vijmn_abab[i,j,i1,j1]*t1a_old[b,j1] 
+               T1ijib[i,j,i1,b]*= 0.125  
+               Tijib[i,j,i1,b] += T1ijib[i,j,i1,b] 
+#
+            ENDDO j1 
+#
+            DO b1 
+#
+               REQUEST Vibja_abab[i,b1,i1,b] 
+               GET t1a_old[b1,j] 
+               T1ijib[i,j,i1,b] = Vibja_abab[i,b1,i1,b]*t1a_old[b1,j] 
+               T1ijib[i,j,i1,b]*= 0.25  
+               Tijib[i,j,i1,b] += T1ijib[i,j,i1,b] 
+#
+            ENDDO b1 
+#
+# Multiply by 4 to match aces 
+# --------------------------- 
+#
+            Tijib[i,j,i1,b] *= 4.0 
+#
+            PREPARE Dijka_abab[i,j,i1,b] += Tijib[i,j,i1,b] 
+#
+      ENDPARDO i, j, i1, b 
+      server_barrier 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# Fifth-term of Iij_aa 
+# -------------------- 
+#
+      PARDO j1, i2, b, i
+#
+            REQUEST Vpiqj[i2,i,b,j1] 
+#
+            DO i1
+#
+               REQUEST Dijka_abab[i1,j1,i2,b]
+#
+               Tii[i,i1]         = Dijka_abab[i1,j1,i2,b]*Vpiqj[i2,i,b,j1]
+               Tii[i,i1]        *= -1.0  
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO j1, i2, b, i
+#
+# Sixth-term of Iij_aa 
+# -------------------- 
+#
+      PARDO i2, j, b, i
+#
+            REQUEST Vpiqj[i,i2,b,j] 
+#
+            DO i1
+#
+               REQUEST Dijka_abab[i2,j,i1,b]
+#
+               Tii[i,i1]         = Vpiqj[i,i2,b,j]*Dijka_abab[i2,j,i1,b]
+               Tii[i,i1]        *= -1.0
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO i2, j, b, i
+#
+# Third-term of Iai_aa 
+# --------------------
+#
+      PARDO a, b, j, i1
+#
+            REQUEST Viaai[i1,a,b,j]
+            Tqpqp[j,i1,b,a]  = Viaai[i1,a,b,j]
+#
+            DO i
+#
+               REQUEST Dijka_abab[i,j,i1,b] 
+#
+               Tai[a,i]         = Dijka_abab[i,j,i1,b]*Tqpqp[j,i1,b,a]
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, j, i1
+#
+# Fourth-term of Iai_aa 
+# ---------------------
+#
+      PARDO a, b, i1, j
+#
+            REQUEST Vpiqj[a,i1,b,j] 
+#
+            DO i
+#
+               REQUEST Dijka_abab[i1,j,i,b] 
+#
+               Tai[a,i]         = Vpiqj[a,i1,b,j]*Dijka_abab[i1,j,i,b]
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, b, i1, j
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+      sip_barrier 
+#
+      ENDPROC DIJKAABAB 
+#     ----------------- 
+#
+# ----------------------------------------------------------------------------- 
+#
+# ----------------------------------------------------------------------------- 
+#
+# In this procedure the D(Ij,Ka) block of the two-particle 
+# density matrix is evaluated. The BABA block is computed.  
+#
+# ----------------------------------------------------------------------------- 
+#
+      PROC DIJKABABA 
+#     -------------- 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+# Fifth-term of Iij_aa 
+# -------------------- 
+#
+      PARDO j1, j, a, i
+#
+            REQUEST Vpiqj[a,i,j,j1] 
+#
+            DO i1
+#
+               REQUEST Dijka_abab[j1,i1,j,a] 
+#
+               Tii[i,i1]         = Dijka_abab[j1,i1,j,a]*Vpiqj[a,i,j,j1]
+               Tii[i,i1]        *= -1.0  
+               PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+            ENDDO i1
+#
+      ENDPARDO j1, j, a, i
+#
+# Sixth-term of Iab_aa 
+# -------------------- 
+#
+      PARDO a, j1, j, i
+#
+            REQUEST Vpiqj[a,i,j1,j] 
+#
+            DO a1
+#
+               REQUEST Dijka_abab[j,i,j1,a1] 
+#
+               Taa[a,a1]         = Vpiqj[a,i,j1,j]*Dijka_abab[j,i,j1,a1]
+               Taa[a,a1]        *= -1.0
+               PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+            ENDDO a1
+#
+      ENDPARDO a, j1, j, i
+#
+# Third-term of Iai_aa 
+# -------------------- 
+#
+      PARDO a, a1, j, j1
+#
+            REQUEST Vaaii[a,a1,j,j1] 
+            Tqqpp[j,j1,a1,a] = Vaaii[a,a1,j,j1]
+#
+            DO i
+#
+               REQUEST Dijka_abab[j,i,j1,a1] 
+#
+               Tai[a,i]         = Dijka_abab[j,i,j1,a1]*Tqqpp[j,j1,a1,a]
+               PUT Iai_aa[a,i] += Tai[a,i]
+#
+            ENDDO i
+#
+      ENDPARDO a, a1, j, j1
+#
+# Sixth-term of Iia_aa 
+# -------------------- 
+#
+      PARDO a, j1, j, i1
+#
+            REQUEST Dijka_abab[j,i1,j1,a] 
+#
+            DO i
+#
+               REQUEST Vpiqj[i1,i,j,j1] 
+#
+               Tia[i,a]         = Dijka_abab[j,i1,j1,a]*Vpiqj[i1,i,j,j1]
+               Tia[i,a]        *= -1.0
+               PUT Iia_aa[i,a] += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, j1, j, i1
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+      sip_barrier 
+# 
+      ENDPROC DIJKABABA 
+#     ----------------- 
+#
+# ----------------------------------------------------------------------------- 
+#
+      PROC DIJKA 
+#     ---------- 
+#
+# Create gamma arrays 
+# ------------------- 
+#
+           CALL DIJKAAAAA 
+           CALL DIJKAABAB 
+           CALL DIJKABABA 
+#
+      ENDPROC DIJKA 
+#     ------------- 
+#
+# ----------------------------------------------------------------------------
+#
+# In this superprocedure the particle-particle block of the relaxed density 
+# matrix is computed. The expressions programmed are: 
+# 
+# D_{ab} = 1/4 P_+(ab) t^{ae}_{mn} \lambda^{mn}_{be}  
+#        + 1/4 P_+(ab) t^{aE}_{mN} \lambda^{mN}_{bE}  
+#        + 1/2 P_+(ab) t^{a}_{m} \lambda^{m}_{b} 
+#
+# D_{AB} = D_{ab} [a<-->A, b<-->B, i<-->I, j<-->J, m<-->M, n<-->N] 
+#
+      PROC DABA 
+#     --------- 
+#
+      PARDO a,a1
+            PUT Dab_a[a,a1] = 0.0 
+      ENDPARDO a,a1
+      sip_barrier 
+
+      PARDO a, a1, i  
+#
+            GET t1a_old[a,i] 
+            GET l1a_old[i,a1] 
+#
+            Taa[a,a1]        = t1a_old[a,i]*l1a_old[i,a1] 
+            Taa[a,a1]       *= 0.5 
+            T1aa[a1,a]       = Taa[a,a1]  
+            PUT Dab_a[a,a1] += Taa[a,a1] 
+            PUT Dab_a[a1,a] += T1aa[a1,a] 
+#
+            DO a2 
+            DO i1 
+#
+               REQUEST T2old_aa[a,i,a2,i1] 
+               REQUEST L2old_aa[i,a1,i1,a2] 
+#
+               Taa[a,a1]        = T2old_aa[a,i,a2,i1]*L2old_aa[i,a1,i1,a2]
+               Taa[a,a1]       *= 0.25 
+               T1aa[a1,a]       = Taa[a,a1]  
+               PUT Dab_a[a,a1] += Taa[a,a1] 
+               PUT Dab_a[a1,a] += T1aa[a1,a] 
+#
+            ENDDO i1 
+            ENDDO a2 
+#
+            DO b 
+            DO j 
+#
+               REQUEST T2old_ab[a,i,b,j]   
+               REQUEST L2old_ab[i,a1,j,b]   
+#
+               Taa[a,a1]        = T2old_ab[a,i,b,j]*L2old_ab[i,a1,j,b]
+               Taa[a,a1]       *= 0.5 
+               T1aa[a1,a]       = Taa[a,a1]  
+               PUT Dab_a[a,a1] += Taa[a,a1] 
+               PUT Dab_a[a1,a] += T1aa[a1,a] 
+#
+            ENDDO j 
+            ENDDO b 
+#
+      ENDPARDO a, a1, i  
+#
+      ENDPROC DABA 
+#     ------------ 
+#
+# ----------------------------------------------------------------------------
+#
+      PROC DAB 
+           CALL DABA 
+      ENDPROC DAB 
+#
+# --------------------------------------------------------------------------- 
+#
+      PROC DENSPP 
+#     ----------- 
+#
+      PARDO p,p1
+         PUT Dpp[i,i1] = 0.0
+      ENDPARDO p,p1
+      PARDO q,q1
+         PUT Dqq[q,q1] = 0.0
+      ENDPARDO q,q1
+      sip_barrier 
+#
+      PARDO i, i1 
+           GET             Dij_a[i,i1] 
+           GET             DOR_ii[i,i1] 
+           tpp[i,i1]     = Dij_a[i,i1] 
+           tpp[i,i1]    += DOR_ii[i,i1] 
+           PUT Dpp[i,i1] = tpp[i,i1] 
+      ENDPARDO i, i1 
+#
+      PARDO j, j1 
+           GET             Dij_a[j,j1] 
+           GET             DOR_ii[j,j1] 
+           tqq[j,j1]     = Dij_a[j,j1] 
+           tqq[j,j1]    += DOR_ii[j,j1] 
+           PUT Dqq[j,j1] = tqq[j,j1] 
+      ENDPARDO j, j1 
+#
+      PARDO a, a1 
+           GET             Dab_a[a,a1] 
+           GET             DOR_aa[a,a1] 
+           tpp[a,a1]     = Dab_a[a,a1] 
+           tpp[a,a1]    += DOR_aa[a,a1] 
+           PUT Dpp[a,a1] = tpp[a,a1] 
+      ENDPARDO a, a1 
+#
+      PARDO b, b1 
+           GET             Dab_a[b,b1] 
+           GET             DOR_aa[b,b1] 
+           tqq[b,b1]     = Dab_a[b,b1] 
+           tqq[b,b1]    += DOR_aa[b,b1] 
+           PUT Dqq[b,b1] = tqq[b,b1] 
+      ENDPARDO b, b1 
+      sip_barrier 
+#
+      PARDO i, i1 
+            GET Dpp[i,i1] 
+            PUT Dij_a[i,i1] = Dpp[i,i1] 
+      ENDPARDO i, i1 
+#
+      PARDO a, a1 
+            GET Dpp[a,a1] 
+            PUT Dab_a[a,a1] = Dpp[a,a1] 
+      ENDPARDO a, a1 
+#
+      PARDO j, j1 
+            GET Dqq[j,j1] 
+            PUT Dij_a[j,j1] = Dqq[j,j1] 
+      ENDPARDO j, j1 
+#
+      PARDO b, b1 
+            GET Dqq[b,b1] 
+            PUT Dab_a[b,b1] = Dqq[b,b1] 
+      ENDPARDO b, b1 
+      sip_barrier 
+#
+      ENDPROC DENSPP 
+#     -------------- 
+#
+# --------------------------------------------------------------------------- 
+#
+# In this superprocedure the occupied-occupied block of the relaxed
+# density matrix is computed. The expressions programmed are:
+#
+# D_{ij} = -1/4 P_+(ij) t^{ef}_{im} \lambda^{jm}_{ef} 
+#          -1/4 P_+(ij) t^{eF}_{iM} \lambda^{jM}_{eF}   
+#          -1/2 P_+(ij) t^{e}_{i} \lambda^{j}_{e}   
+#
+# D_{IJ} = D_{ij} [i<-->I, j<-->J, e<-->E, f<-->F] 
+#
+# --------------------------------------------------------------------------- 
+#
+      PROC DIJA 
+#     --------- 
+#
+      PARDO i, i1
+            PUT Dij_a[i,i1] = 0.0
+      ENDPARDO i, i1
+      sip_barrier
+  
+      PARDO a, a1, i2 
+#
+            DO i 
+#
+               REQUEST T2old_aa[a,i,a1,i2] 
+#
+               DO i1 
+#
+                  REQUEST L2old_aa[i1,a,i2,a1] 
+#
+                  Tii[i,i1]        = T2old_aa[a,i,a1,i2]*L2old_aa[i1,a,i2,a1] 
+                  Tii[i,i1]       *= -0.25   
+                  T1ii[i1,i]       = Tii[i,i1] 
+                  PUT Dij_a[i,i1] += Tii[i,i1] 
+                  PUT Dij_a[i1,i] += T1ii[i1,i] 
+#
+               ENDDO i1 
+#
+            ENDDO i 
+#
+      ENDPARDO a, a1, i2 
+#
+      PARDO a, b, j 
+#
+            DO i 
+#
+               REQUEST T2old_ab[a,i,b,j] 
+#
+               DO i1 
+#
+                  REQUEST L2old_ab[i1,a,j,b] 
+#
+                  Tii[i,i1]        = T2old_ab[a,i,b,j]*L2old_ab[i1,a,j,b] 
+                  Tii[i,i1]       *= -0.5   
+                  T1ii[i1,i]       = Tii[i,i1] 
+                  PUT Dij_a[i,i1] += Tii[i,i1] 
+                  PUT Dij_a[i1,i] += T1ii[i1,i] 
+#
+               ENDDO i1 
+#
+            ENDDO i 
+#
+      ENDPARDO a, b, j 
+#
+      PARDO a, i, i1  
+#
+            GET t1a_old[a,i] 
+            GET l1a_old[i1,a] 
+#
+            Tii[i,i1]        = l1a_old[i1,a]*t1a_old[a,i] 
+            Tii[i,i1]       *= -0.5   
+            T1ii[i1,i]       = Tii[i,i1] 
+            PUT Dij_a[i,i1] += Tii[i,i1] 
+            PUT Dij_a[i1,i] += T1ii[i1,i] 
+#
+      ENDPARDO a, i, i1  
+#
+      ENDPROC DIJA 
+#     ------------ 
+#
+      PROC DIJ 
+#     ----------- 
+           CALL DIJA 
+      ENDPROC DIJ 
+#     ----------- 
+# 
+     PROC I11 
+#    --------
+
+      pardo i,a
+            PUT Iai_aa[a,i] = 0.0
+      endpardo i,a
+      pardo i, i1
+            PUT Iij_aa[i,i1] = 0.0
+      endpardo i, i1
+      pardo a,a1
+            put Iab_aa[a,a1] = 0.0
+      endpardo a,a1
+      sip_barrier
+#
+# Calculate contribution to Iai_aa 
+# -------------------------------- 
+#
+     PARDO a, i, i1, i2  
+#
+           REQUEST VSpipi[a,i2,i1,i] 
+           GET Dij_a[i1,i2] 
+#
+           Tpppp[a,i,i1,i2]  = VSpipi[a,i2,i1,i] 
+           Tai[a,i]          = Tpppp[a,i,i1,i2]*Dij_a[i1,i2] 
+           Tai[a,i]         *= -1.0  
+           PUT Iai_aa[a,i]  += Tai[a,i] 
+#
+     ENDPARDO a, i, i1, i2  
+#
+     PARDO a, j, j1, i 
+#
+           REQUEST Vpiqj[a,i,j,j1] 
+           GET Dij_a[j,j1] 
+#
+           Tai[a,i]         = Vpiqj[a,i,j,j1]*Dij_a[j,j1] 
+           PUT Iai_aa[a,i] += Tai[a,i] 
+#
+     ENDPARDO a, j, j1, i 
+#
+     PARDO a, a1, a2, i 
+#
+           REQUEST VSaaai[a,a1,a2,i]
+           GET Dab_a[a2,a1] 
+#
+           Tpppp[a,i,a2,a1]  = VSaaai[a,a1,a2,i] 
+           Tai[a,i]          = Tpppp[a,i,a2,a1]*Dab_a[a2,a1] 
+           Tai[a,i]         *= -1.0   
+           PUT Iai_aa[a,i]  += Tai[a,i] 
+#
+     ENDPARDO a, a1, a2, i 
+#
+     PARDO a, b, b1, i 
+#
+           REQUEST Vaabj[b1,b,a,i] 
+           GET Dab_a[b1,b] 
+#
+           Tai[a,i]         = Vaabj[b1,b,a,i]*Dab_a[b1,b] 
+           PUT Iai_aa[a,i] += Tai[a,i] 
+#
+     ENDPARDO a, b, b1, i 
+#
+# Done contribution to Iai_aa 
+# --------------------------- 
+#
+# Compute contribution to Iij_aa 
+# ------------------------------ 
+#
+#     Dab contribution 
+#     ---------------- 
+#
+      PARDO a, a1, i, i1 
+#
+            REQUEST Vaaii[a,a1,i,i1] 
+            REQUEST Viaai[i,a1,a,i1]  
+            REQUEST Vaaii[a,a1,i1,i]   
+            REQUEST Viaai[i1,a1,a,i]
+            GET Dab_a[a,a1] 
+#
+            Tpppp[i,i1,a,a1]  = Vaaii[a,a1,i,i1]  
+            T1pppp[i,i1,a,a1] = Viaai[i,a1,a,i1]  
+            T2pppp[i,i1,a,a1] = Vaaii[a,a1,i1,i]  
+            T3pppp[i,i1,a,a1] = Viaai[i1,a1,a,i] 
+#
+            Tpppp[i,i1,a,a1] -= T1pppp[i,i1,a,a1]  
+            Tpppp[i,i1,a,a1] += T2pppp[i,i1,a,a1]  
+            Tpppp[i,i1,a,a1] -= T3pppp[i,i1,a,a1]  
+#
+            Tii[i,i1]         = Tpppp[i,i1,a,a1]*Dab_a[a,a1] 
+            Tii[i,i1]        *= -0.5  
+            PUT Iij_aa[i,i1] += Tii[i,i1] 
+#
+      ENDPARDO a, a1, i, i1 
+#
+      PARDO b, b1, i, i1 
+#
+            REQUEST Vaaii[b,b1,i,i1]   
+            REQUEST Vaaii[b,b1,i1,i]   
+            GET Dab_a[b,b1] 
+#
+            Tppqq[i,i1,b,b1]  = Vaaii[b,b1,i,i1]  
+            T2ppqq[i,i1,b,b1] = Vaaii[b,b1,i1,i]  
+            Tppqq[i,i1,b,b1] += T2ppqq[i,i1,b,b1]  
+#
+            Tii[i,i1]         = Tppqq[i,i1,b,b1]*Dab_a[b,b1] 
+            Tii[i,i1]        *= -0.5  
+            PUT Iij_aa[i,i1] += Tii[i,i1] 
+#
+      ENDPARDO b, b1, i, i1 
+#
+#     Dij contribution 
+#     ---------------- 
+#
+      PARDO i2, i3, i, i1 
+#
+            REQUEST VSpipi[i2,i3,i,i1] 
+            REQUEST VSpipi[i2,i3,i1,i]
+            GET Dij_a[i2,i3] 
+#
+            Tpppp[i,i1,i2,i3]  = VSpipi[i2,i3,i,i1]  
+            T2pppp[i,i1,i2,i3] = VSpipi[i2,i3,i1,i]  
+            Tpppp[i,i1,i2,i3] += T2pppp[i,i1,i2,i3]  
+#
+            Tii[i,i1]          = Tpppp[i,i1,i2,i3]*Dij_a[i2,i3] 
+            Tii[i,i1]         *= -0.5  
+            PUT Iij_aa[i,i1]  += Tii[i,i1] 
+#
+      ENDPARDO i2, i3, i, i1 
+#
+      PARDO j, j1, i, i1 
+#
+            REQUEST Vpiqj[i,i1,j,j1]  
+            REQUEST Vpiqj[i1,i,j,j1]   
+            GET Dij_a[j,j1] 
+#
+            Tppqq[i,i1,j,j1]  = Vpiqj[i,i1,j,j1]  
+            T2ppqq[i,i1,j,j1] = Vpiqj[i1,i,j,j1]  
+            Tppqq[i,i1,j,j1] += T2ppqq[i,i1,j,j1]  
+#
+            Tii[i,i1]         = Tppqq[i,i1,j,j1]*Dij_a[j,j1] 
+            Tii[i,i1]        *= -0.5  
+            PUT Iij_aa[i,i1] += Tii[i,i1] 
+#
+      ENDPARDO j, j1, i, i1 
+# 
+# DONE Compute contribution to Iij_aa 
+# ----------------------------------- 
+#
+     ENDPROC I11 
+#    ----------- 
+#
+# This procedure computes the contributions to the intermediate
+# Iij_a which contain the Fock matrix. First-term of equation 43
+# and computed in dfini.f.
+#
+# Equation programmed:
+#
+#     I(i,j) = - f(i,m) D(j,m)
+#
+      
+      PROC FOCKIIJA
+#     -------------
+#
+      PARDO i, i1
+#
+            Tii[i,i1] = Fock_a[i,i1]
+#
+            DO i2
+#
+            IF i2 == i
+#
+               GET                 DOR_ii[i1,i2]
+               T1ii[i,i1]        = DOR_ii[i1,i2]*Fock_a[i2,i]
+               Tii[i,i1]        += T1ii[i,i1]
+#
+            ENDIF # i2 == i
+#
+            ENDDO i2
+#
+            Tii[i,i1]        *= -1.0
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+      ENDPARDO i, i1
+#
+# Also subtract out Dai contribution Eq. 56 
+# ----------------------------------------- 
+#
+      PARDO i, i1, a, i2 
+#
+            REQUEST VSpipi[a,i2,i,i1] 
+            REQUEST VSpipi[i1,i,a,i2] 
+            GET Doldai_a[a,i2] 
+#
+            Tpppp[i,i1,a,i2]  = VSpipi[a,i2,i,i1] 
+            T2pppp[i,i1,a,i2] = VSpipi[i1,i,a,i2]  
+            Tpppp[i,i1,a,i2] += T2pppp[i,i1,a,i2]  
+#
+            Tii[i,i1]         = Tpppp[i,i1,a,i2]*Doldai_a[a,i2]
+            Tii[i,i1]        *= -1.0 
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+# 
+      ENDPARDO i, i1, a, i2 
+#
+      PARDO i, i1, b, j 
+#
+            REQUEST Vpiqj[i,i1,b,j] 
+            REQUEST Vpiqj[i1,i,b,j]   
+            GET Doldai_a[b,j] 
+#
+            Tppqq[i,i1,b,j]   = Vpiqj[i,i1,b,j]  
+            T2ppqq[i,i1,b,j]  = Vpiqj[i1,i,b,j]  
+            Tppqq[i,i1,b,j]  += T2ppqq[i,i1,b,j]  
+#
+            Tii[i,i1]         = Tppqq[i,i1,b,j]*Doldai_a[b,j]
+            Tii[i,i1]        *= -1.0 
+#
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+# 
+      ENDPARDO i, i1, b, j 
+#
+# Add contributions from o-o and v-v orbital response. 
+# ---------------------------------------------------- 
+#
+      PARDO i, i1, i2, i3 
+#
+            REQUEST             VSpipi[i,i1,i2,i3] 
+            GET                 DOR_ii[i2,i3] 
+            Tii[i,i1]         = VSpipi[i,i1,i2,i3]*DOR_ii[i2,i3] 
+            Tii[i,i1]        *= -1.0  
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+      ENDPARDO i, i1, i2, i3 
+#
+      PARDO i, i1, j2, j3 
+#
+            REQUEST             Vpiqj[i,i1,j2,j3] 
+            GET                 DOR_ii[j2,j3] 
+            Tii[i,i1]         = Vpiqj[i,i1,j2,j3]*DOR_ii[j2,j3] 
+            Tii[i,i1]        *= -1.0  
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+      ENDPARDO i, i1, j2, j3 
+#
+      PARDO i, i1, a2, a3 
+#
+            REQUEST             Vaaii[a2,a3,i,i1]  
+            REQUEST             Viaai[i,a3,a2,i1]  
+            GET                 DOR_aa[a2,a3] 
+            tpppp[i,i1,a2,a3] = Vaaii[a2,a3,i,i1]  
+            t1pppp[i,i1,a2,a3]= Viaai[i,a3,a2,i1]   
+            tpppp[i,i1,a2,a3]-= t1pppp[i,i1,a2,a3] 
+            Tii[i,i1]         = tpppp[i,i1,a2,a3]*DOR_aa[a2,a3] 
+            Tii[i,i1]        *= -1.0  
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+      ENDPARDO i, i1, a2, a3 
+#
+      PARDO i, i1, b2, b3 
+#
+            REQUEST             Vaaii[b2,b3,i,i1] 
+            GET                 DOR_aa[b2,b3] 
+            Tii[i,i1]         = Vaaii[b2,b3,i,i1]*DOR_aa[b2,b3] 
+            Tii[i,i1]        *= -1.0  
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+      ENDPARDO i, i1, b2, b3 
+#
+      ENDPROC FOCKIIJA
+#     ----------------
+#
+# This procedure computes the contributions to the intermediate
+# Iab_a which contain the Fock matrix. First-term of equation 43
+# and computed in dfini.f.
+#
+# Equation programmed:
+#
+#     I(a,b) = - f(a,e) D(b,e)
+#
+      PROC FOCKIABA
+#     -------------
+#
+      PARDO a, a1
+#
+            DO a2
+#
+               IF a2 == a 
+#
+                  GET                 DOR_aa[a2,a1]
+                  Taa[a,a1]         = Fock_a[a,a2]*DOR_aa[a2,a1]
+                  Taa[a,a1]        *= -1.0
+                  PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+               ENDIF # a2 == a 
+#
+            ENDDO a2
+#
+      ENDPARDO a, a1
+#
+      ENDPROC FOCKIABA
+#     ----------------
+#
+# This procedure computes the contributions to the intermediate
+# Iab_b which contain the Fock matrix. First-term of equarion 43
+# and computed in dfini.f.
+#
+# Equation programmed:
+#
+#     I(A,B) = - f(A,E) D(B,E)
+#
+      PROC FOCKIABB
+#     -------------
+#
+      PARDO a, i 
+#
+            Tia[i,a] = 0.0 
+#
+            DO i1 
+#
+               IF i1 == i 
+#
+               GET Doldai_a[a,i1] 
+#
+               T1ia[i,a] = Doldai_a[a,i1]*fock_a[i1,i] 
+               Tia[i,a] -= T1ia[i,a] 
+#
+               ENDIF # i1 == i 
+#
+            ENDDO i1 
+#
+            PUT Iia_aa[i,a] += Tia[i,a] 
+#
+      ENDPARDO a, i 
+
+      ENDPROC FOCKIABB
+#     -------------
+#
+      PROC IFOCK
+#     ----------
+          CALL FOCKIIJA
+          CALL FOCKIABA
+          CALL FOCKIABB
+      ENDPROC IFOCK
+#     -------------
+ 
+#
+      PROC IFOCK_PP 
+#     -------------
+#
+      PARDO i, i1 
+#
+            Tii[i,i1] = 0.0 
+#
+            DO i2 
+#
+            IF i2 == i 
+#
+               GET Dij_a[i1,i2]
+#
+               T1ii[i,i1]        = Dij_a[i1,i2]*Fock_a[i2,i]
+               Tii[i,i1]        += T1ii[i,i1]  
+#
+            ENDIF # i2 == i 
+#
+            ENDDO i2 
+#
+            Tii[i,i1]        *= -1.0 
+            PUT Iij_aa[i,i1] += Tii[i,i1]
+#
+      ENDPARDO i, i1 
+#
+      PARDO a, a1
+#
+            DO a2
+#
+               IF a2 == a 
+#
+                  GET                 Dab_a[a1,a2]
+                  Taa[a,a1]         = Fock_a[a,a2]*Dab_a[a1,a2]
+                  Taa[a,a1]        *= -1.0
+                  PUT Iab_aa[a,a1] += Taa[a,a1]
+#
+               ENDIF # a2 == a 
+#
+            ENDDO a2
+#
+      ENDPARDO a, a1
+#
+      ENDPROC IFOCK_PP 
+#     ----------------
+# 
+      PROC IAIXX 
+#     ---------- 
+#
+# First form the half back-transformed density array 
+# -------------------------------------------------- 
+#
+      PARDO a2, a, i 
+#
+            allocate Lxaai[*,a2,a,i] 
+#
+            DO a1 
+#
+               REQUEST Dabci_aaaa[a1,a2,a,i] 
+#
+               DO mu 
+#
+                  Txaai[mu,a2,a,i]  = Dabci_aaaa[a1,a2,a,i]*ca[mu,a1] 
+                  Lxaai[mu,a2,a,i] += Txaai[mu,a2,a,i] 
+#
+               ENDDO mu 
+#
+            ENDDO a1 
+#
+            DO mu 
+#
+               DO nu 
+#
+                  Txxai[mu,nu,a,i]          = Lxaai[mu,a2,a,i]*ca[nu,a2] 
+                  PREPARE Ixxai[mu,nu,a,i] += Txxai[mu,nu,a,i] 
+#
+               ENDDO nu 
+#
+            ENDDO mu 
+#
+            deallocate Lxaai[*,a2,a,i] 
+#
+      ENDPARDO a2, a, i 
+#
+      PARDO a, b1, i 
+#
+            allocate Lxabi[*,a,b1,i] 
+#
+            DO b 
+#
+               REQUEST Dabci_abab[b,a,b1,i]   
+#
+               DO mu 
+#
+                  Txabi[mu,a,b1,i]  = Dabci_abab[b,a,b1,i]*ca[mu,b] 
+                  Lxabi[mu,a,b1,i] += Txabi[mu,a,b1,i] 
+#
+               ENDDO mu 
+#
+            ENDDO b 
+#
+            DO mu 
+#
+               DO nu 
+#
+                  Txxbi[mu,nu,b1,i]          = Lxabi[mu,a,b1,i]*ca[nu,a] 
+                  PREPARE Ixxbi[mu,nu,b1,i] += Txxbi[mu,nu,b1,i] 
+#
+               ENDDO nu 
+#
+            ENDDO mu 
+#
+            deallocate Lxabi[*,a,b1,i] 
+#
+      ENDPARDO a, b1, i 
+#
+      server_barrier 
+#
+      PARDO mu, nu, a, i
+            REQUEST Ixxai[mu,nu,a,i]  
+            DO lambda 
+               txxxi[mu,nu,lambda,i] = Ixxai[mu,nu,a,i]*ca[lambda,a] 
+               PREPARE Ixxxi[mu,nu,lambda,i] += txxxi[mu,nu,lambda,i] 
+            ENDDO lambda 
+      ENDPARDO mu, nu, a, i
+#
+      PARDO mu, nu, b, i
+            REQUEST Ixxbi[mu,nu,b,i] 
+            DO lambda 
+               txxxi[mu,nu,lambda,i] = Ixxbi[mu,nu,b,i]*ca[lambda,b] 
+               PREPARE Jxxxi[mu,nu,lambda,i] += txxxi[mu,nu,lambda,i] 
+            ENDDO lambda 
+      ENDPARDO mu, nu, b, i
+#
+      PARDO sigma, i
+            PUT JJxi[sigma,i] = 0.0
+            PUT IIxi[sigma,i] = 0.0
+      ENDPARDO sigma, i
+      sip_barrier 
+#
+# Contract with AO integrals 
+# -------------------------- 
+#
+      PARDO sigma, lambda, mu, nu  
+#
+            execute compute_integral_batch AOINT[lambda,mu,sigma,nu]
+            execute compute_integral_batch AOINT1[sigma,mu,lambda,nu]
+            Txxxx[lambda,sigma,mu,nu]  = AOINT[lambda,mu,sigma,nu] 
+            T1xxxx[lambda,sigma,mu,nu] = AOINT1[sigma,mu,lambda,nu] 
+#
+            DO i 
+               REQUEST Jxxxi[mu,nu,lambda,i] 
+               txi[sigma,i] = Txxxx[lambda,sigma,mu,nu]*Jxxxi[mu,nu,lambda,i]  
+               PUT JJxi[sigma,i] += txi[sigma,i] 
+            ENDDO i 
+#
+            Txxxx[lambda,sigma,mu,nu] -= T1xxxx[lambda,sigma,mu,nu] 
+#
+            DO i 
+               REQUEST Ixxxi[mu,nu,lambda,i] 
+               txi[sigma,i] = Txxxx[lambda,sigma,mu,nu]*Ixxxi[mu,nu,lambda,i]  
+               PUT IIxi[sigma,i] += txi[sigma,i] 
+            ENDDO i 
+#
+      ENDPARDO sigma, lambda, mu, nu 
+
+      PARDO mu, a, i 
+            GET IIxi[mu,i] 
+            tai[a,i] = IIxi[mu,i]*ca[mu,a]  
+            tai[a,i] *= 0.5  
+            PUT Iai_aa[a,i] += Tai[a,i] 
+      ENDPARDO mu, a, i 
+#
+      PARDO mu, a, i 
+            GET JJxi[mu,i] 
+            tai[a,i] = JJxi[mu,i]*ca[mu,a]  
+            PUT Iai_aa[a,i] += Tai[a,i] 
+      ENDPARDO mu, a, i 
+
+      sip_barrier 
+#
+      ENDPROC IAIXX 
+#     -------------- 
+#
+# --------------------------------------------------------------------------- 
+#
+#
+# -----------------------------------------------------------------------------
+#
+# Expression programmed: Equivalent to gamma2.  
+#
+# D^{ab}_{cd} = 1/16 P_+(ab,cd) \Tau^{ab}_{ij} \lambda^{ij}_{cd} 
+# 4* D is stored to be consistent with acess 
+#
+# -----------------------------------------------------------------------------
+#
+      PROC DABCDAA 
+#     ------------- 
+#
+      PARDO a, a1, i, i1 
+           REQUEST                        Tau_aa[a,i,a1,i1] 
+           REQUEST                        L2old_aa[i,a,i1,a1] 
+           tpppp[a,a1,i,i1]             = Tau_aa[a,i,a1,i1] 
+           t1pppp[i,i1,a,a1]            = L2old_aa[i,a,i1,a1] 
+           PREPARE LTau_aa[a,a1,i,i1]   = tpppp[a,a1,i,i1]  
+           PREPARE LL2old_aa[i,i1,a,a1] = t1pppp[i,i1,a,a1]  
+      ENDPARDO a, a1, i, i1 
+#
+      PARDO a, b1, i, j1 
+           REQUEST                        Tau_ab[a,i,b1,j1] 
+           REQUEST                        L2old_ab[i,a,j1,b1] 
+           tpqpq[a,b1,i,j1]             = Tau_ab[a,i,b1,j1]
+           t1pqpq[i,j1,a,b1]            = L2old_ab[i,a,j1,b1] 
+           PREPARE LTau_ab[a,b1,i,j1]   = tpqpq[a,b1,i,j1]  
+           PREPARE LL2old_ab[i,j1,a,b1] = t1pqpq[i,j1,a,b1]  
+      ENDPARDO a, b1, i, j1 
+      server_barrier 
+# 
+      PARDO a, a2, a1, a3 
+#
+            Dabcd_aa[a,a1,a2,a3]  = 0.0  
+            DXabcd_aa[a2,a3,a,a1] = 0.0  
+#
+            DO i 
+            DO i1 
+#
+               REQUEST                  LTau_aa[a,a1,i,i1] 
+               REQUEST                  LL2old_aa[i,i1,a2,a3] 
+#
+               Taaaa[a,a1,a2,a3]      = LTau_aa[a,a1,i,i1]*LL2old_aa[i,i1,a2,a3]
+               Taaaa[a,a1,a2,a3]     *= 0.25
+               T1aaaa[a2,a3,a,a1]     = Taaaa[a,a1,a2,a3]
+#
+                Dabcd_aa[a,a1,a2,a3] += Taaaa[a,a1,a2,a3]
+               DXabcd_aa[a2,a3,a,a1] += T1aaaa[a2,a3,a,a1] 
+#
+            ENDDO i1 
+            ENDDO i 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+#           Second-term of Iia_aa 
+#           --------------------- 
+#
+            taaaa[a1,a2,a3,a] = Dabcd_aa[a,a1,a2,a3] 
+            t1aaaa[a1,a,a3,a2] = DXabcd_aa[a2,a3,a,a1] 
+            DO i
+#
+               REQUEST VSaaai[a3,a1,a2,i] 
+               REQUEST VSaaai[a1,a3,a,i]    
+#
+               Tpppp[i,a1,a2,a3]  = VSaaai[a3,a1,a2,i]
+#
+              #Tia[i,a]           = Dabcd_aa[a,a1,a2,a3]*Tpppp[a1,a2,a3,i]
+               Tia[i,a]           = Tpppp[i,a1,a2,a3]*taaaa[a1,a2,a3,a]
+               Tia[i,a]          *= -0.5  
+               PUT Iia_aa[i,a]   += Tia[i,a]
+#
+               Tpppp[i,a1,a,a3]   = VSaaai[a1,a3,a,i]
+#
+              #Tia[i,a2]          = DXabcd_aa[a2,a3,a,a1]*Tpppp[a3,a,a1,i]
+               Tia[i,a2]          = Tpppp[i,a1,a,a3]*t1aaaa[a1,a,a3,a2]  
+               Tia[i,a2]         *=-0.5  
+               PUT Iia_aa[i,a2]  += Tia[i,a2]
+#
+            ENDDO i
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+#
+      ENDPARDO a, a2, a1, a3 
+#
+      ENDPROC DABCDAA 
+#     ---------------- 
+#
+# -----------------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------------
+#
+# Expression programmed: 
+#
+# D^{aB}_{cD} = 1/8 P_+(aB,cD) \Tau^{aB}_{iJ} \lambda^{iJ}_{cD} 
+# 4* D is stored to be consistent with acess 
+#
+# -----------------------------------------------------------------------------
+#
+      PROC DABCDAB 
+#     ------------- 
+# 
+      PARDO a, a1, b, b1 
+#
+            Dabcd_ab[a,b,a1,b1]  = 0.0  
+            DXabcd_ab[a1,b1,a,b] = 0.0 
+#
+            DO i 
+            DO j 
+#
+               REQUEST LTau_ab[a,b,i,j] 
+               REQUEST LL2old_ab[i,j,a1,b1] 
+               Tabab[a,b,a1,b1]      = LTau_ab[a,b,i,j]*LL2old_ab[i,j,a1,b1] 
+               Tabab[a,b,a1,b1]     *= 0.5  
+               T1abab[a1,b1,a,b]     = Tabab[a,b,a1,b1]  
+#
+                Dabcd_ab[a,b,a1,b1] += Tabab[a,b,a1,b1]  
+               DXabcd_ab[a1,b1,a,b] += T1abab[a1,b1,a,b]  
+#
+            ENDDO j 
+            ENDDO i 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+#           Second-term of Iia_aa 
+#           --------------------- 
+#
+            tqqpp[b,b1,a1,a] = Dabcd_ab[a,b,a1,b1] 
+            t1qqpp[b,b1,a,a1]= DXabcd_ab[a1,b1,a,b] 
+
+            DO i
+#
+               REQUEST Vaabj[b1,b,a1,i] 
+               REQUEST Vaabj[b,b1,a,i]   
+#
+               tpqqp[i,b,b1,a1]  = Vaabj[b1,b,a1,i] 
+              #Tia[i,a]          = Dabcd_ab[a,b,a1,b1]*Vbbai[b1,b,a1,i] 
+               Tia[i,a]          = tpqqp[i,b,b1,a1]*tqqpp[b,b1,a1,a]  
+               Tia[i,a]         *= -1.0
+               PUT Iia_aa[i,a]  += Tia[i,a]
+#
+               tpqqp[i,b,b1,a]   = Vaabj[b,b1,a,i] 
+              #Tia[i,a1]         = DXabcd_ab[a1,b1,a,b]*Vbbai[b,b1,a,i]
+               Tia[i,a1]         = tpqqp[i,b,b1,a]*t1qqpp[b,b1,a,a1]  
+               Tia[i,a1]        *= -1.0
+               PUT Iia_aa[i,a1] += Tia[i,a1]
+#
+            ENDDO i
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+#
+      ENDPARDO a, a1, b, b1 
+#
+      ENDPROC DABCDAB 
+#     ---------------- 
+# 
+      PROC DABCD 
+#     ---------- 
+#
+# Create gamma arrays 
+# ------------------- 
+#
+           CALL DABCDAA 
+           CALL DABCDAB 
+# 
+      ENDPROC DABCD 
+#     -------------  
+#
+# ------------------------------------------------------------------------- 
+#
+# Start the calculation of the D^{ab}_{ci} type contributions to the
+# density. Equivalent to Gamma5   
+#
+# ------------------------------------------------------------------------- 
+#
+      PROC DABCIAAAA 
+#     ---------------
+#
+# Form the intermediate I3aa 
+# -------------------------- 
+#
+      PARDO i2,i1,a,i
+            PUT I3aa[i2,i1,a,i] = 0.0
+      ENDPARDO i2,i1,a,i
+      sip_barrier 
+#
+      PARDO i1, i2, a   
+#
+            allocate L3aa[i2,a,i1,*] 
+#
+            DO a1 
+#
+            REQUEST L2old_aa[i2,a,i1,a1] 
+#
+            DO i 
+#
+               GET                t1a_old[a1,i] 
+               Tiaii[i2,a,i1,i] = L2old_aa[i2,a,i1,a1]*t1a_old[a1,i] 
+               L3aa[i2,a,i1,i] += Tiaii[i2,a,i1,i] 
+#
+            ENDDO i 
+#
+            ENDDO a1 
+#
+            DO i 
+               tiiai[i2,i1,a,i]     = L3aa[i2,a,i1,i] 
+               PUT I3aa[i2,i1,a,i] += tiiai[i2,i1,a,i]  
+            ENDDO i 
+#
+            deallocate L3aa[i2,a,i1,*] 
+#
+      ENDPARDO i1, i2, a    
+#
+      sip_barrier 
+#
+      PARDO a2, i, a, a1  
+#
+            GET                  Gae_a[a2,a] 
+            GET                  t1a_old[a1,i] 
+            GET                  Gae_a[a2,a1] 
+            GET                  t1a_old[a,i] 
+#
+            Taaai[a,a1,a2,i]               = 0.0  
+#
+            T1aaai[a,a1,a2,i]              = Gae_a[a2,a]^t1a_old[a1,i] 
+            T1aaai[a,a1,a2,i]             *= -0.5 # -0.125 
+            Taaai[a,a1,a2,i]              += T1aaai[a,a1,a2,i]  
+#
+            T1aaai[a,a1,a2,i]              = Gae_a[a2,a1]^t1a_old[a,i] 
+            T1aaai[a,a1,a2,i]             *= 0.5 # 0.125 
+            Taaai[a,a1,a2,i]              += T1aaai[a,a1,a2,i]  
+#
+           #Taaai[a,a1,a2,i]              *= 4.0 
+            PREPARE Dabci_aaaa[a,a1,a2,i] += Taaai[a,a1,a2,i] 
+# 
+      ENDPARDO a2, i, a, a1  
+#
+      PARDO i, a, a1  
+#
+            allocate Laaai[a,a1,*,i] 
+#
+            DO i1 
+#
+               REQUEST Tau_aa[a,i1,a1,i]   
+               REQUEST L2old_aa[i1,a,i,a1] 
+#
+               DO a2 
+#
+                  GET                  t1a_old[a2,i1] 
+                  GET                  l1a_old[i1,a2] 
+#
+                  T1aaai[a,a1,a2,i]  = Tau_aa[a,i1,a1,i]*l1a_old[i1,a2] 
+                  T1aaai[a,a1,a2,i] *= 0.5 # 0.125 
+                  Laaai[a,a1,a2,i]  += T1aaai[a,a1,a2,i]  
+#
+                  T1aaai[a,a1,a2,i]  = L2old_aa[i1,a,i,a1]*t1a_old[a2,i1] 
+                  T1aaai[a,a1,a2,i] *= 0.5 # 0.125 
+                  Laaai[a,a1,a2,i]  += T1aaai[a,a1,a2,i]  
+#
+               ENDDO a2 
+#
+            ENDDO i1 
+#
+            DO a2 
+               PREPARE Dabci_aaaa[a,a1,a2,i] += Laaai[a,a1,a2,i] 
+            ENDDO a2 
+#
+            deallocate Laaai[a,a1,*,i] 
+# 
+      ENDPARDO i, a, a1  
+#
+      PARDO i, a, a1  
+#
+            allocate Laaai[a,a1,*,i] 
+#
+            DO i1 
+#
+               DO i2 
+#
+                  REQUEST              Tau_aa[a,i1,a1,i2] 
+                  Taaii[a,a1,i1,i2]  = Tau_aa[a,i1,a1,i2] 
+#
+                  DO a2 
+#
+                     GET                  I3aa[i1,i2,a2,i]   
+#
+#                    T1aaai(a,a1,a2,i)  = Tau_aa(a,i1,a1,i2)*I3aa(i1,a2,i2,i) 
+                     T1aaai[a,a1,a2,i]  = Taaii[a,a1,i1,i2]*I3aa[i1,i2,a2,i] 
+                     T1aaai[a,a1,a2,i] *= -0.25 # -0.0625 
+                     Laaai[a,a1,a2,i]  += T1aaai[a,a1,a2,i]  
+#
+                  ENDDO a2 
+#
+               ENDDO i2 
+#
+            ENDDO i1 
+#
+            DO a2 
+               PREPARE Dabci_aaaa[a,a1,a2,i] += Laaai[a,a1,a2,i] 
+            ENDDO a2 
+#
+            deallocate Laaai[a,a1,*,i] 
+# 
+      ENDPARDO i, a, a1  
+#
+# Done indirect contributions to one-particle intermediates 
+# --------------------------------------------------------- 
+# 
+      server_barrier 
+#
+      PARDO a, a1, a2, i 
+#
+            Taaai[a,a1,a2,i] = 0.0  
+#
+            DO i1 
+#
+               REQUEST Vibja_aaaa[i,a2,i1,a]  
+               GET t1a_old[a1,i1] 
+#
+               T1aaai[a,a1,a2,i]  = Vibja_aaaa[i,a2,i1,a]*t1a_old[a1,i1]  
+               Taaai[a,a1,a2,i]  -= T1aaai[a,a1,a2,i]  
+#
+            ENDDO i1 
+#
+# Multiply by 4 to match aces 
+# --------------------------- 
+#
+            T1aaai[a1,a,a2,i] = Taaai[a,a1,a2,i] 
+            T1aaai[a1,a,a2,i] *= -1.0  
+            PREPARE Dabci_aaaa[a,a1,a2,i] += Taaai[a,a1,a2,i] 
+            PREPARE Dabci_aaaa[a1,a,a2,i] += T1aaai[a1,a,a2,i] 
+#
+# Done indirect contributions to one-particle intermediates 
+# --------------------------------------------------------- 
+# 
+      ENDPARDO a, a1, a2, i 
+# 
+      server_barrier 
+#
+      PARDO i, a, a2, a1  
+#
+            REQUEST Dabci_aaaa[a,a1,a2,i] 
+#
+# Compute indirect contributions to one-particle intermediates 
+# ------------------------------------------------------------ 
+#
+#           Fourth-term of Iij_aa 
+#           ---------------------
+#
+            DO  i1 
+#
+               REQUEST              VSaaai[a,a2,a1,i1] 
+#
+               Tpppp[i1,a,a1,a2]  = VSaaai[a,a2,a1,i1]
+               Tii[i1,i]          = Tpppp[i1,a,a1,a2]*Dabci_aaaa[a,a1,a2,i]  
+               Tii[i1,i]         *= -0.5 
+               PUT Iij_aa[i1,i]  += Tii[i1,i]
+#
+            ENDDO i1  
+#
+#           Fourth-term of Iia_aa 
+#           ---------------------
+#
+            DO i1  
+#
+               REQUEST              VSpipi[a,i1,a1,i] 
+#
+               Tia[i1,a2]         = Dabci_aaaa[a,a1,a2,i]*VSpipi[a,i1,a1,i]
+               Tia[i1,a2]        *= -0.5
+               PUT Iia_aa[i1,a2] += Tia[i1,a2]
+#
+            ENDDO i1  
+#
+#           Fifth-term of Iia_aa 
+#           --------------------
+#
+            DO i1  
+#
+               REQUEST              Vaaii[a2,a,i,i1] 
+               REQUEST              Viaai[i,a,a2,i1] 
+#
+               Tpppp[i,a,a2,i1]   = Vaaii[a2,a,i,i1]
+               Tpppp[i,a,a2,i1]  -= Viaai[i,a,a2,i1]
+               Tia[i1,a1]         = Dabci_aaaa[a,a1,a2,i]*Tpppp[i,a,a2,i1]
+               Tia[i1,a1]        *= -1.0  
+               PUT Iia_aa[i1,a1] += Tia[i1,a1]
+#
+            ENDDO i1  
+#
+#           Fourth-term of Iab_aa 
+#           ---------------------
+#
+            tpppp[a,a1,i,a2] = Dabci_aaaa[a,a1,a2,i] 
+            DO a3
+#
+               REQUEST              VSaaai[a,a3,a1,i]
+#
+               Taa[a3,a2]         = VSaaai[a,a3,a1,i]*tpppp[a,a1,i,a2]
+               Taa[a3,a2]        *= -0.5
+               PUT Iab_aa[a3,a2] += Taa[a3,a2]
+#
+            ENDDO a3
+#
+#           Fifth-term of Iab_aa 
+#           --------------------
+#
+            tpppp[a2,a1,i,a] = Dabci_aaaa[a,a1,a2,i] 
+            DO a3
+#
+               REQUEST              VSaaai[a3,a2,a1,i] 
+               Taa[a3,a]          = VSaaai[a3,a2,a1,i]*tpppp[a2,a1,i,a]
+               Taa[a3,a]         *= -1.0
+               PUT Iab_aa[a3,a]  += Taa[a3,a]
+#
+            ENDDO a3
+#
+# Done indirect contributions to one-particle intermediates 
+# --------------------------------------------------------- 
+# 
+      ENDPARDO i, a, a2, a1  
+      server_barrier 
+#
+#
+# End computation of one-particle intermediate contributions 
+# ---------------------------------------------------------- 
+#
+      ENDPROC DABCIAAAA 
+#     ------------------
+#
+      PROC DABCIABAB 
+#     --------------- 
+#
+      PARDO i2,a,j1,j
+            PUT I3ab[i2,a,j1,j] = 0.0
+      ENDPARDO i2,a,j1,j
+      sip_barrier 
+#
+# Form the intermediate I3ab 
+# -------------------------- 
+#
+      PARDO a, b1, j1, i2  
+#
+            REQUEST L2old_ab[i2,a,j1,b1]
+#
+            DO j 
+#
+               GET                    t1a_old[b1,j] 
+               Tiajj[i2,a,j1,j]     = L2old_ab[i2,a,j1,b1]*t1a_old[b1,j] 
+               PUT I3ab[i2,a,j1,j] += Tiajj[i2,a,j1,j] 
+#
+            ENDDO j 
+#
+      ENDPARDO a, b1, j1, i2 
+#
+      sip_barrier  
+#
+      PARDO a1, j, a, b 
+#
+            Tabaj[a,b,a1,j]   = 0.0 
+#
+            GET                 Gae_a[a,a1] 
+            GET                 t1a_old[b,j] 
+#
+            T1abaj[a,b,a1,j]  = Gae_a[a,a1]^t1a_old[b,j] 
+            T1abaj[a,b,a1,j] *= -0.125 
+            Tabaj[a,b,a1,j]  += T1abaj[a,b,a1,j] 
+#
+# Multiply by 4 to match aces 
+# --------------------------- 
+#
+            Tabaj[a,b,a1,j]              *= 4.0 
+            PREPARE Dabci_abab[a,b,a1,j] += Tabaj[a,b,a1,j] 
+#
+      ENDPARDO a1, j, a, b 
+#
+      PARDO a, i, b, j  
+#
+            REQUEST Tau_ab[a,i,b,j]   
+            REQUEST L2old_ab[i,a,j,b]   
+#
+            DO a1  
+#
+               GET                 l1a_old[i,a1] 
+               GET                 t1a_old[a1,i] 
+#
+               Tabaj[a,b,a1,j]   = Tau_ab[a,i,b,j]*l1a_old[i,a1] 
+#
+               T1abaj[a,b,a1,j]  = L2old_ab[i,a,j,b]*t1a_old[a1,i]  
+               Tabaj[a,b,a1,j]  += T1abaj[a,b,a1,j] 
+#
+# Multiply by 4 to match aces 
+# --------------------------- 
+#
+               Tabaj[a,b,a1,j]              *= 0.5 
+               PREPARE Dabci_abab[a,b,a1,j] += Tabaj[a,b,a1,j] 
+#
+            ENDDO a1 
+#
+      ENDPARDO a, i, b, j 
+#
+      PARDO a, b, i, j1  
+#
+            REQUEST             Tau_ab[a,i,b,j1]
+#
+            DO a1 
+            DO j 
+#
+               GET                 I3ab[i,a1,j1,j] 
+#
+#              T1abaj(a,b,a1,j)  = Tau_ab(a,i,b,j1)*I3ab(i,a1,j1,j) 
+#
+               Tabij[a,b,i,j1]   = Tau_ab[a,i,b,j1] 
+               Tijaj[i,j1,a1,j]  = I3ab[i,a1,j1,j] 
+               Tabaj[a,b,a1,j]   = Tabij[a,b,i,j1]*Tijaj[i,j1,a1,j] 
+#
+# Multiply by 4 to match aces 
+# --------------------------- 
+#
+               Tabaj[a,b,a1,j]              *= -0.5 
+               PREPARE Dabci_abab[a,b,a1,j] += Tabaj[a,b,a1,j] 
+#
+            ENDDO j 
+            ENDDO a1 
+#
+      ENDPARDO a, b, i, j1 
+#
+      PARDO a1, b, j, i  
+#
+            REQUEST Vibja_abba[j,a1,i,b] 
+#
+            DO a 
+#
+               GET                             t1a_old[a,i] 
+               Tabaj[a,b,a1,j]               = Vibja_abba[j,a1,i,b]*t1a_old[a,i] 
+               PREPARE Dabci_abab[a,b,a1,j] += Tabaj[a,b,a1,j] 
+#
+            ENDDO a 
+#
+      ENDPARDO a1, b, j, i 
+#
+      PARDO a, a1, j, j1  
+#
+            REQUEST Vibja_abab[j,a1,j1,a] 
+#
+            DO b 
+#
+               GET                             t1a_old[b,j1] 
+               Tabaj[a,b,a1,j]               = Vibja_abab[j,a1,j1,a]*t1a_old[b,j1] 
+               Tabaj[a,b,a1,j]              *= -1.0 
+               PREPARE Dabci_abab[a,b,a1,j] += Tabaj[a,b,a1,j] 
+#
+            ENDDO b 
+#
+      ENDPARDO a, a1, j, j1  
+#
+     server_barrier 
+#
+      PARDO a, j, a1, b  
+#
+            REQUEST Dabci_abab[a,b,a1,j] 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+#           Fifth-term of Iab_aa 
+#           --------------------  
+#
+            tpqqp[a1,b,j,a] = Dabci_abab[a,b,a1,j] 
+            DO a2
+#
+               REQUEST             Vaabj[a2,a1,b,j]
+               Taa[a2,a]         = Vaabj[a2,a1,b,j]*tpqqp[a1,b,j,a]
+               Taa[a2,a]        *= -1.0
+               PUT Iab_aa[a2,a] += Taa[a2,a]
+#
+            ENDDO a2
+#
+#           Fifth-term of Iia_aa 
+#           -------------------- 
+#
+            DO i
+#
+               REQUEST            Viaai[i,a1,b,j] 
+#
+               Tia[i,a]         = Viaai[i,a1,b,j]*Dabci_abab[a,b,a1,j]
+               Tia[i,a]        *= -1.0  
+               PUT Iia_aa[i,a] += Tia[i,a]
+#
+            ENDDO i
+#
+      ENDPARDO a, j, a1, b  
+#
+      PARDO a1, b, a, j 
+#
+            REQUEST Dabci_abab[a,b,a1,j] 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+#           Fourth-term of Iab_aa 
+#           --------------------- 
+#
+            tpqqp[a,b,j,a1] = Dabci_abab[a,b,a1,j] 
+            DO a2
+#
+               REQUEST              Vaabj[a2,a,b,j]
+               Taa[a2,a1]         = Vaabj[a2,a,b,j]*tpqqp[a,b,j,a1]   
+               Taa[a2,a1]        *= -1.0
+               PUT Iab_aa[a2,a1] += Taa[a2,a1]
+#
+            ENDDO a2
+#
+#           Fourth-term of Iia_aa 
+#           --------------------- 
+#
+            DO i
+#
+               REQUEST             Vpiqj[a,i,b,j] 
+               Tia[i,a1]         = Dabci_abab[a,b,a1,j]*Vpiqj[a,i,b,j]
+               Tia[i,a1]        *= -1.0
+               PUT Iia_aa[i,a1] += Tia[i,a1]
+#
+            ENDDO i
+#
+      ENDPARDO a1, b, a, j 
+      server_barrier 
+#
+# Done one-particle intermediates 
+# ------------------------------- 
+#
+      ENDPROC DABCIABAB 
+#     ------------------ 
+#
+      PROC DABCIBABA 
+#     --------------- 
+#
+      PARDO b1, i, a, b  
+#
+            REQUEST Dabci_abab[b1,a,b,i] 
+#
+# Compute contributions to one-particle intermediates 
+# --------------------------------------------------- 
+#
+#           Fourth-term of Iij_aa 
+#           --------------------- 
+#
+            DO i1
+#
+               REQUEST Vaabj[b1,b,a,i1] 
+#
+               Tii[i1,i]         = Vaabj[b1,b,a,i1]*Dabci_abab[b1,a,b,i]
+               Tii[i1,i]        *= -1.0
+               PUT Iij_aa[i1,i] += Tii[i1,i]
+#
+            ENDDO i1
+#
+      ENDPARDO b1, i, a, b  
+#
+      PARDO a, b, i, b1  
+#
+            REQUEST Dabci_abab[b1,a,b,i] 
+#
+#           Fifth-term of Iab_aa 
+#           --------------------
+#
+            tqqpp[b1,b,i,a] = Dabci_abab[b1,a,b,i] 
+            DO a1
+#
+               REQUEST             Vaabj[b1,b,a1,i] 
+               tpqqp[a1,b1,b,i]  = Vaabj[b1,b,a1,i] 
+               Taa[a1,a]         = tpqqp[a1,b1,b,i]*tqqpp[b1,b,i,a]
+               Taa[a1,a]        *= -1.0  
+               PUT Iab_aa[a1,a] += Taa[a1,a]
+#
+            ENDDO a1
+#
+#           Fifth-term of Iia_aa 
+#           -------------------- 
+#
+            DO i1
+#
+               REQUEST Vaaii[b,b1,i,i1] 
+#
+               Tia[i1,a]         = Dabci_abab[b1,a,b,i]*Vaaii[b,b1,i,i1]
+               Tia[i1,a]        *= -1.0  
+               PUT Iia_aa[i1,a] += Tia[i1,a]
+#
+            ENDDO i1
+#
+      ENDPARDO a, b, i, b1  
+#
+# Done contributions to one-particle intermediates 
+# ------------------------------------------------ 
+#
+      ENDPROC DABCIBABA 
+#     ------------------ 
+#
+# Delete distributed intermediate arrays 
+# -------------------------------------- 
+#
+      PROC DABCI  
+#     ---------- 
+#
+# Create distributed intermediate arrays 
+# -------------------------------------- 
+#
+      CALL DABCIAAAA
+      CALL DABCIABAB
+      CALL DABCIBABA
+      CALL IAIXX 
+#
+# Delete distributed intermediate arrays 
+# -------------------------------------- 
+#
+      ENDPROC DABCI 
+#     ------------- 
+# 
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#
+# Contributions depending in Vabcd are computed in this procedure 
+# 'directly'. Since these integrals are not stored the terms:
+# Iab_aa(2) and Iab_bb(2), and Iai_aa(6) and Iai_bb(6) must be 
+# computed differently than earlier. 
+#
+     PROC IABAA1 
+#    ----------- 
+#
+#    Form Half back transformed cluster array
+#    ----------------------------------------
+#
+     PARDO a, a1, i, i1
+#
+           REQUEST Tau_aa[a,i,a1,i1] 
+#
+           DO lambda
+#
+              Zaa[lambda,i,a1,i1] = Tau_aa[a,i,a1,i1]*ca[lambda,a]
+#
+              DO sigma
+#
+                 ZZaa[lambda,i,sigma,i1]        = Zaa[lambda,i,a1,i1]*ca[sigma,a1]
+                 PREPARE TAO_aa[lambda,i,sigma,i1] += ZZaa[lambda,i,sigma,i1]
+#
+              ENDDO sigma
+#
+           ENDDO lambda
+#
+     ENDPARDO a, a1, i, i1
+#
+#    Form Half back transformed lambda array
+#    ---------------------------------------
+#
+     PARDO a, a1, i, i1
+#
+           REQUEST L2old_aa[i,a,i1,a1] 
+#
+           DO lambda
+#
+              Qaa[i,lambda,i1,a1] = L2old_aa[i,a,i1,a1]*ca[lambda,a]
+#
+              DO sigma
+#
+                 QQaa[i,lambda,i1,sigma]        = Qaa[i,lambda,i1,a1]*ca[sigma,a1]
+                 PREPARE LAO_aa[i,lambda,i1,sigma] += QQaa[i,lambda,i1,sigma]
+#
+              ENDDO sigma
+#
+           ENDDO lambda
+#
+     ENDPARDO a, a1, i, i1
+     server_barrier 
+#
+#    Contract Half back transformed arrays with AO integrals 
+#    --> Txixi and T1xixi 
+#    ------------------------------------------------------- 
+#
+     PARDO lambda, sigma, mu, nu  
+#
+           execute compute_integral_batch  aoint[mu,lambda,nu,sigma] 
+#
+           DO i 
+           DO i1 
+#
+              REQUEST Tao_aa[mu,i,nu,i1] 
+              REQUEST Lao_aa[i,mu,i1,nu] 
+#
+              Txixi[lambda,i,sigma,i1]      = Tao_aa[mu,i,nu,i1]*aoint[mu,lambda,nu,sigma] 
+              PREPARE Ixixi[lambda,i,sigma,i1] += Txixi[lambda,i,sigma,i1] 
+#
+              T1xixi[lambda,i,sigma,i1] = Lao_aa[i,mu,i1,nu]*aoint[mu,lambda,nu,sigma] 
+              PREPARE I1xixi[lambda,i,sigma,i1] += T1xixi[lambda,i,sigma,i1] 
+#
+           ENDDO i1 
+           ENDDO i 
+#
+     ENDPARDO lambda, sigma, mu, nu  
+     server_barrier 
+#
+#    Transform I and I1 
+#    ------------------ 
+#
+     PARDO lambda, sigma, i, i1 
+#
+           REQUEST Ixixi[lambda,i,sigma,i1]  
+           REQUEST I1xixi[lambda,i,sigma,i1] 
+#
+           DO a1 
+#
+              Txiai[lambda,i,a1,i1]  =  Ixixi[lambda,i,sigma,i1]*ca[sigma,a1] 
+              T1xiai[lambda,i,a1,i1] = I1xixi[lambda,i,sigma,i1]*ca[sigma,a1] 
+#
+              DO a 
+#
+                 Taiai[a,i,a1,i1]       =  Txiai[lambda,i,a1,i1]*ca[lambda,a]  
+                 T1aiai[a,i,a1,i1]      = T1xiai[lambda,i,a1,i1]*ca[lambda,a]  
+#
+                 PREPARE Iaiai[a,i,a1,i1]  += Taiai[a,i,a1,i1] 
+                 PREPARE I1aiai[a,i,a1,i1] += T1aiai[a,i,a1,i1] 
+#
+                 T2aiai[a1,i,a,i1]      =  Taiai[a,i,a1,i1] 
+                 T3aiai[a1,i,a,i1]      = T1aiai[a,i,a1,i1] 
+#
+                 T2aiai[a1,i,a,i1]     *= -1.0  
+                 T3aiai[a1,i,a,i1]     *= -1.0  
+#
+                 PREPARE Iaiai[a1,i,a,i1]  += T2aiai[a1,i,a,i1] 
+                 PREPARE I1aiai[a1,i,a,i1] += T3aiai[a1,i,a,i1] 
+#
+              ENDDO a 
+#
+           ENDDO a1 
+#
+     ENDPARDO lambda, sigma, i, i1 
+     server_barrier 
+#
+#    Perform final contraction 
+#    ------------------------- 
+#
+     PARDO a, a1, a2 
+#
+           DO i 
+           DO i1 
+#
+              REQUEST  Iaiai[a,i,a2,i1]    
+              REQUEST I1aiai[a,i,a2,i1]      
+              REQUEST L2old_aa[i,a1,i1,a2]   
+              REQUEST Tau_aa[a1,i,a2,i1]     
+#
+              Taa[a,a1]         = Iaiai[a,i,a2,i1]*L2old_aa[i,a1,i1,a2] 
+              T1aa[a,a1]        = I1aiai[a,i,a2,i1]*Tau_aa[a1,i,a2,i1] 
+              Taa[a,a1]        += T1aa[a,a1] 
+              Taa[a,a1]        *= -0.125 
+              PUT Iab_aa[a,a1] += Taa[a,a1] 
+#
+           ENDDO i1 
+           ENDDO i 
+#
+     ENDPARDO a, a1, a2 
+     server_barrier 
+#
+     ENDPROC IABAA1 
+#    -------------- 
+#
+     PROC IABAA2 
+#    ----------- 
+#
+#    Form Half back transformed cluster array
+#    ----------------------------------------
+#
+     PARDO a, b, i, j
+#
+           REQUEST Tau_ab[a,i,b,j] 
+#
+           DO lambda
+#
+              Zab[lambda,i,b,j] = Tau_ab[a,i,b,j]*ca[lambda,a]
+#
+              DO sigma
+#
+                 ZZab[lambda,i,sigma,j]        = Zab[lambda,i,b,j]*ca[sigma,b]
+                 PREPARE TAO_ab[lambda,i,sigma,j] += ZZab[lambda,i,sigma,j]
+#
+              ENDDO sigma
+#
+           ENDDO lambda
+#
+     ENDPARDO a, b, i, j
+#
+#    Form Half back transformed lambda array
+#    ---------------------------------------
+#
+     PARDO a, b, i, j
+#
+           REQUEST L2old_ab[i,a,j,b]
+#
+           DO lambda
+#
+              Qab[i,lambda,j,b] = L2old_ab[i,a,j,b]*ca[lambda,a]
+#
+              DO sigma
+#
+                 QQab[i,lambda,j,sigma]        = Qab[i,lambda,j,b]*ca[sigma,b]
+                 PREPARE LAO_ab[i,lambda,j,sigma] += QQab[i,lambda,j,sigma]
+#
+              ENDDO sigma
+#
+           ENDDO lambda
+#
+     ENDPARDO a, b, i, j
+     server_barrier 
+#
+#    Contract Half back transformed arrays with AO integrals 
+#    --> Txixj and T1xixj 
+#    ------------------------------------------------------- 
+#
+     PARDO lambda, sigma, mu, nu  
+#
+            execute compute_integral_batch aoint[mu,lambda,nu,sigma] 
+#
+           DO i 
+           DO j 
+#
+              REQUEST Tao_ab[mu,i,nu,j]   
+              REQUEST Lao_ab[i,mu,j,nu]   
+#
+              Txixj[lambda,i,sigma,j]       = Tao_ab[mu,i,nu,j]*aoint[mu,lambda,nu,sigma] 
+              PREPARE Ixixj[lambda,i,sigma,j]  += Txixj[lambda,i,sigma,j] 
+#
+              Txixj[lambda,i,sigma,j]       = Lao_ab[i,mu,j,nu]*aoint[mu,lambda,nu,sigma] 
+              PREPARE I1xixj[lambda,i,sigma,j] += Txixj[lambda,i,sigma,j] 
+#
+           ENDDO j 
+           ENDDO i 
+#
+     ENDPARDO lambda, sigma, mu, nu  
+     server_barrier 
+#
+#    Transform I and I1 
+#    ------------------ 
+#
+     PARDO lambda, sigma, i, j 
+#
+           REQUEST Ixixj[lambda,i,sigma,j]  
+           REQUEST I1xixj[lambda,i,sigma,j]   
+#
+           DO b 
+#
+              Txibj[lambda,i,b,j]     =  Ixixj[lambda,i,sigma,j]*ca[sigma,b] 
+              T1xibj[lambda,i,b,j]    = I1xixj[lambda,i,sigma,j]*ca[sigma,b] 
+#
+              DO a 
+#
+                 Taibj[a,i,b,j]       =  Txibj[lambda,i,b,j]*ca[lambda,a]  
+                 T1aibj[a,i,b,j]      = T1xibj[lambda,i,b,j]*ca[lambda,a]  
+#
+                 PREPARE Iaibj[a,i,b,j]  += Taibj[a,i,b,j] 
+                 PREPARE I1aibj[a,i,b,j] += T1aibj[a,i,b,j] 
+#
+              ENDDO a 
+#
+           ENDDO b 
+#
+     ENDPARDO lambda, sigma, i, j 
+     server_barrier 
+#
+#    Perform final contraction to Iab_aa  
+#    -----------------------------------  
+#
+     PARDO a, a1, b 
+#
+           DO i 
+           DO j 
+#
+              REQUEST  Iaibj[a,i,b,j]    
+              REQUEST I1aibj[a,i,b,j]   
+              REQUEST L2old_ab[i,a1,j,b] 
+              REQUEST Tau_ab[a1,i,b,j]   
+#
+              Taa[a,a1]         = Iaibj[a,i,b,j]*L2old_ab[i,a1,j,b] 
+              T1aa[a,a1]        = I1aibj[a,i,b,j]*Tau_ab[a1,i,b,j] 
+              Taa[a,a1]        += T1aa[a,a1] 
+              Taa[a,a1]        *= -0.5 
+              PUT Iab_aa[a,a1] += Taa[a,a1] 
+#
+           ENDDO j 
+           ENDDO i 
+#
+     ENDPARDO a, a1, b 
+#
+     sip_barrier 
+#
+     ENDPROC IABAA2 
+#    -------------- 
+#
+     PROC IABDIRECT 
+#    -------------- 
+          CALL IABAA1 
+          CALL IABAA2 
+     ENDPROC IABDIRECT 
+#    ----------------- 
+#
+         PROC UPDATE_DAI 
+#        --------------- 
+#
+         PARDO a, i 
+#
+               GET        Dnewai_a[a,i] 
+               GET        Doldai_a[a,i] 
+               Tai[a,i] = Dnewai_a[a,i] 
+               execute energy_denominator Tai[a,i] fock_a fock_a AAAA
+               Tai[a,i] -= Doldai_a[a,i] 
+    
+               If kiter < diis_order
+                  PUT eai[a,i,kiter] = tai[a,i]
+               Endif
+
+               If kiter >= diis_order
+                  Do idiis
+                     If idiis == diis_order
+                        PUT eai[a,i,kiter] = tai[a,i]
+                        Exit
+                     Endif
+                 ENDDO idiis
+               Endif
+#
+         ENDPARDO a, i 
+#
+         ENDPROC UPDATE_DAI 
+#        ------------------ 
+#
+      PROC MOVE_DAI 
+#     ------------- 
+#
+      PARDO a, i
+#
+            GET        Doldai_a[a,i]
+            tai[a,i] = Doldai_a[a,i]
+
+            If kiter < diis_order
+               PUT dai[a,i,kiter] = tai[a,i]
+             Endif
+
+               If kiter >= diis_order
+                  Do idiis
+                     If idiis == diis_order
+                        PUT dai[a,i,kiter] = tai[a,i]
+                        Exit
+                     Endif
+                 ENDDO idiis
+               Endif
+#
+      ENDPARDO a, i
+# 
+      ENDPROC MOVE_DAI 
+#     ---------------- 
+#
+# This procedure calculates the virtual-occupied block of the density 
+# matrix iteratively. The equation for the AA spin programmed is:
+#
+# D(a,i)*(e_i-e_a) = X(a,i) - D(c,k)*[ V^{ca}_{ki} - V^{ca}_{ik}  
+#                                    + V^{ci}_{ka} - V^{ci}_{ak} ] 
+#                           - D(C,K)*[ V^{Ca}_{Ki} + V^{Ci}_{Ka} ] 
+#
+      PROC LINEQ
+#     ----------
+#
+# First get initial guess 
+# ----------------------- 
+
+      ecrit = cc_conv
+      esum  = 0.0 
+      eold  = 0.0 
+
+      PARDO a, i 
+#
+            GET                        Xai_aa[a,i] 
+            Tai[a,i]                 = Xai_aa[a,i]  
+            execute energy_denominator Tai[a,i] fock_a fock_a AAAA
+            PUT Doldai_a[a,i]        = Tai[a,i] 
+            PREPARE D0ai[a,i]        = Tai[a,i] 
+#
+      ENDPARDO a, i 
+      DO d1
+      DO d2
+         PUT DIST_BB[d1,d2] = 0.0
+         BB[d1,d1]          = 0.0
+      ENDDO d2
+      ENDDO d1
+      server_barrier 
+#
+# Start iterations 
+# ---------------- 
+#
+      DO KITER  
+#
+#        AA-spin first 
+#        ------------- 
+#
+         PARDO a, i 
+#
+               GET Xai_aa[a,i] 
+               Tai[a,i]           = Xai_aa[a,i] 
+               PUT Dnewai_a[a,i] += Tai[a,i] 
+#
+         ENDPARDO a, i 
+#
+         PARDO a, i, a1, i1 
+#
+               REQUEST VSpipi[a1,i1,a,i] 
+               REQUEST Viaai[i1,a1,a,i]  
+               REQUEST Vaaii[a,a1,i1,i]  
+               GET Doldai_a[a1,i1] 
+#
+               Tpppp[a,i,a1,i1]   = VSpipi[a1,i1,a,i] 
+               T2pppp[a,i,a1,i1]  = Viaai[i1,a1,a,i]   
+               T3pppp[a,i,a1,i1]  = Vaaii[a,a1,i1,i]  
+#
+               Tpppp[a,i,a1,i1]  += T2pppp[a,i,a1,i1] 
+               Tpppp[a,i,a1,i1]  -= T3pppp[a,i,a1,i1] 
+#
+               Tai[a,i]           = Tpppp[a,i,a1,i1]*Doldai_a[a1,i1] 
+               PUT Dnewai_a[a,i] += Tai[a,i] 
+#
+         ENDPARDO a, i, a1, i1 
+#
+         PARDO a, i, b, j 
+#
+               REQUEST Vpiqj[a,i,b,j] 
+               REQUEST Viaai[i,a,b,j]
+               GET Doldai_a[b,j] 
+#
+               Tppqq[a,i,b,j]     = Vpiqj[a,i,b,j]  
+               T2ppqq[a,i,b,j]    = Viaai[i,a,b,j]  
+               Tppqq[a,i,b,j]    += T2ppqq[a,i,b,j] 
+#
+               Tai[a,i]           = Tppqq[a,i,b,j]*Doldai_a[b,j] 
+               PUT Dnewai_a[a,i] += Tai[a,i] 
+#
+         ENDPARDO a, i, b, j 
+         sip_barrier 
+#
+#        Update error vector for diis
+#        ----------------------------
+#
+         CALL UPDATE_DAI 
+         sip_barrier 
+#
+#        Compute 'Energy' 
+#        ---------------- 
+#
+         esum = 0.0 
+         enew = 0.0 
+         PARDO a, i 
+#
+               GET Dnewai_a[a,i] 
+               etemp = Dnewai_a[a,i]*Dnewai_a[a,i]  
+               esum += etemp 
+               Tai[a,i] = Dnewai_a[a,i] 
+               execute energy_denominator Tai[a,i]  fock_a fock_a AAAA
+               PUT Doldai_a[a,i] = Tai[a,i] 
+#
+         ENDPARDO a, i 
+#
+#        Check on convergence
+#        --------------------
+         sip_barrier
+         collective enew += esum
+
+         assert_same enew
+         assert_same eold
+
+#  Check on convergence
+#  --------------------
+
+         etemp = (eold - enew)**(2.0)
+         ediff = (etemp)**(0.5)
+         assert_same ediff
+         print ediff
+
+         IF ediff < ecrit
+            Print "Iterative solution of CPHF like equations are converged" 
+            Print ""
+            exit
+         ENDIF
+
+#bgn_debug
+#         print eold
+#         print enew
+#        print ediff
+#end_debug
+
+         if kiter >= diis_start
+            CALL DO_DIIS
+         endif
+
+#   Reset eold --> enew
+#   -------------------
+#
+         eold = enew
+
+         CALL MOVE_DAI 
+         sip_barrier 
+#
+#        Zero out Dai 
+#        ------------ 
+# 
+         PARDO a, i 
+#
+               Tai[a,i] = 0.0 
+               PUT Dnewai_a[a,i] = Tai[a,i] 
+#
+         ENDPARDO a, i 
+# 
+         sip_barrier 
+#
+      ENDDO KITER  
+# 
+      ENDPROC LINEQ
+#     -------------
+#
+      PROC I1TRANS
+#     ------------
+#
+#
+#     Transform Iai_aa and Iia_aa
+#     ---------------------------
+      PARDO a, i
+#
+            GET Iia_aa[i,a]
+#
+            DO mu
+#
+               Jxi[mu,i]  = ca[mu,a]*Iia_aa[i,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu] = Jxi[mu,i]*ca[nu,i]
+                  I1xx[nu,mu] = Ixx[mu,nu]
+                  PUT Ipq[mu,nu] += Ixx[mu,nu]
+                  PUT Ipq[nu,mu] += I1xx[nu,mu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, i
+#
+#     Transform Iaa_aa
+#     ----------------
+      PARDO a, a1
+#
+            GET Iab_aa[a,a1]
+#
+            DO mu
+#
+               Ixa[mu,a1]  = ca[mu,a]*Iab_aa[a,a1]
+#
+               DO nu
+#
+                  Ixx[mu,nu] = Ixa[mu,a1]*ca[nu,a1]
+                  PUT Ipq[mu,nu] += Ixx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, a1
+#
+#     Transform Iij_aa
+#     ----------------
+      PARDO i, i1
+#
+            GET Iij_aa[i,i1]
+#
+            DO mu
+#
+               Jxi[mu,i1]  = ca[mu,i]*Iij_aa[i,i1]
+#
+               DO nu
+#
+                  Ixx[mu,nu] = Jxi[mu,i1]*ca[nu,i1]
+                  PUT Ipq[mu,nu] += Ixx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO i, i1
+#
+      sip_barrier
+#
+# Finally contract with the derivative integrals
+# ----------------------------------------------
+#
+      flag = 3.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+
+      PARDO mu, nu
+
+            GET Ipq[mu,nu]
+            Tpq[mu,nu]  = Ipq[mu,nu]
+            Tpq[mu,nu] *= 2.0  
+
+            Txx[mu,nu]  = 0.0
+
+
+            execute return_1el_gradient Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+      ENDPARDO mu, nu
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+#
+      ENDPROC I1TRANS
+#     ---------------
+#
+      PROC D1TRANS
+#     ------------
+#
+#     Transform Dai_aa
+#     ----------------
+      PARDO a, i
+#
+            GET Doldai_a[a,i]
+#
+            DO mu
+#
+               Jxi[mu,i]  = Doldai_a[a,i]*ca[mu,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu]      = Jxi[mu,i]*ca[nu,i]
+                  I1xx[nu,mu]     = Ixx[mu,nu]
+                  PUT Dpq[mu,nu] += Ixx[mu,nu]
+                  PUT Dpq[nu,mu] += I1xx[nu,mu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, i
+#
+#     Transform Dab_a
+#     ---------------
+      PARDO a, a1
+#
+            GET Dab_a[a,a1]
+            GET Dor_aa[a,a1]
+            taa[a,a1] = Dab_a[a,a1] 
+            taa[a,a1]+= Dor_aa[a,a1] 
+#
+            DO mu
+#
+               Ixa[mu,a1]  = taa[a,a1]*ca[mu,a]
+#
+               DO nu
+#
+                  Ixx[mu,nu] = Ixa[mu,a1]*ca[nu,a1]
+                  PUT Dpq[mu,nu] += Ixx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO a, a1
+#
+#     Transform Dij_aa
+#     ----------------
+      PARDO i, i1
+#
+            GET Dij_a[i,i1]
+            GET Dor_ii[i,i1]
+            tii[i,i1] = Dij_a[i,i1] 
+            tii[i,i1]+= Dor_ii[i,i1] 
+#
+            DO mu
+#
+               Jxi[mu,i1]  = tii[i,i1]*ca[mu,i]
+#
+               DO nu
+#
+                  Ixx[mu,nu] = Jxi[mu,i1]*ca[nu,i1]
+                  PUT Dpq[mu,nu] += Ixx[mu,nu]
+#
+               ENDDO nu
+#
+            ENDDO mu
+#
+      ENDPARDO i, i1
+#
+      sip_barrier
+#
+# Finally contract with the derivative integrals
+# ----------------------------------------------
+#
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+
+      DO mu 
+      DO nu
+            GET Dpq[mu,nu]
+            GET DHF[mu,nu]
+            Tpq[mu,nu]  = Dpq[mu,nu]
+            Tpq[mu,nu] += DHF[mu,nu]
+            Tpq[mu,nu] *= 2.0  
+            Spq[mu,nu]  = Tpq[mu,nu] 
+
+            Txx[mu,nu] = 0.0
+
+            flag = 1.0
+            execute return_1el_gradient Txx[mu,nu] Spq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+            Do Ngrads
+              L_Gradient[Ngrads] = 0.0
+            Enddo Ngrads
+
+            flag = 2.0
+            execute return_1el_gradient Txx[mu,nu] Spq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+      ENDDO nu
+      ENDDO mu 
+      sip_barrier 
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+#
+      ENDPROC D1TRANS
+#     ---------------
+#
+#
+      PROC HFDENS
+#     -----------
+#
+      PARDO mu, nu, i
+#
+            Txi[nu,i]       = ca[nu,i]
+            Tpq[mu,nu]      = ca[mu,i]*Txi[nu,i]
+            PUT Dhf[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, i
+#
+      ENDPROC HFDENS
+#     --------------
+#
+      PROC WHFDENS
+#     ------------
+#
+      PARDO mu, nu, i
+#
+            Txi[nu,i] = 0.0
+#
+            DO i1
+#
+               IF i1 == i 
+#
+               T1xi[nu,i] = ca[nu,i1]*fock_a[i,i1]
+               Txi[nu,i] -= T1xi[nu,i]
+#
+               ENDIF # i1 == i 
+#
+            ENDDO i1
+#
+            Tpq[mu,nu]      = ca[mu,i]*Txi[nu,i]
+            PUT Dhfa[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, i
+#
+      PARDO mu, nu, j
+#
+            Txj[nu,j] = 0.0
+#
+            DO j1
+#
+               IF j1 == j 
+#
+               T1xj[nu,j] = ca[nu,j1]*fock_a[j,j1]
+               Txj[nu,j] -= T1xj[nu,j]
+#
+               ENDIF # j1 == j 
+#
+            ENDDO j1
+#
+            Tpq[mu,nu]      = ca[mu,j]*Txj[nu,j]
+            PUT Dhfb[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, j
+      sip_barrier
+#
+      ENDPROC WHFDENS
+#     --------------
+#
+      PROC DIJ_OR  
+#     ----------- 
+#
+# Alpha-alpha block 
+# ----------------- 
+#
+      pardo i,i1
+           put DOR_ii[i,i1] = 0.0
+      endpardo i,i1
+      sip_barrier 
+
+      PARDO i, i1 
+#
+            GET                         Iij_aa[i,i1]    
+            GET                         Iij_aa[i1,i]    
+#
+            tii[i1,i]                 = Iij_aa[i,i1] 
+            tii[i1,i]                -= Iij_aa[i1,i] 
+#
+            execute energy_udenominator tii[i1,i] fock_a AAAA
+            PUT DOR_ii[i1,i]         += tii[i1,i] 
+#
+      ENDPARDO i, i1 
+#
+      ENDPROC DIJ_OR  
+#     -------------- 
+# 
+      PROC DAB_OR  
+#     ----------- 
+#
+# Alpha-alpha block 
+# ----------------- 
+#
+      pardo a,a1
+            put DOR_aa[a,a1] = 0.0
+      endpardo a,a1
+      sip_barrier 
+      
+      PARDO a, a1 
+#
+            GET                         Iab_aa[a,a1]    
+            GET                         Iab_aa[a1,a]    
+#
+            taa[a1,a]                 = Iab_aa[a,a1] 
+            taa[a1,a]                -= Iab_aa[a1,a] 
+#
+            execute energy_udenominator taa[a1,a] fock_a AAAA
+            PUT DOR_aa[a1,a]         += taa[a1,a] 
+#
+      ENDPARDO a, a1 
+#
+      ENDPROC DAB_OR  
+#     -------------- 
+#
+      PROC XAI_FULL   
+#     ------------- 
+#
+# Set Xai'_aa and Xai'_bb  
+# -----------------------  
+#
+      PARDO a, i  
+#
+            GET Iai_aa[a,i] 
+            GET Iia_aa[i,a] 
+#
+            Tai[a,i]        = Iia_aa[i,a] 
+            Tai[a,i]       += Iai_aa[a,i] 
+            PUT Xai_aa[a,i] = Tai[a,i]  
+#
+      ENDPARDO a, i  
+#
+      sip_barrier 
+#
+# Add contributions from the o-o and v-v orbital response density. 
+# ----------------------------------------------------------------   
+#
+# Alpha-alpha contribution 
+# ------------------------ 
+#
+      PARDO a, i, i1, i2 
+#
+            REQUEST             VSpipi[a,i,i2,i1]   
+            REQUEST             VSpipi[a,i,i1,i2]   
+            GET                 DOR_ii[i2,i1] 
+#
+            tpppp[a,i,i2,i1]  = VSpipi[a,i,i1,i2] 
+            tpppp[a,i,i2,i1] += VSpipi[a,i,i2,i1] 
+#
+            tpp[a,i]          = tpppp[a,i,i2,i1]*DOR_ii[i2,i1] 
+            tpp[a,i]         *= 0.5 
+            PUT Xai_aa[a,i]  += tpp[a,i]  
+#
+      ENDPARDO a, i, i1, i2 
+#
+      PARDO a, i, j, j1 
+#
+            REQUEST            Vpiqj[a,i,j1,j]   
+            REQUEST            Vpiqj[a,i,j,j1]   
+            GET                DOR_ii[j1,j] 
+#
+            tppqq[a,i,j1,j]  = Vpiqj[a,i,j,j1] 
+            tppqq[a,i,j1,j] += Vpiqj[a,i,j1,j] 
+#
+            tpp[a,i]         = tppqq[a,i,j1,j]*DOR_ii[j1,j] 
+            tpp[a,i]        *= 0.5 
+            PUT Xai_aa[a,i] += tpp[a,i]  
+#
+      ENDPARDO a, i, j, j1 
+#
+      PARDO a, i, a1, a2 
+#
+            REQUEST             VSaaai[a1,a2,a,i]  
+            REQUEST             VSaaai[a2,a1,a,i]  
+            GET                 DOR_aa[a1,a2] 
+#
+            tpppp[a1,a2,a,i]  = VSaaai[a2,a1,a,i] 
+            tpppp[a1,a2,a,i] += VSaaai[a1,a2,a,i] 
+#
+            tpp[a,i]          = tpppp[a1,a2,a,i]*DOR_aa[a1,a2] 
+            tpp[a,i]         *= 0.5 
+            PUT Xai_aa[a,i]  += tpp[a,i]  
+#
+      ENDPARDO a, i, a1, a2 
+#
+      PARDO a, i, b, b1 
+#
+            REQUEST            Vaabj[b,b1,a,i]  
+            REQUEST            Vaabj[b1,b,a,i]  
+            GET                DOR_aa[b,b1] 
+#
+            tqqpp[b,b1,a,i]  = Vaabj[b1,b,a,i] 
+            tqqpp[b,b1,a,i] += Vaabj[b,b1,a,i] 
+#
+            tpp[a,i]         = tqqpp[b,b1,a,i]*DOR_aa[b,b1] 
+            tpp[a,i]        *= 0.5 
+            PUT Xai_aa[a,i] += tpp[a,i]  
+#
+      ENDPARDO a, i, b, b1 
+#
+      sip_barrier 
+#
+      ENDPROC XAI_FULL   
+#     ---------------- 
+# 
+      PROC S2IIJ 
+#     ----------
+#
+           DO i 
+           DO i1 
+              GET Iij_aa[i,i1] 
+              print  Iij_aa[i,i1]  
+           ENDDO i1 
+           ENDDO i 
+#
+      ENDPROC S2IIJ 
+#     ----------
+#
+      PROC S2IAB 
+#     ----------
+#
+           DO a 
+           DO a1 
+              GET Iab_aa[a,a1] 
+              print  Iab_aa[a,a1]  
+           ENDDO a1 
+           ENDDO a 
+#
+      ENDPROC S2IAB 
+#     ----------
+#
+      PROC S2IAI 
+#     ----------
+#
+           DO a 
+           DO i 
+              GET Iai_aa[a,i] 
+              print Iai_aa[a,i]  
+           ENDDO i 
+           ENDDO a 
+#
+      ENDPROC S2IAI 
+#     ----------
+#
+      PROC S2IIA 
+#     ----------
+#
+           DO a 
+           DO i 
+              GET Iia_aa[i,a] 
+              print Iia_aa[i,a]  
+           ENDDO i 
+           ENDDO a 
+#
+      ENDPROC S2IIA 
+#     ----------
+#
+      PROC PRINTIIJ
+#     -------------
+#
+           DO i
+           DO i1
+              GET Iij_aa[i,i1]
+              print Iij_aa[i,i1]
+           ENDDO i1
+           ENDDO i
+#
+      ENDPROC PRINTIIJ
+#     ----------------
+
+      PROC PRINTIAB
+#     -------------
+           DO a
+           DO a1
+              GET Iab_aa[a,a1]
+               print Iab_aa[a,a1]
+           ENDDO a1
+           ENDDO a
+#
+      ENDPROC PRINTIAB
+#     ----------------
+
+      PROC PRINTIIA
+#     -------------
+           DO i
+           DO a
+              GET Iia_aa[i,a]
+              print Iia_aa[i,a]
+           ENDDO a
+           ENDDO i
+#
+      ENDPROC PRINTIIA
+#     ----------------
+
+      PROC PRINTIAI
+#     -------------
+#
+           DO i
+           DO a
+              GET Iai_aa[a,i]
+              print Iai_aa[a,i]
+           ENDDO a
+           ENDDO i
+#
+      ENDPROC PRINTIAI
+#     ----------------
+#
+#
+# As a simple test of the correctnes of the code the sum of the sum of the squares 
+# of ALL the one-particle intermediates is computed. This can determine whether there
+# is an error but obviously not where the error is. Of course the same quantity 
+# must have been calculated correctly using another code.  
+#
+      PROC SQUAREALL 
+#     -------------- 
+#
+# Intermediate arrays
+# -------------------
+#
+      esum = 0.0 
+#
+      PARDO i, i1 
+            GET Iij_aa[i,i1]
+            etemp = Iij_aa[i,i1]*Iij_aa[i,i1] 
+            esum += etemp 
+      ENDPARDO i, i1 
+#
+      PARDO a, a1 
+            GET Iab_aa[a,a1]
+            etemp = Iab_aa[a,a1]*Iab_aa[a,a1] 
+            esum += etemp 
+      ENDPARDO a, a1 
+#
+      PARDO a, i 
+            GET Iai_aa[a,i]
+            etemp = Iai_aa[a,i]*Iai_aa[a,i] 
+            esum += etemp 
+      ENDPARDO a, i 
+#
+      PARDO a, i 
+            GET Iia_aa[i,a]
+            etemp = Iia_aa[i,a]*Iia_aa[i,a] 
+            esum += etemp 
+      ENDPARDO a, i 
+#
+      PARDO a, i 
+            GET Xai_aa[a,i]
+            etemp = Xai_aa[a,i]*Xai_aa[a,i] 
+            esum += etemp 
+      ENDPARDO a, i 
+#
+      sip_barrier 
+      collective enew += esum 
+      print "check sums of I and X intermediates"
+      print enew  
+#
+      ENDPROC SQUAREALL 
+#     ----------------- 
+#
+      PROC DMAIN
+#     ----------
+# Form the Tau arrays and single particle intermediates GAE and GMI  
+# -----------------------------------------------------------------  
+
+         CALL TAU 
+         CALL GAE 
+         CALL GMI 
+         server_barrier 
+#
+# Form the single particle density DAB and DIJ   
+# --------------------------------------------  
+         CALL DAB 
+         CALL DIJ 
+         server_barrier  
+#
+# Compute contributions to one-particle intermediates from DAB and DIJ 
+# -------------------------------------------------------------------- 
+         CALL I11 
+#
+# Form DIJKL 
+# ---------- 
+         CALL DIJKL # gamma3 
+#
+# Form DABCD 
+# ---------- 
+         CALL DABCD # gamma2 
+#
+# Form DIBJA 
+# ---------- 
+         CALL DIBJA # gamma4 
+#
+# Form DIJAB  
+# ---------- 
+         CALL DIJAB # gamma1 
+#
+# Form DIJKA  
+# ---------- 
+         CALL DIJKA # gamma6 
+#
+# Form DABCI 
+# ---------- 
+         CALL DABCI # gamma5 
+#
+# Compute 'Direct' contributions to Iab coming from Vabcd  
+# ------------------------------------------------------- 
+         CALL IABDIRECT 
+         server_barrier  
+#
+# Compute the contributions to Iaa and Iii coming from the Fock matrix 
+# -------------------------------------------------------------------- 
+         CALL IFOCK_PP 
+         sip_barrier  
+#
+# Compute the orbital response contributions to the occupied-occupied
+# and virtual-virtual one-particle density matrix. 
+# --------------------------------------------------------------------
+#
+         CALL DIJ_OR  
+         CALL DAB_OR  
+         sip_barrier  
+#
+# Compute the RHS of the Z-vector equation. 
+# ----------------------------------------- 
+#
+         CALL XAI_FULL   
+         sip_barrier  
+#
+# Finally solve for Dai iteratively 
+# --------------------------------- 
+         CALL LINEQ
+         sip_barrier  
+#
+# Compute the contributions to Iai coming from the Fock matrix 
+# ------------------------------------------------------------ 
+         CALL IFOCK
+         sip_barrier
+#
+# Backtransform one-particle intermediates and contract with integral derivatives
+# ------------------------------------------------------------------------------
+
+         CALL HFDENS
+         CALL WHFDENS
+         CALL I1TRANS
+#
+# Backtransform one-particle density and contract with integral derivatives
+# -------------------------------------------------------------------------
+         CALL D1TRANS
+#
+      ENDPROC DMAIN
+#     -------------
+# 
+# Main program, Start with the initialization calls.
+#
+     zmax = 0.0
+     imax = 0.0
+     one  = 1.0
+     two  = 2.0
+     six  = 6.0
+     AAAA = 1.0
+
+     execute compute_int_scratchmem oed_ovl zmax imax
+
+#bgn_debug
+#      print "reference, the zmax and imax"
+#      print reference
+#      print zmax
+#      print imax
+#      print diis_order
+#      print diis_start
+#end_debug
+
+     execute compute_nn_repulsion_grad Gradient
+
+     DO Ngrads
+        Put D_gradient[Ngrads] = Gradient[Ngrads]
+     Enddo Ngrads
+
+#bgn_debug
+     etmp = 0.0
+     sip_barrier
+     DO Ngrads
+         get D_gradient[Ngrads]
+         etmp += D_Gradient[Ngrads] * D_Gradient[Ngrads]
+     enddo Ngrads
+     print "checksum of nuc-nuc gradient"
+     print  etmp
+#end_debug
+#
+# Read integrls, T and lambda amplitudes 
+# --------------------------------------- 
+#
+      CALL READ_2EL 
+#
+      PARDO a, a1, a2, i 
+            REQUEST                     Vaabj[a,a1,a2,i] 
+            REQUEST                     Vaabj[a2,a1,a,i] 
+            tpppp[a,a1,a2,i]          = Vaabj[a,a1,a2,i] 
+            t1pppp[a,a1,a2,i]         = Vaabj[a2,a1,a,i] 
+            tpppp[a,a1,a2,i]         -= t1pppp[a,a1,a2,i]  
+            PREPARE VSaaai[a,a1,a2,i] = tpppp[a,a1,a2,i] 
+      ENDPARDO a, a1, a2, i 
+      server_barrier
+#
+      CALL DMAIN 
+
+#
+# Write amplitudes to file
+# ------------------------
+#
+      CALL WRITE_2EL 
+#
+                    ENDSIAL CCSD_1GRAD_RHF
+#                   -----------------------
