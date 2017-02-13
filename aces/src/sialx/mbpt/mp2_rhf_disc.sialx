@@ -1,4 +1,4 @@
-      import "rccsd_rhf_defs.sialx"
+      import "mp2_rhf_defs.sialx"
 #
       SIAL MP2_RHF_DISC          
 #

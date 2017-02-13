@@ -1,0 +1,172 @@
+import "mp2grad_rhf_defs.sialx"
+import "mp2grad_rhf_vars.sialx"
+#
+# This is a standalone sial procedure to DIIS only two index array
+# vectors are involved. This is a closed shell only version. 
+# The definition of arrays are as follows.
+# The arrays that are specific to DIIS do not need to be declared in the
+# calling program. The follwing arrrays must match (the names and the
+# data) for this to work (and avoid duplicate copying).
+#
+#      Scalar scale2               : Scaling factor; set it to the correct
+#                                  : value from the actual SIAL code.
+#
+#      Distributed Dai[a,i,kdiis]  : The vector that is being extrapolated
+#      Distributed Eai[a,i,jdiis]  : The error vector (diffrence between
+#                                    n and n-1 vectors, n= no. iteration)
+#      Served D0ai[a,i]            : The vector at zero iteration.
+#
+#
+#      dstributed PAIold_aa[a,i]   : The extrapolated vector returns
+#                                    in this generic distributed array.
+#                                    Copy this to the name of the variable 
+#                                    name being used in the calling
+#                                    program to proceed.
+#
+       SIAL DIIS_2INDEX_RHF_MP2GRAD
+#      ----------------------------
+#
+      PROC DO_DIIS
+#     ------------
+
+      worder = kiter 
+      scale2 = 1.0
+      If niter >= diis_order 
+         worder = diis_order
+      Endif 
+      Iorder = worder 
+      sip_barrier 
+
+      PARDO a, i
+         DO jdiis
+         where jdiis <= Iorder
+
+               GET Eai[a,i,jdiis]
+
+         DO j1diis
+         where j1diis <= Iorder
+
+               GET Eai[a,i,j1diis]
+
+               tbb[jdiis,j1diis]          = Eai[a,i,jdiis]*Eai[a,i,j1diis]
+               tbb[jdiis,j1diis]         *= Scale2
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+
+         ENDDO j1diis
+         ENDDO jdiis
+      ENDPARDO a, i
+
+      sip_barrier
+
+      DO jdiis
+      where jdiis <= Iorder
+          DO j1diis
+          where j1diis <= Iorder
+                GET DIST_BB[jdiis,j1diis]
+                BB[jdiis,j1diis] = DIST_BB[jdiis,j1diis]
+          ENDDO j1diis
+      ENDDO jdiis
+
+#bgn_debug
+#     do jdiis
+#     where jdiis <= iorder
+#     do idiis
+#     where idiis  <= iorder
+#        etmp = BB[idiis,jdiis] * BB[idiis,jdiis]
+#     enddo idiis
+#     enddo jdiis
+#     print "checksum of B matrix"
+#     print etmp
+#end_debug
+
+      execute compute_diis BB
+      sip_barrier
+
+      PARDO a, i
+            tai[a,i] = 0.0
+            DO kdiis
+            where kdiis < Iorder
+               n1 = (scalar)kdiis
+               GET         Dai[a,i,kdiis]
+               t2ai[a,i] = Dai[a,i,kdiis]
+
+                DO d2
+                where d2 <= Iorder
+                   n2 = (scalar)d2
+                   kcount  = n2
+                   kcount -= n1
+                   if kcount == one
+                      GET         Eai[a,i,d2]
+                      t3ai[a,i] = Eai[a,i,d2]
+                      etemp = BB[d2,d2]
+                      t3ai[a,i] += t2ai[a,i]
+                      t3ai[a,i] *= etemp
+                      tai[a,i]  += t3ai[a,i]
+                   endif
+                ENDDO d2
+            ENDDO kdiis
+
+            DO d2
+               if d2 == 1
+                  REQUEST D0ai[a,i]
+                  t2ai[a,i] = D0ai[a,i]
+                  GET         Eai[a,i,d2]
+                  t3ai[a,i] = Eai[a,i,d2]
+                  etemp = BB[d2,d2]
+                  t3ai[a,i] += t2ai[a,i]
+                  t3ai[a,i] *= etemp
+                  tai[a,i]  += t3ai[a,i]
+               endif
+            ENDDO d2
+
+            PUT PAIold_aa[a,i] = tai[a,i]
+      ENDPARDO a, i
+
+      server_barrier
+
+# If history space is full shift (downward) history end error vectors
+
+      PARDO a, i
+      DO kdiis
+      where kdiis < Iorder
+          n1 = (scalar)kdiis
+          GET Dai[a,i,kdiis]
+          tai[a,i] = Dai[a,i,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Dai[a,i,k1diis] = tai[a,i]
+             endif
+          ENDDO k1diis
+          if n1 == one
+             PREPARE D0ai[a,i] = tai[a,i]
+          endif
+      ENDDO kdiis
+      ENDPARDO a, i
+
+      PARDO a, i
+      DO kdiis
+      where kdiis <= Iorder
+         n1 = (scalar)kdiis
+         GET Eai[a,i,kdiis]
+         tai[a,i] = Eai[a,i,kdiis]
+          DO k1diis
+             n2 = (scalar)k1diis
+             etemp = n1
+             etemp -= n2
+             if etemp == 1.0
+                PUT Eai[a,i,k1diis] = tai[a,i]
+             endif
+          ENDDO k1diis
+      ENDDO kdiis
+      ENDPARDO a, i
+
+      sip_barrier
+
+      ENDPROC DO_DIIS
+#     ---------------
+
+      ENDSIAL DIIS_2INDEX_RHF_MP2GRAD
+#     -------------------------------

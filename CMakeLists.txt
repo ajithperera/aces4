@@ -575,6 +575,8 @@ set(DOMAIN_SIAL_FILES
     aces/src/sialx/mbpt_deriv/mp2grad_uhf_defs.sialx;
     aces/src/sialx/mbpt_deriv/mp2grad_uhf.sialx;
     aces/src/sialx/mbpt_deriv/mp2grad_uhf_vars.sialx;
+    aces/src/sialx/mbpt_deriv/diis_2index_mp2grad_rhf.sialx;
+    aces/src/sialx/mbpt_deriv/diis_2index_mp2grad_uhf.sialx;
     aces/src/sialx/cc_deriv/ccsd_1grad_rhf.sialx;
     aces/src/sialx/cc_deriv/ccsd_1grad_rhf_vars.sialx;
     aces/src/sialx/cc_deriv/ccsd_1grad_uhf.sialx;
@@ -591,7 +593,8 @@ set(DOMAIN_SIAL_FILES
 #    aces/src/sialx/scf_deriv/scf_hess_uhf_defs.sialx;
 #    aces/src/sialx/scf_deriv/scf_hess_uhf.sialx)
 
-set(DOMAIN_SIAL_FILES
+set(SIAL_FILES 
+    ${DOMAIN_SIAL_FILES}
     sia/src/sialx/test/empty.sialx;
     sia/src/sialx/test/static_array_test.sialx;
     sia/src/sialx/test/ifelse.sialx;
