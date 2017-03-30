@@ -266,10 +266,10 @@ c     call TAU_STOP("start scratch_array")
 
 c     call TAU_START("start compute_uintegrals6")   
 c
-      int_length1 = extents_0(1)+offset_1 
-      int_length2 = extents_0(2)+offset_2 
-      int_length3 = extents_0(3)+offset_3 
-      int_length4 = extents_0(4)+offset_4
+      int_length1 = extents_0(1) + 2
+      int_length2 = extents_0(2) + 2
+      int_length3 = extents_0(3) + 2
+      int_length4 = extents_0(4) + 2
       int_length  = int_length1 * int_length2 * int_length3 *
      +              int_length4
 

@@ -1156,7 +1156,7 @@ import "diis_4index_ccsd_uhf.sialx"
 #
             REQUEST VSpipi[i2,i,i3,i1] 
             Tiiii[i2,i,i3,i1] = VSpipi[i2,i,i3,i1]
-            PUT Wminj_aa[i2,i,i3,i1] = Tiiii[i2,i,i3,i1]
+            PUT Wminj_aa[i2,i,i3,i1] += Tiiii[i2,i,i3,i1]
       ENDPARDO i, i1, i2, i3
 #
       PARDO a, i3, i, i2
@@ -1230,7 +1230,7 @@ import "diis_4index_ccsd_uhf.sialx"
 #
             REQUEST VSqjqj[j2,j,j3,j1] 
             Tjjjj[j2,j,j3,j1] = VSqjqj[j2,j,j3,j1]
-            PUT Wminj_bb[j2,j,j3,j1] = Tjjjj[j2,j,j3,j1]
+            PUT Wminj_bb[j2,j,j3,j1] += Tjjjj[j2,j,j3,j1]
       ENDPARDO j, j1, j2, j3
 #
       PARDO j3,j,b,j2
@@ -1303,7 +1303,7 @@ import "diis_4index_ccsd_uhf.sialx"
 #
             REQUEST Vpiqj[i1,i,j1,j] 
             Tiijj[i1,i,j1,j] = Vpiqj[i1,i,j1,j]
-            PUT Wminj_ab[i1,i,j1,j] = Tiijj[i1,i,j1,j]
+            PUT Wminj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]
       ENDPARDO i, i1, j, j1
 #
       PARDO i,i1,b,j1
@@ -1640,6 +1640,7 @@ import "diis_4index_ccsd_uhf.sialx"
             deallocate Lbjbj[b,j,*,j1] 
 #
       ENDPARDO b, j, j1
+
 #
       PARDO b, j, b1 
 #
@@ -4527,12 +4528,12 @@ import "diis_4index_ccsd_uhf.sialx"
       execute compute_int_scratchmem oed_ovl zmax imax
 
 #bgn_debug
-#      print "reference,diis_start,diis_order,ecrit"
-#      print reference
-#      print diis_start
-#      print diis_order
-#      print ecrit  
-#      print " "
+      print "reference,diis_start,diis_order,ecrit"
+      print reference
+      print diis_start
+      print diis_order
+      print ecrit  
+      print " "
 #end_debug
 #
 # Read transformed integrals from lists 
@@ -4548,6 +4549,7 @@ import "diis_4index_ccsd_uhf.sialx"
 # Calculate the second-order energy 
 # --------------------------------- 
       CALL ENERGY_NEW 
+      print "1"
 
 # Start iterations
 # ---------------- 
@@ -4596,7 +4598,7 @@ import "diis_4index_ccsd_uhf.sialx"
 
          if kiter >= diis_start 
             CALL DO_DIIS
-         ENDIF
+         Endif 
 
          CALL MOVET1
          CALL MOVET2
@@ -4611,8 +4613,8 @@ import "diis_4index_ccsd_uhf.sialx"
          ediff = (etemp)**(0.5)
          assert_same ediff
 #bgn_debug
-         print kiter 
-         print ecorrT
+         print  kiter 
+         print  ecorrT
 #end_debug
 
          IF ediff < ecrit

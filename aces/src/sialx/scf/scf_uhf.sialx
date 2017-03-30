@@ -1227,6 +1227,8 @@ import "scf_uhf_defs.sialx"
 
       ENDDO j
       ENDDO q
+
+      sip_barrier 
       
       EXECUTE  A4_RETURN_OCCUPATION ORB_OVLP_A  A_OCC_NUMS
       EXECUTE  A4_RETURN_OCCUPATION ORB_OVLP_B  B_OCC_NUMS
