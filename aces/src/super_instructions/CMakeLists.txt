@@ -11,6 +11,9 @@ set(QM_SOURCE_FILES
     set_flags2.f;
     drop_core_in_sip.F;
     excited/cis_unit_guess.F;
+    excited/a4_1hp_guess.F;
+    excited/a4_reord_eigs.F;
+    excited/a4_select_max.F;
     scf/a4_david_damp_factor.F;
     scf/a4_get_init_occupation.F;
     scf/a4_return_occupation.F;
@@ -42,6 +45,7 @@ set(QM_SOURCE_FILES
     utility/return_sval.F;
     utility/remove_diagonal_elements.F;
     utility/cwork0222.F;
+    utility/a4_xgeev.F;
     mcpt-fragment/set_frag.F;
     mcpt-fragment/scf_atom_lowmem.F;
     mcpt-fragment/compute_int_scratchmem_lowmem.F;
