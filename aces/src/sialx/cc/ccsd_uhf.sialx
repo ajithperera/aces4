@@ -84,6 +84,40 @@ import "diis_4index_ccsd_uhf.sialx"
 # 
      PROC IGUESS_UHF  
 #    --------------
+
+#bgn_debug
+#     esuma=0.0
+#     esumb=0.0
+#     esumab=0.0
+#     ecorraa = 0.0
+#     ecorrbb = 0.0
+#     ecorrab = 0.0
+#     pardo a, a1, i, i1
+#     request VSpipi[a,i,a1,i1]
+#     etemp =  VSpipi[a,i,a1,i1] * VSpipi[a,i,a1,i1]
+#     esuma += etemp
+#     endpardo a, a1, i, i1
+#     PARDO b, b1, j, j1
+#     request VSqjqj[b,j,b1,j1]
+#     etemp = VSqjqj[b,j,b1,j1] * VSqjqj[b,j,b1,j1]
+#     esumb += etemp
+#     ENDPARDO b, b1, j, j1
+#     PARDO a, i, b, j
+#     request Vpiqj[a,i,b,j] 
+#     etemp = Vpiqj[a,i,b,j] * Vpiqj[a,i,b,j]
+#     esumab += etemp
+#     ENDPARDO a, i, b, j
+#     sip_barrier
+#     collective ecorraa += esuma
+#     collective ecorrbb += esumb
+#     collective ecorrab += esumab
+#     sip_barrier
+#     print ecorraa
+#     print ecorrbb
+#     print ecorrab
+#     sip_barrier
+#end_debug
+
 #
      PARDO a, a1, i, i1 
 #
@@ -1147,10 +1181,10 @@ import "diis_4index_ccsd_uhf.sialx"
       PROC WminjAA
 #     ------------
 #
-#      PARDO i, i1, i2, i3
-#            PUT Wminj_aa[i2,i,i3,i1] = 0.0
-#      ENDPARDO i, i1, i2, i3
-#      sip_barrier 
+      PARDO i, i1, i2, i3
+            PUT Wminj_aa[i2,i,i3,i1] = 0.0
+      ENDPARDO i, i1, i2, i3
+      sip_barrier 
       
       PARDO i, i1, i2, i3
 #
@@ -1221,10 +1255,10 @@ import "diis_4index_ccsd_uhf.sialx"
       PROC WminjBB
 #     ------------
 #
-#      PARDO j, j1, j2, j3
-#            PUT Wminj_bb[j2,j,j3,j1] = 0.0
-#      ENDPARDO j, j1, j2, j3
-#      sip_barrier 
+      PARDO j, j1, j2, j3
+            PUT Wminj_bb[j2,j,j3,j1] = 0.0
+      ENDPARDO j, j1, j2, j3
+      sip_barrier 
 
       PARDO j, j1, j2, j3
 #
@@ -1294,10 +1328,10 @@ import "diis_4index_ccsd_uhf.sialx"
 
       PROC WminjAB
 #     ------------
-#      PARDO i, i1, j, j1
-#            PUT Wminj_ab[i1,i,j1,j] = 0.0
-#      ENDPARDO i, i1, j, j1
-#      sip_barrier 
+      PARDO i, i1, j, j1
+            PUT Wminj_ab[i1,i,j1,j] = 0.0
+      ENDPARDO i, i1, j, j1
+      sip_barrier 
       
       PARDO i, i1, j, j1
 #
@@ -4177,7 +4211,7 @@ import "diis_4index_ccsd_uhf.sialx"
 #     print ecorrab
 #     Print "The CCSD correlation energy"
 #     print ecorrT
-#end_debug 
+##end_debug 
 #
      ENDPROC ENERGY_NEW 
 #    ------------------
@@ -4544,12 +4578,15 @@ import "diis_4index_ccsd_uhf.sialx"
 # Get initial second-order guess 
 # ------------------------------ 
       CALL IGUESS_UHF
-      SERVER_BARRIER  
+
+     PARDO jdiis, j1diis
+           PUT DIST_BB[jdiis,j1diis] = 0.0
+     ENDPARDO jdiis, j1diis
+     SIP_BARRIER  
 #
 # Calculate the second-order energy 
 # --------------------------------- 
       CALL ENERGY_NEW 
-      print "1"
 
 # Start iterations
 # ---------------- 
@@ -4588,7 +4625,7 @@ import "diis_4index_ccsd_uhf.sialx"
          CALL AOLADDER 
          CALL WAEBF  
          CALL WMEBJ 
-
+#
          SERVER_BARRIER   
 #
          CALL UPDATET1 
@@ -4613,8 +4650,10 @@ import "diis_4index_ccsd_uhf.sialx"
          ediff = (etemp)**(0.5)
          assert_same ediff
 #bgn_debug
+         print  " "
          print  kiter 
          print  ecorrT
+         print  ediff 
 #end_debug
 
          IF ediff < ecrit

@@ -233,11 +233,11 @@ c-----------------------------------------------------------------------------
 
       enddo
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
        Write(6,*)
        Write(6,"(a)") "The 2-electron gradient"
        write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
-C#endif
+#endif
       Return
       End
 

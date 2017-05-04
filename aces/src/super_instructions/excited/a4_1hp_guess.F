@@ -76,10 +76,10 @@ C The scalar the desinate number of roots
       nb2 = 1
       nb3 = 1
 
-      if (.NOT. (rank_0 .eq. 2 .and. rank_1 .eq. 2)) then
+      if (.NOT. (rank_0 .eq. 2 .and. rank_1 .eq. 3)) then
 
-         Write(6,"(a,a)") " The rank of the array must be 2 in",
-     &                    " supper instruction A4_1hp_guess"
+         Write(6,"(a,a)") " The rank of the arrays must be 2 and 3", 
+     &                    " in the suppe instruction A4_1hp_guess"
          call abort_job()
 
       endif
@@ -118,10 +118,12 @@ C-------------------------------------------------------------------------
      &                    l1,l2,m1,m2,n1,n2,o1,o2,p1,p2,Dtmp,
      &                    O_lable,V_label,ierr)
 
+      include 'sip_interface.f'
+
       Integer l1,l2,m1,m2,n1,n2,o1,o2,p1,p2
       Integer Inroots,k
-      Integer Tdim,Mdim,Ndim
-      Integer Itmp,I,J
+      Integer Tdim,Mdim 
+      Integer Itmp,I,J,Pid
       Double Precision Xmin
 
       Double Precision Diags(l2-l1+1,m2-m1+1)
@@ -131,8 +133,10 @@ C-------------------------------------------------------------------------
       Integer O_Label(Inroots)
       Integer V_Label(Inroots)
 
+      Pid = mpi_rank()
+
 #ifdef _DEBUG_LVL0
-      if (me .eq. 0) then
+      if (pid .eq. 0) then
       write(6,"(a,3i3)") "Input dimensions:", n2,o2,p2
       write(6,"(a)") "@-A4_1HP_GUESS @-entry, the diagonals"
       call output(Diags,1,n2,1,m2,n2,m2,1)
@@ -141,7 +145,7 @@ C-------------------------------------------------------------------------
 
       Call Dcopy(Tdim, Diags, 1, Dtmp, 1)
 
-      Do k = 1, Nroots
+      Do k = 1, Inroots
 
           Xmin = Diags(1,1)
 
@@ -165,25 +169,24 @@ C-------------------------------------------------------------------------
           Dtmp(Itmp,Jtmp) = 1.0D10
       Enddo
 #ifdef _DEBUG_LVL0
-      if (me .eq.0) then
+      if (pid .eq.0) then
       write(6,"(a)") "@-A4_1HP_GUESS The position of smallest digonals"
       write(6,"(6(1x,i3))") (O_label(i),i=1,Nroots)
       write(6,"(6(1x,i3))") (V_label(i),i=1,Nroots)
       endif
 #endif
 
-      Do k = 1, Nroots
+      Do k = 1, INroots
          Ondx = O_label(k)
          Vndx = V_label(k)
          GVecs(Vndx,Ondx,k) = 1.0D0
       Enddo
 
 #ifdef _DEBUG_LVL0
-
-      if (me .eq.0) then
+      if (pid .eq.0) then
       write(6,"(a)") "@-A4_1HP_GUESS vectors"
-      Do k = 1, Nroots
-          call output(Vecs(1,1,k),k1,k2,l1,l2,k2,l2,1)
+      Do k = 1, INroots
+          call output(GVecs(1,1,k),n1,n2,o1,o2,n2,o2,1)
       Enddo
       endif
 #endif

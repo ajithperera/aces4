@@ -635,7 +635,7 @@ c---------------------------------------------------------------------------
 
              endif
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       do b = db1, db2
       do a = da1, da2
          if (component .eq. 1) sumx = sumx + der_ints(a,b) * 
@@ -646,7 +646,7 @@ C#ifdef _DEBUG_LVL0
      &                                der_ints(a,b)
       enddo
       enddo
-C#endif
+#endif
          enddo ! ix
          enddo ! component
 
@@ -655,7 +655,7 @@ C#endif
          enddo   ! n shells
          enddo   ! m shells
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
        if (type .eq. 1) then
        Write(6,*)
        Write(6,"(a)") "The nuclear attraction gradient"
@@ -669,7 +669,7 @@ C#ifdef _DEBUG_LVL0
        Write(6,"(a)") "The overlap gradient"
        write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
        endif 
-C#endif
+#endif
 
 
 #ifdef _DEBUG_LVL0

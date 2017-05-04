@@ -596,7 +596,7 @@ c---------------------------------------------------------------------------
          enddo   ! n
          enddo   ! m
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       sum = 0.0d0 
       do d = d1, d2
       do c = c1, c2
@@ -609,6 +609,6 @@ C#ifdef _DEBUG_LVL0
       enddo
       write(6,"(a,F20.10)")" The 2-el der. integral checksum =",
      &                     sum
-Cendif 
+#endif 
       return
       end

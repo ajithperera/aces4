@@ -516,6 +516,8 @@ set(DOMAIN_SIAL_FILES
     aces/src/sialx/scf/scf_rhf_defs.sialx;
     aces/src/sialx/scf/diis_4index_rhf.sialx;
     aces/src/sialx/scf/diis_4index_uhf.sialx;
+    aces/src/sialx/scf/hfstability_uhf_defs.sialx;
+    aces/src/sialx/scf/hfstability_uhf.sialx;
     aces/src/sialx/cc/rccsd_rhf.sialx;
     aces/src/sialx/cc/rlambda_rhf.sialx;
     aces/src/sialx/cc/rlccd_rhf.sialx;

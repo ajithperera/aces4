@@ -588,7 +588,7 @@ c-------------------------------------------------------------------------
 
              endif
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       do b = db1, db2
       do a = da1, da2
          if (component .eq. 1) sumx = sumx + der_ints(a,b) * 
@@ -599,7 +599,7 @@ C#ifdef _DEBUG_LVL0
      &                                der_ints(a,b)
       enddo
       enddo
-C#endif
+#endif
          enddo ! ix
 
 CSSS         enddo ! component

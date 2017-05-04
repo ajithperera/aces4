@@ -1,12 +1,12 @@
 C-----------------------------------------------------------------------
 !>
-!> special a4_reord_eigs uur 
+!> special a4_reord_eigs uurr 
 !>
-!> EXECUTE A4_REORD_EIGS array0 array1 array2
+!> EXECUTE A4_REORD_EIGS array0 array1 array2 array3
 !> This SIP reorders eigenvalues and the corresponding eigenvectors ascending 
 !> or decesnding order. 
 !> The array0 and array1 are eigenvalues and the corresponding eigenvectors. 
-!> The array2 is a flag to identify the order: Descending (0) and ascending
+!> The array3 is a flag to identify the order: Descending (0) and ascending
 !> 1. Both arrays must be static. 
 !> Ajith Perera, 04/2017.
 C-----------------------------------------------------------------------
@@ -15,6 +15,7 @@ C-----------------------------------------------------------------------
      * array_0, rank_0, index_values_0, size_0, extents_0, data_0,
      * array_1, rank_1, index_values_1, size_1, extents_1, data_1,
      * array_2, rank_2, index_values_2, size_2, extents_2, data_2,
+     * array_3, rank_3, index_values_3, size_3, extents_3, data_3,
      * ierr) BIND(C)
 
       use, intrinsic :: ISO_C_BINDING
@@ -41,7 +42,7 @@ C These contains the eigenvectors
       integer(C_INT), intent(in)::extents_1(1:rank_1)
       real(C_DOUBLE), intent(in)::data_1(1:size_1)
 
-C The flag indicating the prefered order
+C The order of the matrix (the extents of arrray_0 are lead dimensions)
 
       integer(C_INT), intent(in)::array_2
       integer(C_INT), intent(in)::rank_2
@@ -50,10 +51,19 @@ C The flag indicating the prefered order
       integer(C_INT), intent(in)::extents_2(1:rank_2)
       real(C_DOUBLE), intent(in)::data_2(1:size_2)
 
+C The flag indicating the prefered order
+
+      integer(C_INT), intent(in)::array_3
+      integer(C_INT), intent(in)::rank_3
+      integer(C_INT), intent(in)::index_values_3(1:rank_3)
+      integer(C_INT), intent(in)::size_3
+      integer(C_INT), intent(in)::extents_3(1:rank_3)
+      real(C_DOUBLE), intent(in)::data_3(1:size_3)
+
       integer(C_INT), intent(out)::ierr
       integer na1,na2,nb1,nb2,nc1,nc2
-      integer Ndim,Mdim
-      double precision Dflag 
+      integer Lda,Ldb
+      integer Iflag, Nord
 
       na1 = 1
       na2 = 1
@@ -75,18 +85,19 @@ C The flag indicating the prefered order
 
       Endif 
 
-      Ndim = extents_1(1)
-      Mdim = extents_1(2)
+      Lda = extents_1(1)
+      Ldb = extents_1(2)
 
-      If (Ndim .Ne. Mdim) then
+      If (Lda .Ne. Ldb) then
          Write(6,"(a,a)") " The matrix is rectangular",
      &                    " Not supported by A4_REORD_EIGS"
          call abort_job()
       Endif
 
-      Dflag = Data_2(1)
+      Nord  = INT(Data_2(1))
+      Iflag = INT(Data_3(1))
 
-      call Process_eigs(data_0,data_1,Dflag,Ndim,
+      call Process_eigs(data_0,data_1,Iflag,Lda,Ldb,Nord,
      &                 na1,extents_0(1),
      &                 nb1,extents_1(1),
      &                 nb2,extents_1(2),
@@ -98,56 +109,61 @@ C The flag indicating the prefered order
       end
 C-------------------------------------------------------------------------
 
-      Subroutine Process_eigs(Eigs,Evecs,DFlag,Ndim,
+      Subroutine Process_eigs(Eigs,Evecs,IFlag,Lda,Ldb,Nord,
      &                        l1,l2,m1,m2,n1,n2,Ierr)
 
       
+      include 'sip_interface.f'
+
       Integer l1,l2,m1,m2,n1,n2,Ndim
       Integer Iflag
+      Integer k, i, Pid
 
       Double Precision Eigs(l1:l2)
       Double Precision EVecs(m1:m2,n1:n2)
-      Double Precision DFlag
 
-#ifdef _DEBUG_LVL0
-      If(me.eq.0) Then
+      Pid = mpi_rank()
+
+CSSS#ifdef _DEBUG_LVL0
+      If(pid.eq.0) Then
       Write(6,"(a)") "Eigenvalues/vectors of incoming matrix"
-      Write(6,"(6(1x,F10.5))") (Eigs(i),i=1,l2)
-      call output(Evecs,m1,m2,n1,n2,m2,n2,1)
+      Write(6,"(6(1x,F10.5))") (Eigs(i),i=1,Nord)
+      call output(Evecs,m1,Nord,n1,Nord,m2,n2,1)
       endif
-#endif
-      Iflag = Int(Dflas)
+CSSS#endif
     
       If (Iflag .Eq. 0) Then
-         Call Reorder_d()
+         Call Reorder_d(Eigs,Evecs,Lda,Ldb,Nord)
       Elseif (Iflag .Eq. 1) Then
-         Call Reorder_a()
+         Call Reorder_a(Eigs,Evecs,Lda,Ldb,Nord)
       Endif 
 
-#ifdef _DEBUG_LVL0
+CSSS#ifdef _DEBUG_LVL0
+      if (pid .eq.0) then
       Write(6,"(a)") "Reordered Eigen values vectors"
-      Write(6,"(6(1x,F10.5))") (Eigs(i),i=1,l2)
-      call output(Evecs,m1,m2,n1,n2,m2,n2,1)
-#endif
+      Write(6,"(6(1x,F10.5))") (Eigs(i),i=1,Nord)
+      call output(Evecs,m1,Nord,n1,Nord,m2,n2,1)
+      endif 
+CSSS#endif
 
       Return
       End
 
-      Subroutine Reorder_a(Eigs,Evecs,Ndim)
+      Subroutine Reorder_a(Eigs,Evecs,Lda,Ldb,Nord)
 
-      Integer i,j,k,Ndim
+      Integer i,j,k,Lda,Ldb,Nord
 
-      Double Precision Eigs(Ndim), Evecs(Ndim,Ndim)
+      Double Precision Eigs(Lda), Evecs(Lda,Ldb)
       Double Precision Dtmp,DtmpR
 
 C Reorder the eigenvalues and vectors Ascending order.
 C Notice that this assumes that all the relavent eigenvalues are
 C non-zero.
 
-      If (Ndim .Eq. 1) Return
+      If (Nord .Eq. 1) Return
 
-      Do i = 1, Ndim-1
-         Do j = i+1, Ndim
+      Do i = 1, Nord-1
+         Do j = i+1, Nord
 
           If (Eigs(j) .NE. 0.0D0) Then
 
@@ -155,33 +171,33 @@ C non-zero.
               Dtmp    = Eigs(i)
               Eigs(i) = Eigs(j)
               Eigs(j) = Dtmp
-              Do k = 1, Ndim
+              Do k = 1, Nord
                  DtmpR      = Evecs(k,i)
                  Evecs(k,i) = Evecs(k,j)
                  Evecs(k,j) = DtmpR
               Enddo
           Endif
           Endif
-
+         
          Enddo
       Enddo
 
       Return
       End
 
-      Subroutine Reorder_d(Eigs,Evecs,Ndim)
+      Subroutine Reorder_d(Eigs,Evecs,Lda,Ldb,Nord)
 
-      Integer i,j,Ndim,k
+      Integer i,j,Lda,Ldb,Nord
 
-      Double Precision Eigs(Ndim), Evecs(Ndim,Ndim)
+      Double Precision Eigs(Lda), Evecs(Lda,Ldb)
       Double Precision Dtmp,DtmpR
 
 C Reorder the eigenvalues and vectors descending order.
 
-      If (Ndim .Eq. 1) Return
+      If (Nord .Eq. 1) Return
 
-      Do i = 1, Ndim-1
-         Do j = i+1, Ndim
+      Do i = 1, Nord-1
+         Do j = i+1, Nord
 
           If (Eigs(j) .NE. 0.0D0) Then
 
@@ -189,10 +205,10 @@ C Reorder the eigenvalues and vectors descending order.
               Dtmp    = Eigs(i)
               Eigs(i) = Eigs(j)
               Eigs(j) = Dtmp
-              Do k = 1, Ndim
+              Do k = 1, Nord
                  DtmpR      = Evecs(k,i)
-                 Evecs(k,i) = Evecs(k,j)
-                 Evecs(k,j) = DtmpR
+                 Evecs(k,i) = Evecs(k,j) 
+                 Evecs(k,j) = DtmpR 
               Enddo
           Endif
           Endif

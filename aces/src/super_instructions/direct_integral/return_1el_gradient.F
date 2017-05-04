@@ -168,10 +168,10 @@ c
       if (index_values_1(2) .gt. 1) offset_12 
      &                              = paosegs(index_values_1(2)-1) 
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,"(a)") " At the entry to compute_return_1el_grdnts"
-      Write(6,"(a)") " ncenters, type, zsum_length1"
-      Write(6,"(3I4)") ncenters,type,zsum_length1
+      Write(6,"(a)") " ncenters, type, zsum_length11"
+      Write(6,"(3I4)") ncenters,type,zsum_length11
       Write(6,*)
       Write(6,"(a)") " The atom coordinates" 
       Write(6,"(3F12.6)") (coords(i),i=1,3*sDimCoords(2))
@@ -185,7 +185,7 @@ C#ifdef _DEBUG_LVL0
      *                        extents_0(1),extents_0(2),
      *                        extents_1(1),extents_1(2)
       write(6,"(3(1x,F12.6))")(data_2(i),i=1,3*ncenters)
-C#endif 
+#endif 
 
       call compute_return_1el_gradient(
      &                                data_0, data_1, data_2, type,

@@ -14,6 +14,7 @@ set(QM_SOURCE_FILES
     excited/a4_1hp_guess.F;
     excited/a4_reord_eigs.F;
     excited/a4_select_max.F;
+    excited/a4_return_select.F;
     scf/a4_david_damp_factor.F;
     scf/a4_get_init_occupation.F;
     scf/a4_return_occupation.F;
@@ -26,6 +27,7 @@ set(QM_SOURCE_FILES
     qm-generic/energy_numerator_rhf.F;
     qm-generic/energy_denominator.F;
     qm-generic/energy_udenominator.F;
+    qm-generic/a4_apply_denominator.F;
     utility/form_diagonal_unit_matrix.F;
     utility/return_diagonal.F;
     utility/print_block_and_index.F;
@@ -46,6 +48,7 @@ set(QM_SOURCE_FILES
     utility/remove_diagonal_elements.F;
     utility/cwork0222.F;
     utility/a4_xgeev.F;
+    utility/a4_print_static.F;
     mcpt-fragment/set_frag.F;
     mcpt-fragment/scf_atom_lowmem.F;
     mcpt-fragment/compute_int_scratchmem_lowmem.F;

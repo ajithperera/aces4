@@ -428,12 +428,33 @@ void a4_reord_eigs(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
         int& ierr);
 
 void a4_select_max(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
         int& ierr);
+
+void a4_return_select(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& ierr);
+
+void a4_print_static(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& ierr);
+
+void a4_apply_denominator(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
 
 //##############################
 }
@@ -710,6 +731,9 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_reord_eigs"]=(fp0)&a4_reord_eigs;
     procmap_["a4_xgeev"]=(fp0)&a4_xgeev;
     procmap_["a4_select_max"]=(fp0)&a4_select_max;
+    procmap_["a4_return_select"]=(fp0)&a4_return_select;
+    procmap_["a4_print_static"]=(fp0)&a4_print_static;
+    procmap_["a4_apply_denominator"]=(fp0)&a4_apply_denominator;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

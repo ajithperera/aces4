@@ -132,6 +132,7 @@ import "ccsdgrad_rhf_defs.sialx"
 
       temp Tpq[mu,nu]
       temp Txx[mu,nu]
+      temp Tx[Ngrads]
       temp Txi[mu,i]
       temp Txj[mu,j]
       temp PXXXX[mu,nu,lambda,sigma]

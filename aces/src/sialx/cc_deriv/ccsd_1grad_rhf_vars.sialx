@@ -453,8 +453,8 @@ import "ccsdgrad_rhf_defs.sialx"
       distributed Dnewai_a[a,i]
       distributed Dai[a,i,idiis]
       distributed eai[a,i,idiis]
-      distributed D_gradient[Ngrads]
       Distributed DIST_BB[d1,d2]
+      Distributed D_gradient[Ngrads]
 
       static DSii[i,i1]
       static DS1ii[i,i1]
@@ -506,6 +506,7 @@ import "ccsdgrad_rhf_defs.sialx"
       scalar two
       scalar six
       scalar etmp
+      scalar nuc_grad
       
       Int worder
       Int Iorder

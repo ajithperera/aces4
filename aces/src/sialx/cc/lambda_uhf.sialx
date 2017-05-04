@@ -5278,6 +5278,17 @@ import "diis_4index_lambda_uhf.sialx"
 #     AA spin combination 
 #     ------------------- 
 
+      PARDO i, i1, i2, i3
+            Tiiii[i,i2,i1,i3] = 0.0
+            PUT Iiiii[i,i2,i1,i3] = Tiiii[i,i2,i1,i3] 
+      ENDPARDO i, i1, i2, i3
+
+      PARDO i, i1, i2, a
+            Tiiia[i,i2,i1,a] = 0.0
+            PUT Iiiia[i,i2,i1,a] = Tiiia[i,i2,i1,a] 
+      ENDPARDO i, i1, i2, a
+      sip_barrier 
+
       PARDO i, i1, a, a1 
 # 
             REQUEST L2old_aa[i,a,i1,a1] 
@@ -5347,14 +5358,20 @@ import "diis_4index_lambda_uhf.sialx"
 #
 #     BB spin combination 
 #     ------------------- 
-#
-      pardo j,j1,j2,j3
-             put Xjjjj[j,j1,j2,j3] = 0.0
-      endpardo j,j1,j2,j3
 
+      PARDO j, j1, j2, j3
+            Tjjjj[j,j2,j1,j3] = 0.0
+            PUT Ijjjj[j,j2,j1,j3]  = Tjjjj[j,j2,j1,j3] 
+      ENDPARDO j, j1, j2, j3
 
-      PARDO j, j1, b, b1 
+      PARDO j, j1, j2, b1
+            Tjjjb[j,j2,j1,b1] = 0.0
+            PUT Ijjjb[j,j2,j1,b1]  = Tjjjb[j,j2,j1,b1] 
+      ENDPARDO j, j1, j2, b1
+      sip_barrier
 # 
+      PARDO j, j1, b, b1
+
             REQUEST L2old_bb[j,b,j1,b1] 
 #
             DO j2  
@@ -5421,7 +5438,22 @@ import "diis_4index_lambda_uhf.sialx"
 #
 #     AB spin combination 
 #     ------------------- 
-#
+
+      PARDO i, i1, j, j1
+            Tiijj[i,i1,j,j1]  = 0.0
+            PUT Iiijj[i,i1,j,j1] =  Tiijj[i,i1,j,j1]
+      ENDPARDO i, i1, j, j1
+      
+      PARDO i, i1, j, b
+            Tiijb[i,i1,j,b]  = 0.0
+            PUT Iiijb[i,i1,j,b] =  Tiijb[i,i1,j,b]
+      ENDPARDO i, i1, j, b
+
+      PARDO i, a, j, j1
+            Tiajj[i,a,j,j1]  = 0.0
+            PUT Iiajj[i,a,j,j1] =  Tiajj[i,a,j,j1]
+      ENDPARDO i, a, j, j1
+      sip_barrier 
 
       PARDO i, j, a, b   
 #
@@ -5516,6 +5548,7 @@ import "diis_4index_lambda_uhf.sialx"
 #     First piece
 #     -----------
 #
+      sip_barrier
       pardo i,i1,i2,a
             put Xiiia[i,i1,i2,a] = 0.0
       endpardo i,i1,i2,a
@@ -5539,7 +5572,7 @@ import "diis_4index_lambda_uhf.sialx"
 #
       ENDPARDO i, i2, a1, a2
       sip_barrier
-#
+
       PARDO a, a2, a3, i3 
 #
             REQUEST VSaaai[a3,a2,a,i3] 
@@ -5559,11 +5592,11 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO i
 #
       ENDPARDO a, a2, a3, i3 
-      sip_barrier
 #
 # 'Fix' on 9/29/08 
 # ---------------- 
 #
+      sip_barrier
       pardo i,i1,i2,i3
             put Xiiii[i,i1,i2,i3] = 0.0
       endpardo i,i1,i2,i3
@@ -5621,18 +5654,13 @@ import "diis_4index_lambda_uhf.sialx"
 #     Second piece
 #     ------------
 #
+      sip_barrier 
       pardo i,a,j,j1
             put Xiajj[i,a,j,j1] = 0.0
       endpardo i,a,j,j1
       pardo i,i1,b,j
             put Xiibj[i,i1,b,j] = 0.0
       endpardo i,i1,b,j
-      pardo i,i1,i2,a
-            put Xiiia[i,i1,i2,a] = 0.0
-      endpardo i,i1,i2,a
-      pardo i,i1,i2,i3
-            put Xiiii[i,i1,i2,i3] = 0.0
-      endpardo i,i1,i2,i3
       sip_barrier 
 
       PARDO i, j2, a1, b1
@@ -5718,7 +5746,6 @@ import "diis_4index_lambda_uhf.sialx"
       ENDPARDO a, b, b1, i1  
 #
       sip_barrier
-
       pardo i,i1,j,j1
             put Xiijj[i,i1,j,j1] = 0.0
       endpardo i,i1,j,j1
@@ -5784,9 +5811,10 @@ import "diis_4index_lambda_uhf.sialx"
 #     First piece
 #     -----------
 #
-      pardo j,j1,b,b1
-            put Xjjbb[j,j1,b,b1] = 0.0
-      endpardo j,j1,b,b1  
+      sip_barrier 
+      pardo j,j1,j2,b
+            put Xjjjb[j,j1,j2,b] = 0.0
+      endpardo j,j1,j2,b
       sip_barrier
 
       PARDO j, j2, b1, b2
@@ -5827,8 +5855,8 @@ import "diis_4index_lambda_uhf.sialx"
             ENDDO j2
 #
       ENDPARDO b, b3, b2, j3
-      sip_barrier
 
+      sip_barrier
       pardo j,j1,j2,j3
             put Xjjjj[j,j1,j2,j3] = 0.0
       endpardo j,j1,j2,j3
@@ -5886,18 +5914,13 @@ import "diis_4index_lambda_uhf.sialx"
 #     Second piece
 #     ------------
 #
+      sip_barrier 
       pardo j,b,i,i1
             put Xjbii[j,b,i,i1] = 0.0
       endpardo j,b,i,i1
       pardo j,j1,a,i
             put Xjjai[j,j1,a,i] = 0.0
       endpardo j,j1,a,i
-      pardo j,j1,j2,j3
-            put Xjjjj[j,j1,j2,j3] = 0.0
-      endpardo j,j1,j2,j3
-      pardo j,j1,j2,b1
-            put Xjjjb[j,j1,j2,b1] = 0.0
-      endpardo j,j1,j2,b1
       sip_barrier
 
       PARDO j, i2, b1, a1
@@ -5984,7 +6007,6 @@ import "diis_4index_lambda_uhf.sialx"
       ENDPARDO a, b, j1, a1  
 #
       sip_barrier
-
       pardo i,i1,j,j1
             put Xjjii[j,j1,i,i1] = 0.0
       endpardo i,i1,j,j1
@@ -6069,10 +6091,11 @@ import "diis_4index_lambda_uhf.sialx"
            sip_barrier
 
            CALL LLADDER
+
            CALL L2WABCDaa
            CALL L2WABCDbb
            CALL L2WABCDab
-
+#
            CALL L1WABCDa
            CALL L1WABCDb
 #
@@ -6179,7 +6202,6 @@ import "diis_4index_lambda_uhf.sialx"
          server_barrier 
 
 #bgn_debug
-#      server_barrier
 #      suma=0.0
 #      sumaa=0.0
 #      sumbb=0.0
@@ -6248,8 +6270,8 @@ import "diis_4index_lambda_uhf.sialx"
          ediff = (etemp)**(0.5)
          assert_same ediff
 #bgn_debug
-         print ecorrT
-         print ediff 
+#         print ecorrT
+#         print ediff 
 #end_debug
 
          IF ediff < ecrit

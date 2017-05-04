@@ -3708,6 +3708,7 @@ import "diis_2index_ccgrad_rhf.sialx"
 #
       ENDPARDO sigma, lambda, mu, nu 
 
+      sip_barrier 
       PARDO mu, a, i 
             GET IIxi[mu,i] 
             tai[a,i] = IIxi[mu,i]*ca[mu,a]  
@@ -4814,12 +4815,10 @@ import "diis_2index_ccgrad_rhf.sialx"
             PREPARE D0ai[a,i]        = Tai[a,i] 
 #
       ENDPARDO a, i 
-      DO d1
-      DO d2
+      PARDO d1,d2 
          PUT DIST_BB[d1,d2] = 0.0
          BB[d1,d1]          = 0.0
-      ENDDO d2
-      ENDDO d1
+      ENDPARDO d1,d2
       server_barrier 
 #
 # Start iterations 
@@ -5046,13 +5045,14 @@ import "diis_2index_ccgrad_rhf.sialx"
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
             Enddo Ngrads
       ENDPARDO mu, nu
+      sip_barrier 
 
 #bgn_debug
-          print "Nuclear attraction+repulsion+kinetic+overlap gradient"
-          Do Ngrads
-             get  D_Gradient[Ngrads]
-             print D_gradient[Ngrads]
-          Enddo Ngrads
+#          print "Nuclear attraction+repulsion+kinetic+overlap gradient"
+#          Do Ngrads
+#             get D_gradient[Ngrads]
+#             print D_gradient[Ngrads]
+#          Enddo Ngrads
 #end_debug
 #
       ENDPROC I1TRANS
@@ -5141,8 +5141,7 @@ import "diis_2index_ccgrad_rhf.sialx"
          L_Gradient[Ngrads] = 0.0
       Enddo Ngrads
 
-      DO mu 
-      DO nu
+      PARDO mu, nu
             GET Dpq[mu,nu]
             GET DHF[mu,nu]
             Tpq[mu,nu]  = Dpq[mu,nu]
@@ -5170,13 +5169,12 @@ import "diis_2index_ccgrad_rhf.sialx"
                PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
             Enddo Ngrads
 
-      ENDDO nu
-      ENDDO mu 
+      ENDPARDO mu, nu
       sip_barrier 
 #bgn_debug
           print "Nuclear attraction+repulsion+kinetic gradient"
           Do Ngrads
-             get  D_Gradient[Ngrads]
+             get D_gradient[Ngrads]
              print D_gradient[Ngrads]
           Enddo Ngrads
 #end_debug
@@ -5658,19 +5656,31 @@ import "diis_2index_ccgrad_rhf.sialx"
 
      execute compute_nn_repulsion_grad Gradient
 
-     DO Ngrads
-        Put D_gradient[Ngrads] = Gradient[Ngrads]
+     Do Ngrads 
+        D_gradient[Ngrads] = 0.0
      Enddo Ngrads
+     sip_barrier 
+
+     execute get_my_rank rank
+     
+     If rank == 0.0
+        DO Ngrads
+           PUT D_gradient[Ngrads] += Gradient[Ngrads]
+        Enddo Ngrads
+     Endif 
+     sip_barrier 
 
 #bgn_debug
      etmp = 0.0
-     sip_barrier
+     nuc_grad = 0.0
      DO Ngrads
-         get D_gradient[Ngrads]
+         get D_Gradient[Ngrads]
          etmp += D_Gradient[Ngrads] * D_Gradient[Ngrads]
      enddo Ngrads
+     sip_barrier 
+     collective nuc_grad +=etmp
      print "checksum of nuc-nuc gradient"
-     print  etmp
+     print  nuc_grad
 #end_debug
 #
 # Read integrls, T and lambda amplitudes 

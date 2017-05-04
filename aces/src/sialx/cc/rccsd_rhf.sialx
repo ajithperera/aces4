@@ -1949,6 +1949,30 @@
 # 
 #    ------------------------------------------------------------------------ 
 #
+#bgn_debug
+     esuma=0.0
+     esumab=0.0
+     ecorraa = 0.0
+     ecorrab = 0.0
+     pardo a, a1, i, i1
+     request T2old_aa[a,i,a1,i1]
+     etemp =  T2old_aa[a,i,a1,i1] * T2old_aa[a,i,a1,i1]
+     esuma += etemp
+     endpardo a, a1, i, i1
+     PARDO a, i, b, j
+     request T2old_ab[a,i,b,j]
+     etemp = T2old_ab[a,i,b,j] * T2old_ab[a,i,b,j]
+     esumab += etemp
+     ENDPARDO a, i, b, j
+     sip_barrier
+     collective ecorraa += esuma
+     collective ecorrab += esumab
+     sip_barrier
+     print ecorraa
+     print ecorrab
+     sip_barrier
+#end_debug
+
      ecorrab = 0.0 
      esumab  = 0.0 
      sip_barrier 

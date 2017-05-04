@@ -213,7 +213,7 @@ c
      *                         1+offset_3, extents_0(3)+offset_3,
      *                         1+offset_4, extents_0(4)+offset_4,
      *                         data_0, !integrals data_0,  
-     *                         scr_inte, ! aux. integral scratch
+C     *                         scr_inte, ! aux. integral scratch
      *                         scr, ! scratch spaces for integrals data_0,  
      *                         iscr, ! integer scratch spaces for integrals 
      *                         pcoords, ptcoords, 
@@ -249,7 +249,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine compute_integrals(a1,a2,b1,b2,c1,c2,d1,d2,aoint, 
-     *                 integrals, scr, iscr, coords, tcoords ,coeffs, 
+     *                 scr, iscr, coords, tcoords ,coeffs, 
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend)
 c---------------------------------------------------------------------------
@@ -298,8 +298,7 @@ c---------------------------------------------------------------------------
 
       double precision coords(3,*), coeffs(*), alphas(*)
       double precision tcoords(3,*)
-      double precision integrals(a1:a2,b1:b2,c1:c2,d1:d2) 
-      double precision aoint(*) 
+      double precision aoint(a1:a2,b1:b2,c1:c2,d1:d2) 
 
       double precision scr(*)   
       integer iscr(*)
@@ -442,16 +441,6 @@ c ----------------------------------------------------------------------
 c     intmax = 100**4 ! VER BAD HACK  
 c     zmax = 2*intmax  
  
-      do d = d1, d2 
-      do c = c1, c2 
-      do b = b1, b2 
-      do a = a1, a2 
-         integrals(a,b,c,d) = 0.0 
-      enddo 
-      enddo 
-      enddo 
-      enddo 
-
 c Set the integral tolerance 
 
 c Skip screening for now 
@@ -568,31 +557,8 @@ c---------------------------------------------------------------------------
 
            if (nints .gt. 0) then
  
-              jx = 2 
-              call return_int(nalpha_occupied, nbeta_occupied, jx,  
-     *                             a1,a2,b1,b2,
-     *                             c1,c2,d1,d2,
-     *                             integrals, 
-     *                             scr(nfirst),   
-     *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
-     *                             )
- 
-              i = 0
-              do d = d1, d2 
-              do c = c1, c2 
-              do b = b1, b2 
-              do a = a1, a2 
-                 i = i + 1 
-                 if ((a .ge. aa1 .and. a .le. aa2) .and.
-     *               (b .ge. bb1 .and. b .le. bb2) .and.
-     *               (c .ge. cc1 .and. c .le. cc2) .and.
-     *               (d .ge. dd1 .and. d .le. dd2)) then  
-                     aoint(i) = integrals(a,b,c,d)  
-                 endif 
-              enddo 
-              enddo 
-              enddo 
-              enddo 
+              call move_integrals(aoint, a1,a2,b1,b2,c1,c2,d1,d2,
+     *              scr(nfirst),aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2)
 
            endif
 

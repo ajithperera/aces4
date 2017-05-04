@@ -543,6 +543,7 @@ import "ccsdgrad_uhf_defs.sialx"
       scalar tmp
       scalar suma 
       scalar sumb 
+      scalar nuc_grad
 
       Int worder
       Int Iorder

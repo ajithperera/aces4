@@ -1,8 +1,7 @@
 import "ccsd_uhf_defs.sialx"
 import "ccsd_uhf_vars.sialx"
 
-# This is a stand alone sial procedure to DIIS only two index array
-# vectors are involved. This is a closed shell only version. 
+# This is a stand alone sial procedure to DIIS for UHF CC. 
 # The definition of arrays are as follows.
 # The arrays that are specific to DIIS do not need to be declared in the
 # calling program. The follwing arrrays must match (the names and the
@@ -49,6 +48,8 @@ import "ccsd_uhf_vars.sialx"
 
       scale4 = 4.0
       scale1 = 1.0
+#
+# zero out the diis vectors
 
       worder = kiter
       If kiter >= diis_order 

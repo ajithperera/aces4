@@ -347,6 +347,7 @@ import "ccsd_2grad_rhf_vars.sialx"
             PUT L1aa[a1,a2] += Taa[a1,a2]
 #
       ENDPARDO a1, a2, i  
+      sip_barrier 
 
       PARDO a1, a2, i      
 #
@@ -2203,10 +2204,10 @@ import "ccsd_2grad_rhf_vars.sialx"
 #
             Tbabi[b1,a,b,i] = 0.0 
 #
-            GET Gae_a[b1,b] 
+            GET Gae_a[b,b1] 
             GET t1a_old[a,i] 
 #
-            T1babi[b1,a,b,i]  = Gae_a[b1,b]^t1a_old[a,i] 
+            T1babi[b1,a,b,i]  = Gae_a[b,b1]^t1a_old[a,i] 
             T1babi[b1,a,b,i] *= -0.125 
             Tbabi[b1,a,b,i]  += T1babi[b1,a,b,i] 
 #
@@ -3260,14 +3261,18 @@ import "ccsd_2grad_rhf_vars.sialx"
                  Enddo Twelve
 
       ENDPARDO mu, nu, lambda, sigma  
-      server_barrier 
+      sip_barrier 
+
+      Do Ngrads
+            Get D_gradient[Ngrads]
+            Tx[Ngrads]         = D_Gradient[Ngrads]
+            Gradient[Ngrads]   = Tx[Ngrads]
+      Enddo Ngrads
 
 #bgn_debug
-          print "Nuclear attraction+repulsion+kinetic+overlap+2-el gradient"
-          Do Ngrads
-             get  D_Gradient[Ngrads]
-             print D_gradient[Ngrads]
-          Enddo Ngrads
+      Do Ngrads
+             print Gradient[Ngrads]
+      Enddo Ngrads
 #end_debug
 
 #
@@ -3602,8 +3607,8 @@ import "ccsd_2grad_rhf_vars.sialx"
 #bgn_debug
           print "Nuclear attraction+repulsion+kinetic+overlap gradient"
           Do Ngrads
-             get  D_Gradient[Ngrads]
-             print D_gradient[Ngrads]
+             get D_Gradient[Ngrads]
+             print D_Gradient[Ngrads]
           Enddo Ngrads
 #end_debug
 

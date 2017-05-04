@@ -1,0 +1,64 @@
+sial hfstability_uhf_defs
+#
+
+predefined  int norb   #total number of atomic orbital segments 
+predefined  int naocc  # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc  # number of occupied molecular orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc  # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+predefined  int bavirtorb # used as a simple index, begining alpha virtual
+predefined  int bbvirtorb # used as a simple index, begining end virtual
+predefined  int eavirtorb # used as a simple index, end alpha virtual 
+predefined  int ebvirtorb # used as a simple index, end beta virtual 
+
+#
+#variables used as keys and the key-values are user controlled
+# must be read from the .dat file
+
+#these are predefined in the index table
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+aoindex aces_defs_mu = 1: norb
+
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+
+scalar scf_energy
+scalar totenerg 
+          
+predefined static e[aces_defs_mu]  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
+predefined static ea[aces_defs_mu]  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static eb[aces_defs_mu]  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
+
+predefined scalar eom_tol
+predefined int eom_roots
+predefined int eom_subspc
+
+static fock_a[aces_defs_pa, aces_defs_pa]
+static fock_b[aces_defs_pb, aces_defs_pb]
+static oed_nai[aces_defs_mu,aces_defs_mu]
+static oed_kin[aces_defs_mu,aces_defs_mu]
+static oed_ovl[aces_defs_mu,aces_defs_mu]
+
+special compute_int_scratchmem  uuu
+special a4_1hp_guess rwr
+special a4_xgeev uuu
+special a4_reord_eigs uur
+special a4_select_max rw
+special a4_return_select ru
+special compute_integral_batch w
+special a4_print_static rrr 
+special a4_apply_denominator urrr
+special energy_denominator urrr
+special return_sval rw
+special return_diagonal_elements u
+special get_my_rank w
+
+endsial hfstability_uhf_defs 
+

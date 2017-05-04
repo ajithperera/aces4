@@ -148,7 +148,7 @@ c
       if (index_values_0(2) .gt. 1) offset_02 
      &                              = paosegs(index_values_0(2)-1) 
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,"(a)") " At the entry to compute_return_1el_grdnts"
       Write(6,"(a)") " ncenters, type,component"
       Write(6,"(3I4)") ncenters,type,component 
@@ -162,7 +162,7 @@ C#ifdef _DEBUG_LVL0
       Write(*,*)
       Write(*,"(a)") " The extents of arrays passed in from SIAL"
       Write(*,"(2I4)") extents_0(1),extents_0(2)
-C#endif 
+#endif 
 
       call compute_return_1el_grdints(
      &                                data_0, type, component, 

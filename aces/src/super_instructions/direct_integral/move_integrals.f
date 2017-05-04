@@ -102,7 +102,7 @@ c---------------------------------------------------------------------------
 
       double precision v(va1:va2,vb1:vb2)
       double precision intblk(a1:a2,b1:b2)
-      double precision sum, s
+      double precision sum
 
       brange1 = max(vb1, b1)
       brange2 = min(vb2, b2)
@@ -114,14 +114,6 @@ c---------------------------------------------------------------------------
             v(a,b) = intblk(a,b)
          enddo
          enddo
-
-CSSS         s=0.0d0
-CSSS         do a=va1,va2
-CSSS         do b=vb1,vb2
-CSSS            s = s+ v(a,b) * v(a,b)
-CSSS         enddo
-CSSS         enddo
-CSSS         Write(6, "(a,F10.5)") "S = ", S
 
       return
       end
@@ -198,6 +190,7 @@ c---------------------------------------------------------------------------
          write(6,*) ' Error in add_integrals2: indices mismatch ' 
          write(6,*) va1, va2, vb1, vb2   
          write(6,*) a1, a2, b1, b2   
+               call abort_job()
       endif 
 
       do b = brange1, brange2

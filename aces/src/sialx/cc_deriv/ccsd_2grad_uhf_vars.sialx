@@ -177,6 +177,7 @@ import "ccsdgrad_uhf_defs.sialx"
       temp Tme_b[j,b]
       temp Tpq[mu,nu]
       temp Txx[mu,nu]
+      temp Tx[Ngrads]
       temp Txi[mu,i]
       temp Txj[mu,j]
       temp PXXXX[mu,nu,lambda,sigma]

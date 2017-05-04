@@ -3193,13 +3193,13 @@ import "rccsd_rhf_defs.sialx"
      server_barrier 
 
      collective ecorraa += esuma
-    #execute print_scalar ecorraa
+     print ecorraa
 
      collective ecorrbb += esumb
-    #execute print_scalar ecorrbb
+     print ecorrbb
 
      collective ecorrab += esumab
-    #execute print_scalar ecorrab
+     print ecorrab
 #
      ecorrT  = ecorraa + ecorrbb
      ecorrT += ecorrab
